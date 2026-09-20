@@ -72,11 +72,17 @@ On the attachments bucket set the lifecycle rule to keep only the last
 version of each file, or to hide and then delete within a few days. B2 keeps
 every version forever by default, and krypta's attachment cleanup deletes
 objects when forms or responses are removed; against a keep-everything
-lifecycle those deletes only hide the object and storage never shrinks.
+lifecycle those deletes only hide the object and storage never shrinks. The
+same applies to any store that versions objects, including S3 with versioning
+switched on. R2 is the exception: it does not implement versioning at all, so
+a delete there is final and the bucket needs no lifecycle rule for this.
 
 The endpoint and region are shown on the bucket page and must agree, for
 example `https://s3.eu-central-003.backblazeb2.com` with region
 `eu-central-003`. A mismatch fails every request with a signature error.
+R2 is the exception here too: its region is always `auto`, whatever the
+bucket's location hint says, with the endpoint
+`https://<account id>.r2.cloudflarestorage.com`.
 
 ## Email
 
@@ -430,4 +436,5 @@ and API share one origin).
   subnet in the compose file; both are `172.28.0.0/24` as shipped. Under
   Dokploy it is `TRUSTED_PROXY_HOSTS` instead, as described there.
 - **Attachment uploads fail with a signature error.** `S3_REGION` does not
-  match the bucket's region, or the endpoint is from a different region.
+  match the bucket's region, or the endpoint is from a different region. On
+  R2 the value is always `auto`, not the bucket's location.
