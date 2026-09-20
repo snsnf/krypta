@@ -84,7 +84,16 @@ jobs:
         with:
           workspaces: apps/api
       - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps chromium
+      # From apps/web, because that is the only place the playwright binary
+      # is installed. Run from the root, bunx finds nothing in node_modules
+      # and fetches the latest playwright from the registry instead, which
+      # downloads the browser build that version wants while the suite runs
+      # under the pinned @playwright/test and looks for a different build
+      # number. The failure reads "Executable doesn't exist", which sounds
+      # like a missing install rather than the wrong one.
+      - name: Install the Playwright browser
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
 
       # Writes infra/docker/garage.toml, starts the dev stack, creates the
       # Garage bucket and key, and writes apps/api/.env from .env.example.
