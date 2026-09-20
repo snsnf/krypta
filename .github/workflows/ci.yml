@@ -1,4 +1,4 @@
-# Both jobs delegate to scripts/ci.sh so that what CI runs and what you can run
+# Every job delegates to scripts/ci.sh so that what CI runs and what you can run
 # locally cannot drift apart. Add a check there, not here.
 name: CI
 
@@ -23,6 +23,12 @@ jobs:
   static:
     name: Static checks
     runs-on: ubuntu-latest
+    # A job with no timeout gets GitHub's default of six hours. Every job here
+    # has a step that can hang rather than fail (a service that never answers,
+    # a build that stalls, a browser test waiting on a navigation), so each one
+    # carries a ceiling close enough to its real duration that a hang is
+    # reported in minutes instead of idling out the afternoon.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -53,6 +59,7 @@ jobs:
   images:
     name: Docker images
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Start Postgres and Redis
@@ -62,6 +69,9 @@ jobs:
   integration:
     name: Integration and e2e
     runs-on: ubuntu-latest
+    # The long one: every Rust integration suite single-threaded (TOTP
+    # deliberately waits out 30-second timesteps) plus Playwright at one worker.
+    timeout-minutes: 60
     env:
       # The API compiles here before its database is migrated, so SQLx must
       # read the committed .sqlx metadata rather than query the empty database.
