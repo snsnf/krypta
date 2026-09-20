@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n             count(*) FILTER (WHERE status = 'sending') AS \"sending!\",\n             count(*) FILTER (WHERE status = 'delivery_failed') AS \"delivery_failed!\"\n           FROM form_invitations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sending!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "delivery_failed!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "fb8718497d940d2b6f3e5f261da9da3322fb95c8c592ae620e5ac4e9e0782e43"
+}

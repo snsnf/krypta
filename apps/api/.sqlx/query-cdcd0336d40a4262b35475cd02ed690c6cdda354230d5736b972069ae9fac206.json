@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members\n         SET last_notified_at = $1, notify_failure_count = 0, notify_retry_after = NULL\n         WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cdcd0336d40a4262b35475cd02ed690c6cdda354230d5736b972069ae9fac206"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n             SET status = 'delivery_failed', token_hash = NULL, updated_at = now()\n             WHERE id = $1 AND form_id = $2 AND status = 'sending'\n               AND token_hash = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "57dbea2b1549e5209434c457a6a8ac40e01f1db1732efd62198b01a78167e29a"
+}

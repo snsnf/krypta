@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n             SET role = $1,\n                 status = 'sending',\n                 token_hash = $2,\n                 recipient_user_id = $3,\n                 recipient_sharing_public_key = $4,\n                 encrypted_form_data_key = $5,\n                 encrypted_form_private_key = $6,\n                 expires_at = now() + interval '7 days',\n                 accepted_at = NULL,\n                 updated_at = now()\n             WHERE id = $7 AND form_id = $8 AND invited_email = $9\n               AND status IN ('pending', 'delivery_failed', 'expired')\n             RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8eea27e37d3a8fa228906277e1fc9fd138ac0587678069851238699c74451a44"
+}

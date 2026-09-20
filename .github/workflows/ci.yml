@@ -1,0 +1,115 @@
+# Both jobs delegate to scripts/ci.sh so that what CI runs and what you can run
+# locally cannot drift apart. Add a check there, not here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # A button in the Actions tab, so the gate can be re-run without pushing a
+  # commit. The integration job is why: it fails for timing reasons (a slow
+  # image build, a hydration race in the e2e suite) more often than for
+  # anything in the code.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: apps/api
+      - run: bun install --frozen-lockfile
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+      # The unit tests open real Redis and Postgres connections. Only those two
+      # services are started; the queries themselves are checked against the
+      # offline cache in apps/api/.sqlx (the script sets SQLX_OFFLINE), so a
+      # query changed without re-running `cargo sqlx prepare` fails the build
+      # rather than passing locally and breaking later.
+      - name: Start Postgres and Redis
+        run: docker compose -f infra/docker/docker-compose.dev.yml up -d --wait postgres redis
+      - run: cp apps/api/.env.example apps/api/.env
+      - run: ./scripts/ci.sh static
+
+  # Nothing else builds a Dockerfile before a release tag does, so without
+  # this a broken one surfaces when a release is cut rather than on the
+  # commit that broke it. Its own job because the Rust build takes minutes.
+  images:
+    name: Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Start Postgres and Redis
+        run: docker compose -f infra/docker/docker-compose.dev.yml up -d --wait postgres redis
+      - run: ./scripts/ci.sh images
+
+  integration:
+    name: Integration and e2e
+    runs-on: ubuntu-latest
+    env:
+      # The API compiles here before its database is migrated, so SQLx must
+      # read the committed .sqlx metadata rather than query the empty database.
+      SQLX_OFFLINE: "true"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: apps/api
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+
+      # Writes infra/docker/garage.toml, starts the dev stack, creates the
+      # Garage bucket and key, and writes apps/api/.env from .env.example.
+      # The suite settings live in that file, so this job and a local run
+      # test exactly the same configuration.
+      - run: ./scripts/ci.sh prepare
+
+      - name: Start the API
+        working-directory: apps/api
+        run: |
+          cargo run &
+          for _ in $(seq 1 120); do
+            curl -sf http://localhost:8080/health && exit 0
+            sleep 2
+          done
+          echo "API did not become healthy" >&2
+          exit 1
+
+      - name: Start the web app
+        working-directory: apps/web
+        run: |
+          bun run dev &
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3000/ && exit 0
+            sleep 2
+          done
+          echo "Web app did not become healthy" >&2
+          exit 1
+
+      - run: ./scripts/ci.sh integration
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/test-results
+            apps/web/playwright-report
+          if-no-files-found: ignore

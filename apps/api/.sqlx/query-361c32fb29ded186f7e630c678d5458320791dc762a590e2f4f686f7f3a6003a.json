@@ -1,0 +1,80 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n            users.id,\n            users.created_at,\n            users.instance_admin,\n            (users.suspended_at IS NOT NULL) AS \"suspended!\",\n            users.totp_enabled,\n            account_quotas.max_forms,\n            account_quotas.max_attachment_bytes,\n            account_quotas.max_responses,\n            COALESCE(account_usage.forms_used, 0) AS \"forms_used!\",\n            COALESCE(account_usage.attachment_bytes_used, 0) AS \"attachment_bytes_used!\"\n         FROM users\n         LEFT JOIN account_quotas ON account_quotas.user_id = users.id\n         LEFT JOIN account_usage ON account_usage.user_id = users.id\n         WHERE ($1::text IS NULL OR users.email = $1)\n           AND ($2::text IS NULL OR users.id::text LIKE $2)\n           AND (\n                $3::timestamptz IS NULL\n                OR $4::uuid IS NULL\n                OR (users.created_at, users.id) < ($3, $4)\n           )\n         ORDER BY users.created_at DESC, users.id DESC\n         LIMIT $5",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "instance_admin",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "suspended!",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "totp_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "max_forms",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "max_attachment_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "max_responses",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "forms_used!",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "attachment_bytes_used!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      false,
+      true,
+      true,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "361c32fb29ded186f7e630c678d5458320791dc762a590e2f4f686f7f3a6003a"
+}

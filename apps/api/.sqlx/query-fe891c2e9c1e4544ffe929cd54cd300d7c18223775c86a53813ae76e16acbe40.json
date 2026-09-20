@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE attachments\n         SET claimed_at = now()\n         WHERE form_id = $1\n           AND id = ANY($2)\n           AND upload_state = 'ready'\n           AND claimed_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fe891c2e9c1e4544ffe929cd54cd300d7c18223775c86a53813ae76e16acbe40"
+}

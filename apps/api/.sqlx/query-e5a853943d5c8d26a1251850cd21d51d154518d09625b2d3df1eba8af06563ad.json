@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members target\n         SET role = $1, updated_at = now()\n         WHERE target.id = $2 AND target.form_id = $3\n           AND target.role IN ('editor', 'viewer') AND target.state = 'active'\n           AND EXISTS (\n             SELECT 1 FROM form_members caller\n             WHERE caller.form_id = target.form_id AND caller.user_id = $4\n               AND caller.role = 'owner' AND caller.state = 'active'\n           )\n         RETURNING target.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e5a853943d5c8d26a1251850cd21d51d154518d09625b2d3df1eba8af06563ad"
+}

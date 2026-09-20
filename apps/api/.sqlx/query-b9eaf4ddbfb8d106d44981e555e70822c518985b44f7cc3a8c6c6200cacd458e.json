@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT notify_failure_count, notify_retry_after\n             FROM form_members WHERE form_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "notify_failure_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "notify_retry_after",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "b9eaf4ddbfb8d106d44981e555e70822c518985b44f7cc3a8c6c6200cacd458e"
+}

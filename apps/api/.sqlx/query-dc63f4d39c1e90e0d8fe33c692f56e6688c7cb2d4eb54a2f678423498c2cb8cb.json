@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id FROM forms\n         WHERE id = $1 AND deletion_started_at IS NULL\n         FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dc63f4d39c1e90e0d8fe33c692f56e6688c7cb2d4eb54a2f678423498c2cb8cb"
+}

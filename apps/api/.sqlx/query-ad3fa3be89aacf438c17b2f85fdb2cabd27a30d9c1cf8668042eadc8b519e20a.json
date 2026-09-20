@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT members.id, users.email::text AS \"email!\", members.role,\n                  members.state, members.created_at, members.updated_at\n           FROM form_members members\n           JOIN users ON users.id = members.user_id\n           WHERE members.form_id = $1\n           ORDER BY members.created_at, members.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "email!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "state",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ad3fa3be89aacf438c17b2f85fdb2cabd27a30d9c1cf8668042eadc8b519e20a"
+}

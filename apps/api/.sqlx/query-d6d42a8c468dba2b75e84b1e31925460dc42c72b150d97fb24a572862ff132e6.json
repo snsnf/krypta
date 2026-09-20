@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT upload_state, byte_size FROM attachments WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "upload_state",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "byte_size",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d6d42a8c468dba2b75e84b1e31925460dc42c72b150d97fb24a572862ff132e6"
+}

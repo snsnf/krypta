@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members target\n         SET state = 'active', key_scheme = 'account_sealed_box_v1',\n             encrypted_form_data_key = $1, encrypted_form_private_key = $2,\n             updated_at = now()\n         WHERE target.id = $3 AND target.form_id = $4\n           AND target.state = 'awaiting_keys' AND target.role IN ('editor', 'viewer')\n           AND EXISTS (\n             SELECT 1 FROM users recipient\n             WHERE recipient.id = target.user_id\n               AND recipient.sharing_public_key = $5\n               AND recipient.sharing_key_version = 1\n           )\n           AND EXISTS (\n             SELECT 1 FROM form_members owner\n             WHERE owner.form_id = target.form_id AND owner.user_id = $6\n               AND owner.role = 'owner' AND owner.state = 'active'\n           )\n         RETURNING target.user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "93f507ab82ebe70f7a3d86b7e7b08fb5460dbe582d594f44cba95a2d2258552c"
+}

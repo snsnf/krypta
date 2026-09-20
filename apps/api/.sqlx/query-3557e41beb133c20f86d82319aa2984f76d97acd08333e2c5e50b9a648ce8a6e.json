@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM pending_checkouts WHERE user_id = $1 AND stripe_session_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3557e41beb133c20f86d82319aa2984f76d97acd08333e2c5e50b9a648ce8a6e"
+}

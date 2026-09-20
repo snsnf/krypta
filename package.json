@@ -1,0 +1,19 @@
+{
+  "name": "krypta",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "ci": "./scripts/ci.sh",
+    "ci:prepare": "./scripts/ci.sh prepare",
+    "ci:static": "./scripts/ci.sh static",
+    "ci:integration": "./scripts/ci.sh integration",
+    "ci:images": "./scripts/ci.sh images"
+  },
+  "devDependencies": {
+    "shadcn": "^4.19.0"
+  }
+}

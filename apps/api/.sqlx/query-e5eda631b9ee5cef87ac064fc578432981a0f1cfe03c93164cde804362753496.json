@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT forms.id, forms.allow_response_editing, forms.accepting_responses,\n                forms.closes_at, forms.max_responses\n         FROM forms\n         JOIN form_members owner\n           ON owner.form_id = forms.id\n          AND owner.role = 'owner'\n          AND owner.state = 'active'\n         JOIN users owner_user\n           ON owner_user.id = owner.user_id\n          AND owner_user.suspended_at IS NULL\n         WHERE forms.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "allow_response_editing",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "accepting_responses",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "closes_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "max_responses",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "e5eda631b9ee5cef87ac064fc578432981a0f1cfe03c93164cde804362753496"
+}

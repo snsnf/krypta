@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE account_usage\n         SET forms_used = forms_used + 1,\n             updated_at = now()\n         WHERE user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c0a904074778f602c6c081e55c405a96b59acdee29cc470689b509e4ce11c4de"
+}

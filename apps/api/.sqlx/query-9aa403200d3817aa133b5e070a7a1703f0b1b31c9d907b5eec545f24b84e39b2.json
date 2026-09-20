@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations SET status = 'revoked', token_hash = NULL WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9aa403200d3817aa133b5e070a7a1703f0b1b31c9d907b5eec545f24b84e39b2"
+}

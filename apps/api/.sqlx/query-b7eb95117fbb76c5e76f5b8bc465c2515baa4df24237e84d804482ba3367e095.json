@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO subscriptions (user_id, plan_id, stripe_customer_id, status)\n             VALUES ($1, 'pro', $2, 'active')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b7eb95117fbb76c5e76f5b8bc465c2515baa4df24237e84d804482ba3367e095"
+}

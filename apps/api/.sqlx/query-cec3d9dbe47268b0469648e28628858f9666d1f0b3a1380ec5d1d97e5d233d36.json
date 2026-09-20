@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO admin_audit_events (id, actor_user_id, target_user_id, action, result)\n         VALUES ($1, $2, $3, $4, $5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cec3d9dbe47268b0469648e28628858f9666d1f0b3a1380ec5d1d97e5d233d36"
+}

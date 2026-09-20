@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT wrapped_account_key FROM account_key_wrappers WHERE user_id = $1 AND method = 'recovery_code'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "wrapped_account_key",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e4fbec69d013b988e318dde44fd6f25c57f0e4551b6f6110f74c6925af8b8435"
+}

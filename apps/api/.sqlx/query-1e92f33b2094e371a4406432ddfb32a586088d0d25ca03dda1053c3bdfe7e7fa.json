@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO account_key_wrappers (id, user_id, method, wrapped_account_key) VALUES ($1, $2, 'recovery_code', $3) ON CONFLICT (user_id, method) WHERE credential_id IS NULL DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1e92f33b2094e371a4406432ddfb32a586088d0d25ca03dda1053c3bdfe7e7fa"
+}

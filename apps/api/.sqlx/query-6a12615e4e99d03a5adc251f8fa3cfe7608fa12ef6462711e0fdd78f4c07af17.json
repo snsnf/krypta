@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM form_members\n         WHERE id = $1 AND form_id = $2 AND role IN ('editor', 'viewer')\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6a12615e4e99d03a5adc251f8fa3cfe7608fa12ef6462711e0fdd78f4c07af17"
+}

@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id!\", ciphertext AS \"ciphertext!\", created_at AS \"created_at!\"\n           FROM (\n               SELECT id, ciphertext, created_at,\n                      sum(octet_length(ciphertext)) OVER (ORDER BY id) AS running\n               FROM responses\n               WHERE form_id = $1 AND ($2::uuid IS NULL OR id > $2)\n               ORDER BY id\n               LIMIT $3\n           ) page\n           WHERE page.running - octet_length(page.ciphertext) < $4\n           ORDER BY id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "ciphertext!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at!",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d562f93a94f9cd67b7e9fdb3f2d84ec5835bdef45c03686b78cfb5379106a072"
+}

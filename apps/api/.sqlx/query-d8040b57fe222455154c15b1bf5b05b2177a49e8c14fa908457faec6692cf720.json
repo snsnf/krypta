@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE attachments\n             SET upload_state = 'uploading', upload_completed_at = NULL,\n                 lifecycle_updated_at = now()\n             WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d8040b57fe222455154c15b1bf5b05b2177a49e8c14fa908457faec6692cf720"
+}

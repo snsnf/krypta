@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COALESCE(\n             account_quotas.max_forms,\n             plans.max_open_forms,\n             instance_settings.default_max_forms\n           ) AS \"max_forms!\"\n           FROM instance_settings\n           LEFT JOIN account_quotas ON account_quotas.user_id = $1\n           LEFT JOIN subscriptions ON subscriptions.user_id = $1\n           LEFT JOIN plans\n             ON $2 AND plans.id = entitled_plan_id(subscriptions.status, subscriptions.plan_id)\n           WHERE instance_settings.id = TRUE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "max_forms!",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ef998d80c8574f9fe44ab0e6669cc5eb4c7f63e15f640e5dd64f2e6f21d876ff"
+}

@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO form_invitations (\n            id, form_id, invited_email, role, status, token_hash,\n            recipient_user_id, expires_at\n         ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, now() + interval '1 day')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        },
+        "Text",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "97f69163e7fa10cb219c5319e1c12a4648cea9f2598b15aba93d45b4a1b3a6d1"
+}

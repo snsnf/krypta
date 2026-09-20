@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT plan_id, stripe_customer_id, status, updated_at FROM subscriptions WHERE user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "plan_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "stripe_customer_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f1787a52835cee642e1374e114a87708a6f9ddb17b34c2698f43a49e13039098"
+}

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) FROM form_invitations\n         WHERE form_id = $1 AND invited_email = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "025a0ccc1f0182f664d90baae0f97a52d5e6bb7f16f690886d1c700a520447ad"
+}

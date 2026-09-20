@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS(\n            SELECT 1 FROM form_members members\n            JOIN users ON users.id = members.user_id\n            WHERE members.form_id = $1 AND users.email = $2\n              AND members.state = 'active'\n         )",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "85c071e6472f4db9f5a03afaa9053b702bc0b408768ebd54acbba164eac60568"
+}

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id FROM attachments\n             WHERE form_id = $1 AND upload_state = 'cleanup_pending'\n             ORDER BY id\n             FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a8f9424a2fff0fe9ae69f6af6458d61c95760e4dc10040767ca87d9fc2ea8ba6"
+}

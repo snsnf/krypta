@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS(\n            SELECT 1 FROM form_invitations\n            WHERE token_hash = $1 AND status = 'pending'\n         )",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "622ba179dfdd7b0ca8187e8b53174be61630332780cc01b8b3bf563110674934"
+}

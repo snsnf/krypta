@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT owner.form_id, editor.id AS \"editor_member_id?\"\n           FROM form_members owner\n           LEFT JOIN form_members editor\n             ON editor.form_id = owner.form_id\n            AND editor.role = 'editor'\n            AND editor.state = 'active'\n           WHERE owner.user_id = $1\n             AND owner.role = 'owner'\n             AND owner.state = 'active'\n             AND EXISTS (\n               SELECT 1\n               FROM form_members shared\n               WHERE shared.form_id = owner.form_id\n                 AND shared.user_id <> $1\n             )\n           ORDER BY owner.form_id, editor.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "form_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "editor_member_id?",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c9c5fc0bec6dddbfd6be8a603f72b3b787f3aaa9ee9cab861b2788d1b180b41e"
+}

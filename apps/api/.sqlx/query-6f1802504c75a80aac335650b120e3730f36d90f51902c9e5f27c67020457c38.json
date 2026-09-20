@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE passkey_credentials SET credential = $2, last_used_at = now() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6f1802504c75a80aac335650b120e3730f36d90f51902c9e5f27c67020457c38"
+}

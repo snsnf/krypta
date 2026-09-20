@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sharing_public_key, wrapped_sharing_private_key, sharing_key_version\n         FROM users WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sharing_public_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "wrapped_sharing_private_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "sharing_key_version",
+        "type_info": "Int2"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "8079a7a9a73d2a6d9266a3a31ea5a05d0fb71fe87b43f203abaa98ffe585b248"
+}

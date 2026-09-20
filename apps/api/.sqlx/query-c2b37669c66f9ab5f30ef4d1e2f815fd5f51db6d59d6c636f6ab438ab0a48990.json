@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO forms (\n                id, title_ciphertext, schema_ciphertext, form_public_key,\n                attachment_count, attachment_bytes\n             ) VALUES (\n                $1, 'title', 'schema', 'public-key', 1, 3\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c2b37669c66f9ab5f30ef4d1e2f815fd5f51db6d59d6c636f6ab438ab0a48990"
+}

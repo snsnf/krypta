@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT email, instance_admin, totp_enabled FROM users WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email",
+        "type_info": {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "instance_admin",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "totp_enabled",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fb9727a268688e4b8662e971390e8517e03f0c7a41a411208fefee09b27caabb"
+}

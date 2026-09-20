@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE account_usage\n         SET forms_used = GREATEST(forms_used - 1, 0),\n             updated_at = now()\n         WHERE user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ff6c9a44fb6c49826d159e9c8588d001284d0f712369e1514de28e57ad8e2090"
+}

@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n             plans.id AS plan_id,\n             plans.max_open_forms AS plan_max_open_forms,\n             plans.max_responses_per_period AS plan_max_responses_per_period,\n             subscriptions.status AS \"status?\",\n             subscriptions.current_period_end AS \"current_period_end?\",\n             subscriptions.cancel_at_period_end AS \"cancel_at_period_end?\"\n           FROM plans\n           LEFT JOIN subscriptions ON subscriptions.user_id = $1\n           WHERE plans.id = entitled_plan_id(subscriptions.status, subscriptions.plan_id)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "plan_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "plan_max_open_forms",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "plan_max_responses_per_period",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "status?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "current_period_end?",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "cancel_at_period_end?",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "94d148df148f36784f6927c364777401be4d440792308973a8e0a389fb6272b7"
+}

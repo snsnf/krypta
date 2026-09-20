@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO response_usage (user_id, period_start, response_count)\n         VALUES ($1, $2, 1)\n         ON CONFLICT (user_id, period_start)\n         DO UPDATE SET response_count = response_usage.response_count + 1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4edef1a992411698b5ba3ff257eb82d96b1fc1401c82007baabbae350edf70cc"
+}

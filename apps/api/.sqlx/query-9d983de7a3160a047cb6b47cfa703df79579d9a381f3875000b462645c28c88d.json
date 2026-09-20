@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members SET notify_on_response = false WHERE form_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9d983de7a3160a047cb6b47cfa703df79579d9a381f3875000b462645c28c88d"
+}

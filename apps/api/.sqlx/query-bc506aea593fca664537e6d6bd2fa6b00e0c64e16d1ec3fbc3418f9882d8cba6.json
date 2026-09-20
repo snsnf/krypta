@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO pending_checkouts (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bc506aea593fca664537e6d6bd2fa6b00e0c64e16d1ec3fbc3418f9882d8cba6"
+}

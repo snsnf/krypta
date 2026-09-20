@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT fm.id AS \"member_id!\", fm.form_id AS \"form_id!\", u.email AS \"email!\"\n           FROM form_members fm\n           JOIN users u ON u.id = fm.user_id AND u.suspended_at IS NULL\n           WHERE fm.notify_on_response\n             AND fm.state = 'active'\n             AND (\n               fm.last_notified_at IS NULL\n               OR fm.last_notified_at <= now() - $1 * interval '1 second'\n             )\n             AND (\n               fm.notify_retry_after IS NULL\n               OR fm.notify_retry_after <= now()\n             )\n             AND EXISTS (\n               SELECT 1 FROM responses r\n               WHERE r.form_id = fm.form_id\n                 AND r.created_at > COALESCE(fm.last_notified_at, fm.created_at)\n             )\n           ORDER BY fm.last_notified_at ASC NULLS FIRST, fm.id\n           LIMIT 200",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "member_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "form_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "email!",
+        "type_info": {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8f8d84a2e7ece16dc8ecb59747557567513f6bb8e1867a8d71de92251381dc2b"
+}

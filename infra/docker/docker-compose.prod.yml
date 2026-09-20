@@ -1,0 +1,244 @@
+# infra/docker/docker-compose.prod.yml
+#
+# Production stack: Traefik in front, terminating TLS for one hostname and
+# routing /api to the API and everything else to the web app. Nothing but
+# Traefik publishes a port. Postgres and Redis are reachable only on the
+# internal network, and the API trusts X-Forwarded-For only from that network
+# (TRUSTED_PROXY_CIDRS below matches the subnet pinned on it).
+#
+# Attachments live in an external S3-compatible object store (Backblaze B2,
+# Cloudflare R2, Hetzner Object Storage, AWS S3), configured through the S3_*
+# variables in .env.prod. There is no Garage here: Garage is the dev and
+# smoke stack's stand-in so the code runs without an account anywhere, and
+# running it in production would mean operating and backing up an object
+# store on the same disk as everything else. Every object is ciphertext
+# sealed in the browser before upload, so the provider holds nothing readable.
+#
+#   cp .env.prod.example .env.prod   # then fill it in
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+#
+# README.md in this directory is the deployment guide: prerequisites, the
+# order to do things in, verification, backups, upgrades, and what every
+# variable in .env.prod means.
+#
+# A fixed project name, so the volume below is krypta_krypta_postgres_data
+# and never collides with the dev or smoke stack, which declare the same
+# volume keys. All three files now name their project, but this is the one
+# that matters: without it a production run on a machine that had ever run
+# the dev stack would boot on the dev database. Do not give any other stack
+# this name.
+name: krypta
+
+x-hardened: &hardened
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+networks:
+  internal:
+    ipam:
+      config:
+        # Pinned so TRUSTED_PROXY_CIDRS can name it. Docker would otherwise
+        # pick a subnet at first `up`, and a redeploy could pick another.
+        - subnet: 172.28.0.0/24
+
+volumes:
+  krypta_postgres_data:
+  krypta_redis_data:
+  krypta_letsencrypt:
+
+services:
+  traefik:
+    <<: *hardened
+    # Base images are pinned to an exact release so a redeploy never changes
+    # the proxy or a database server underneath a running instance. Raise them
+    # deliberately, one at a time.
+    image: traefik:v3.7.13
+    command:
+      - --configfile=/etc/traefik/traefik.yml
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    # Binding 80 and 443 is the one capability the proxy needs.
+    cap_add: [NET_BIND_SERVICE]
+    read_only: true
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - krypta_letsencrypt:/letsencrypt
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--configfile=/etc/traefik/traefik.yml"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    <<: *hardened
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_USER: krypta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: krypta
+    # Postgres drops to its own user after chowning its data directory.
+    cap_add: [CHOWN, SETUID, SETGID, FOWNER, DAC_OVERRIDE]
+    volumes:
+      - krypta_postgres_data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krypta"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    <<: *hardened
+    image: redis:7.4.11-alpine
+    # Sessions, rate limits and pending signups live here. Append-only
+    # persistence means a restart logs nobody out.
+    command: ["redis-server", "--appendonly", "yes", "--save", ""]
+    user: "999:999"
+    volumes:
+      - krypta_redis_data:/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    <<: *hardened
+    # Both keys are set on purpose, so an operator picks the path rather than
+    # the file picking for them:
+    #   docker compose pull && docker compose up -d   pulls the published image
+    #   docker compose up -d --build                  builds from this source
+    # The default names are local, so a clone with no KRYPTA_*_IMAGE set builds
+    # exactly as it always did. Building stays available deliberately: this
+    # product's claim is that the browser does the encryption, and anyone who
+    # takes that seriously should be able to run what they audited rather than
+    # a binary we handed them.
+    image: ${KRYPTA_API_IMAGE:-krypta-api:local}
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    read_only: true
+    environment:
+      DATABASE_URL: postgres://krypta:${POSTGRES_PASSWORD}@postgres:5432/krypta
+      REDIS_URL: redis://redis:6379
+      PORT: "8080"
+      S3_ENDPOINT: ${S3_ENDPOINT:?set S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:?set S3_REGION}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      WEB_BASE_URL: https://${DOMAIN:?set DOMAIN}
+      # Defaults to the hostname. Set it to the registrable apex instead
+      # (getkrypta.com while serving forms.getkrypta.com) when more apps will
+      # share accounts: a passkey is scoped to the RP ID and valid from any
+      # host beneath it, and it can never be widened after enrolment.
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-${DOMAIN}}
+      WEBAUTHN_ORIGIN: https://${DOMAIN}
+      # Traefik is the only thing that reaches this container from outside,
+      # and it sits on the pinned subnet above. See apps/api/src/client_ip.rs.
+      TRUSTED_PROXY_CIDRS: 172.28.0.0/24
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_TLS: ${SMTP_TLS:-starttls}
+      MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
+      KRYPTA_INITIAL_ADMIN_EMAIL: ${KRYPTA_INITIAL_ADMIN_EMAIL:-}
+      # Read only to tell the admin health view whether backups have an
+      # off-site copy. The backup itself is backup.sh on the host, which reads
+      # this and the four keys beside it straight from .env.prod; the API never
+      # uploads anything.
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      # Tuning. Every one of these has a production default in the API's
+      # config.rs and a blank value means "use it", so the whole block can be
+      # left untouched in .env.prod. README.md lists what each one does.
+      REGISTER_RATE_LIMIT_PER_HOUR: ${REGISTER_RATE_LIMIT_PER_HOUR:-}
+      REGISTER_EMAIL_RATE_LIMIT_PER_HOUR: ${REGISTER_EMAIL_RATE_LIMIT_PER_HOUR:-}
+      LOGIN_RATE_LIMIT_PER_MINUTE: ${LOGIN_RATE_LIMIT_PER_MINUTE:-}
+      VERIFY_RATE_LIMIT_PER_MINUTE: ${VERIFY_RATE_LIMIT_PER_MINUTE:-}
+      VERIFY_CODE_TTL_SECONDS: ${VERIFY_CODE_TTL_SECONDS:-}
+      VERIFY_MAX_ATTEMPTS: ${VERIFY_MAX_ATTEMPTS:-}
+      RESEND_COOLDOWN_SECONDS: ${RESEND_COOLDOWN_SECONDS:-}
+      PASSKEY_RATE_LIMIT_PER_MINUTE: ${PASSKEY_RATE_LIMIT_PER_MINUTE:-}
+      RECOVER_START_RATE_LIMIT_PER_HOUR: ${RECOVER_START_RATE_LIMIT_PER_HOUR:-}
+      RECOVER_VERIFY_RATE_LIMIT_PER_MINUTE: ${RECOVER_VERIFY_RATE_LIMIT_PER_MINUTE:-}
+      RECOVER_MAX_ATTEMPTS: ${RECOVER_MAX_ATTEMPTS:-}
+      INVITE_RATE_LIMIT_PER_HOUR: ${INVITE_RATE_LIMIT_PER_HOUR:-}
+      INVITE_RATE_LIMIT_PER_DAY: ${INVITE_RATE_LIMIT_PER_DAY:-}
+      INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR: ${INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR:-}
+      INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR: ${INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR:-}
+      RESPONSE_NOTIFY_COOLDOWN_SECONDS: ${RESPONSE_NOTIFY_COOLDOWN_SECONDS:-}
+      RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS: ${RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS:-}
+      S3_OPERATION_TIMEOUT_SECONDS: ${S3_OPERATION_TIMEOUT_SECONDS:-}
+      ATTACHMENT_UPLOAD_STALE_SECONDS: ${ATTACHMENT_UPLOAD_STALE_SECONDS:-}
+      ATTACHMENT_CLEANUP_INTERVAL_SECONDS: ${ATTACHMENT_CLEANUP_INTERVAL_SECONDS:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PORTAL_RETURN_URL: ${STRIPE_PORTAL_RETURN_URL:-}
+      STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
+      STRIPE_PRICE_YEARLY: ${STRIPE_PRICE_YEARLY:-}
+      # Everything else keeps the production defaults from config.rs.
+    networks: [internal]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    # The binary probes itself; the image has no curl. See src/healthcheck.rs.
+    healthcheck:
+      test: ["CMD", "./api", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.api.rule: Host(`${DOMAIN}`) && PathPrefix(`/api`)
+      traefik.http.routers.api.entrypoints: websecure
+      traefik.http.routers.api.priority: "10"
+      traefik.http.services.api.loadbalancer.server.port: "8080"
+
+  web:
+    <<: *hardened
+    # No build arguments. Traefik puts the API under /api on this same
+    # hostname, so the browser's API base is the relative default baked into
+    # the image, and the image is therefore not tied to any domain. That is
+    # what makes one published image usable by every self-hoster.
+    image: ${KRYPTA_WEB_IMAGE:-krypta-web:local}
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      # Absolute base for Open Graph and Twitter card URLs, which crawlers
+      # reject when relative. Read on the server at request time, so it
+      # configures a running container rather than a built image.
+      SITE_URL: https://${DOMAIN}
+      # Who operates this instance, for /privacy and /terms. Both pages are
+      # served only when the entity and the contact address are set, and
+      # nothing links to them otherwise: a policy is a promise made by a
+      # particular operator, so shipping one that names somebody else would be
+      # worse than serving no page at all.
+      LEGAL_ENTITY: ${LEGAL_ENTITY:-}
+      LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:-}
+    networks: [internal]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.web.rule: Host(`${DOMAIN}`)
+      traefik.http.routers.web.entrypoints: websecure
+      traefik.http.routers.web.priority: "1"
+      traefik.http.services.web.loadbalancer.server.port: "3000"

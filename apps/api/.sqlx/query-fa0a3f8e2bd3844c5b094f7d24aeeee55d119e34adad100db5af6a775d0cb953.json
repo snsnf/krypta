@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE account_key_wrappers SET wrapped_account_key = $3, updated_at = now() WHERE user_id = $1 AND method = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fa0a3f8e2bd3844c5b094f7d24aeeee55d119e34adad100db5af6a775d0cb953"
+}

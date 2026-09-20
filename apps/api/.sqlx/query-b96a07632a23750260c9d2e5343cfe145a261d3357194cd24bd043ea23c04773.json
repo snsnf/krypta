@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO processed_stripe_events (id) VALUES ($1) ON CONFLICT (id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b96a07632a23750260c9d2e5343cfe145a261d3357194cd24bd043ea23c04773"
+}

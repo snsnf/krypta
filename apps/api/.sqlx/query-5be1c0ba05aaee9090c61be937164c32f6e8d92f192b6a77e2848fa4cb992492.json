@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE forms\n         SET accepting_responses = false,\n             deletion_started_at = COALESCE(deletion_started_at, now())\n         WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5be1c0ba05aaee9090c61be937164c32f6e8d92f192b6a77e2848fa4cb992492"
+}

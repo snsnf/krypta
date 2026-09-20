@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO users (id, email, password_hash)\n         VALUES ($1, $2, 'test-password-hash')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6f5b2ecd6250aec1b023e0d3d5327821f480338eedfec16188da819b0b3ec496"
+}

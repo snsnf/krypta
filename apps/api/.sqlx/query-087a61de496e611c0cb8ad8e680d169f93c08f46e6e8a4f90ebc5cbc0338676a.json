@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE instance_bootstrap\n         SET claimed_user_id = $1, claimed_at = now()\n         WHERE id = TRUE AND claimed_user_id IS NULL\n         RETURNING claimed_user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "claimed_user_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "087a61de496e611c0cb8ad8e680d169f93c08f46e6e8a4f90ebc5cbc0338676a"
+}

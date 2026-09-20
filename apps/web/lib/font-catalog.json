@@ -1,0 +1,2265 @@
+{
+  "fonts": [
+    {
+      "id": "abel",
+      "family": "Abel",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "albert-sans",
+      "family": "Albert Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "alegreya",
+      "family": "Alegreya",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "alexandria",
+      "family": "Alexandria",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "almarai",
+      "family": "Almarai",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "amiri",
+      "family": "Amiri",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "anton",
+      "family": "Anton",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "archivo",
+      "family": "Archivo",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "archivo-black",
+      "family": "Archivo Black",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "aref-ruqaa",
+      "family": "Aref Ruqaa",
+      "category": "serif",
+      "variants": [
+        "regular",
+        "700"
+      ]
+    },
+    {
+      "id": "arimo",
+      "family": "Arimo",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "assistant",
+      "family": "Assistant",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "atkinson-hyperlegible",
+      "family": "Atkinson Hyperlegible",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "baloo-bhaijaan-2",
+      "family": "Baloo Bhaijaan 2",
+      "category": "display",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "barlow",
+      "family": "Barlow",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "barlow-condensed",
+      "family": "Barlow Condensed",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "be-vietnam-pro",
+      "family": "Be Vietnam Pro",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "bebas-neue",
+      "family": "Bebas Neue",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "bitter",
+      "family": "Bitter",
+      "category": "serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "bricolage-grotesque",
+      "family": "Bricolage Grotesque",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "cabin",
+      "family": "Cabin",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "cairo",
+      "family": "Cairo",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "cardo",
+      "family": "Cardo",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "700"
+      ]
+    },
+    {
+      "id": "caveat",
+      "family": "Caveat",
+      "category": "handwriting",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "changa",
+      "family": "Changa",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "chivo",
+      "family": "Chivo",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "comfortaa",
+      "family": "Comfortaa",
+      "category": "display",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "cormorant-garamond",
+      "family": "Cormorant Garamond",
+      "category": "serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "crimson-text",
+      "family": "Crimson Text",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "dancing-script",
+      "family": "Dancing Script",
+      "category": "handwriting",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "dm-sans",
+      "family": "DM Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "dm-serif-display",
+      "family": "DM Serif Display",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular"
+      ]
+    },
+    {
+      "id": "domine",
+      "family": "Domine",
+      "category": "serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "dosis",
+      "family": "Dosis",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "eb-garamond",
+      "family": "EB Garamond",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "el-messiri",
+      "family": "El Messiri",
+      "category": "sans-serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "exo-2",
+      "family": "Exo 2",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "figtree",
+      "family": "Figtree",
+      "category": "sans-serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "fira-code",
+      "family": "Fira Code",
+      "category": "monospace",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "fira-sans",
+      "family": "Fira Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "fjalla-one",
+      "family": "Fjalla One",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "fraunces",
+      "family": "Fraunces",
+      "category": "serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "gabarito",
+      "family": "Gabarito",
+      "category": "display",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "geist",
+      "family": "Geist",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "golos-text",
+      "family": "Golos Text",
+      "category": "sans-serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "hanken-grotesk",
+      "family": "Hanken Grotesk",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "harmattan",
+      "family": "Harmattan",
+      "category": "sans-serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "heebo",
+      "family": "Heebo",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "hind",
+      "family": "Hind",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "ibm-plex-mono",
+      "family": "IBM Plex Mono",
+      "category": "monospace",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "ibm-plex-sans",
+      "family": "IBM Plex Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "ibm-plex-sans-arabic",
+      "family": "IBM Plex Sans Arabic",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "ibm-plex-serif",
+      "family": "IBM Plex Serif",
+      "category": "serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "inconsolata",
+      "family": "Inconsolata",
+      "category": "monospace",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "indie-flower",
+      "family": "Indie Flower",
+      "category": "handwriting",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "instrument-sans",
+      "family": "Instrument Sans",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "instrument-serif",
+      "family": "Instrument Serif",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular"
+      ]
+    },
+    {
+      "id": "inter",
+      "family": "Inter",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "jetbrains-mono",
+      "family": "JetBrains Mono",
+      "category": "monospace",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "josefin-sans",
+      "family": "Josefin Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "jost",
+      "family": "Jost",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "kanit",
+      "family": "Kanit",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "karla",
+      "family": "Karla",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "kufam",
+      "family": "Kufam",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "lalezar",
+      "family": "Lalezar",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "lateef",
+      "family": "Lateef",
+      "category": "serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "lato",
+      "family": "Lato",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "700italic",
+        "700",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "lexend",
+      "family": "Lexend",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "libre-baskerville",
+      "family": "Libre Baskerville",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "libre-franklin",
+      "family": "Libre Franklin",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "literata",
+      "family": "Literata",
+      "category": "serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "lobster",
+      "family": "Lobster",
+      "category": "display",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "lora",
+      "family": "Lora",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "mada",
+      "family": "Mada",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "manrope",
+      "family": "Manrope",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "markazi-text",
+      "family": "Markazi Text",
+      "category": "serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "merriweather",
+      "family": "Merriweather",
+      "category": "serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "merriweather-sans",
+      "family": "Merriweather Sans",
+      "category": "sans-serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "montserrat",
+      "family": "Montserrat",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "mulish",
+      "family": "Mulish",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "newsreader",
+      "family": "Newsreader",
+      "category": "serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "noto-kufi-arabic",
+      "family": "Noto Kufi Arabic",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "noto-naskh-arabic",
+      "family": "Noto Naskh Arabic",
+      "category": "serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "noto-sans",
+      "family": "Noto Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "noto-sans-arabic",
+      "family": "Noto Sans Arabic",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "noto-serif",
+      "family": "Noto Serif",
+      "category": "serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "nunito",
+      "family": "Nunito",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "nunito-sans",
+      "family": "Nunito Sans",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "onest",
+      "family": "Onest",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "open-sans",
+      "family": "Open Sans",
+      "category": "sans-serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "oswald",
+      "family": "Oswald",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "outfit",
+      "family": "Outfit",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "overpass",
+      "family": "Overpass",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "oxygen",
+      "family": "Oxygen",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "700"
+      ]
+    },
+    {
+      "id": "pacifico",
+      "family": "Pacifico",
+      "category": "handwriting",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "permanent-marker",
+      "family": "Permanent Marker",
+      "category": "handwriting",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "playfair-display",
+      "family": "Playfair Display",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "plus-jakarta-sans",
+      "family": "Plus Jakarta Sans",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "poppins",
+      "family": "Poppins",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "prompt",
+      "family": "Prompt",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "pt-sans",
+      "family": "PT Sans",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "pt-serif",
+      "family": "PT Serif",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "public-sans",
+      "family": "Public Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "quicksand",
+      "family": "Quicksand",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "raleway",
+      "family": "Raleway",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "readex-pro",
+      "family": "Readex Pro",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "red-hat-display",
+      "family": "Red Hat Display",
+      "category": "sans-serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "reem-kufi",
+      "family": "Reem Kufi",
+      "category": "sans-serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "righteous",
+      "family": "Righteous",
+      "category": "display",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "roboto",
+      "family": "Roboto",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "roboto-condensed",
+      "family": "Roboto Condensed",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "roboto-mono",
+      "family": "Roboto Mono",
+      "category": "monospace",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "rubik",
+      "family": "Rubik",
+      "category": "sans-serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "satisfy",
+      "family": "Satisfy",
+      "category": "handwriting",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "scheherazade-new",
+      "family": "Scheherazade New",
+      "category": "serif",
+      "variants": [
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "schibsted-grotesk",
+      "family": "Schibsted Grotesk",
+      "category": "sans-serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "schoolbell",
+      "family": "Schoolbell",
+      "category": "handwriting",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "shadows-into-light",
+      "family": "Shadows Into Light",
+      "category": "handwriting",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "signika",
+      "family": "Signika",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "sora",
+      "family": "Sora",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800"
+      ]
+    },
+    {
+      "id": "source-code-pro",
+      "family": "Source Code Pro",
+      "category": "monospace",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "source-sans-3",
+      "family": "Source Sans 3",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "space-grotesk",
+      "family": "Space Grotesk",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "space-mono",
+      "family": "Space Mono",
+      "category": "monospace",
+      "variants": [
+        "italic",
+        "regular",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "spectral",
+      "family": "Spectral",
+      "category": "serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800"
+      ]
+    },
+    {
+      "id": "tajawal",
+      "family": "Tajawal",
+      "category": "sans-serif",
+      "variants": [
+        "200",
+        "300",
+        "regular",
+        "500",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "teko",
+      "family": "Teko",
+      "category": "sans-serif",
+      "variants": [
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700"
+      ]
+    },
+    {
+      "id": "titillium-web",
+      "family": "Titillium Web",
+      "category": "sans-serif",
+      "variants": [
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "900"
+      ]
+    },
+    {
+      "id": "ubuntu",
+      "family": "Ubuntu",
+      "category": "sans-serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "700italic",
+        "700"
+      ]
+    },
+    {
+      "id": "urbanist",
+      "family": "Urbanist",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "varela-round",
+      "family": "Varela Round",
+      "category": "sans-serif",
+      "variants": [
+        "regular"
+      ]
+    },
+    {
+      "id": "vazirmatn",
+      "family": "Vazirmatn",
+      "category": "sans-serif",
+      "variants": [
+        "100",
+        "200",
+        "300",
+        "regular",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900"
+      ]
+    },
+    {
+      "id": "vollkorn",
+      "family": "Vollkorn",
+      "category": "serif",
+      "variants": [
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "work-sans",
+      "family": "Work Sans",
+      "category": "sans-serif",
+      "variants": [
+        "100italic",
+        "100",
+        "200italic",
+        "200",
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700",
+        "800italic",
+        "800",
+        "900italic",
+        "900"
+      ]
+    },
+    {
+      "id": "zilla-slab",
+      "family": "Zilla Slab",
+      "category": "serif",
+      "variants": [
+        "300italic",
+        "300",
+        "italic",
+        "regular",
+        "500italic",
+        "500",
+        "600italic",
+        "600",
+        "700italic",
+        "700"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT user_id\n         FROM form_members\n         WHERE form_id = $1 AND role = 'owner' AND state = 'active'\n         FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "02acc2ab5935017227d03559b7924d2b8d3a29f602ed3037bf8e6242c7098166"
+}

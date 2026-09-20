@@ -1,0 +1,708 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --color-brand: var(--brand);
+  --font-heading: var(--font-heading);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-8: var(--chart-8);
+  --color-chart-7: var(--chart-7);
+  --color-chart-6: var(--chart-6);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-chart-neutral: var(--chart-neutral);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Brand green, used by the krypta logo mark. */
+  --brand: #356343;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.42 0.08 152);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.58 0.09 152);
+  /* Categorical chart hues, in a FIXED order that must not be reordered or
+     cycled: the order is what keeps adjacent bars distinguishable under
+     protanopia and deuteranopia. Validated against this mode's card surface
+     (#ffffff): lightness band, chroma floor, CVD separation and the
+     normal-vision floor all pass. Three hues sit under 3:1 contrast, which is
+     permitted only because every bar carries a direct label and the Individual
+     table view exists; do not remove those labels without re-checking.
+     A ninth series is never a generated hue: it folds into "other". */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
+  /* Values outside the categorical encoding: options past the eighth, answers
+     no longer in the schema, and the aggregated "other" row. Deliberately
+     achromatic so it cannot be mistaken for an identity. */
+  --chart-neutral: oklch(0.6 0 0);
+  /*
+   * Every rounded corner in the app derives from this one value, including the
+   * six call sites that hand-tune against it (button.tsx's min() clamps,
+   * input-group.tsx's calc() insets), so they follow it without being touched.
+   *
+   * Raised from 0.625rem to soften the app toward the landing page's language
+   * without adopting its 2rem enclosures, which would cost the density the
+   * dashboard needs. Note the ceiling: --radius-md is 0.8 of this, so at
+   * 0.75rem it computes to 9.6px and button.tsx's `min(var(--radius-md),10px)`
+   * has 0.4px of headroom left. Push this past 0.78rem and that clamp starts
+   * biting, freezing the xs buttons while every other corner keeps growing.
+   */
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.42 0.08 152);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.58 0.09 152);
+}
+
+.dark {
+  /* Same hue as the light-mode brand green, lightened so it stays legible on dark. */
+  --brand: #85ca98;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.75 0.11 152);
+  --primary-foreground: oklch(0.18 0.03 152);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.65 0.1 152);
+  /* Dark steps of the same eight hues, selected for this surface, not an
+     automatic flip of the light values. Validated against the dark card
+     (oklch(0.205 0 0)); all eight clear 3:1 here. Same fixed order. */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
+  --chart-neutral: oklch(0.65 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.75 0.11 152);
+  --sidebar-primary-foreground: oklch(0.18 0.03 152);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.65 0.1 152);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /*
+   * In-page anchors glide rather than jump, on pages that opt in by marking
+   * themselves with data-smooth-scroll. Gated on the motion preference too,
+   * because an unrequested 800px animated scroll is what that setting exists
+   * to stop.
+   *
+   * Scoped rather than set on html unconditionally, and that is not caution:
+   * applying it globally broke the builder's drag-to-reorder. Dragging a
+   * question scrolls the page implicitly, smooth scrolling then moves the list
+   * under the pointer while the drag is still resolving, and a drag calibrated
+   * to cross one card's midpoint crossed two. Grepping for scrollTo and
+   * scrollIntoView finds nothing and proves nothing here, because the scrolling
+   * that matters is the browser's own during a drag.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    html:has([data-smooth-scroll]) {
+      scroll-behavior: smooth;
+    }
+  }
+  /*
+   * Anything that acts like a control gets a pointer. Text-entry fields are
+   * deliberately excluded: a pointer over a text input signals "clickable"
+   * when the real affordance is "type here", so those keep the caret.
+   */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  select:not(:disabled),
+  summary,
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  input[type="range"]:not(:disabled),
+  input[type="color"]:not(:disabled) {
+    cursor: pointer;
+  }
+  /* An option row is one target: the label toggles the control inside it. */
+  label:has(> input[type="checkbox"]:not(:disabled)),
+  label:has(> input[type="radio"]:not(:disabled)) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  textarea:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .form-theme-surface {
+    background: var(--form-page-background);
+    color: var(--foreground);
+  }
+  /*
+   * Cards are their own color scope. In light mode a card is white whatever
+   * the page behind it is, so its text and muted text must be the card
+   * variants even when the page foreground has flipped to light for a dark
+   * page background. Redeclaring the tokens here, rather than in each
+   * component, is what lets every existing text-foreground and
+   * text-muted-foreground inside a card keep working unchanged. The attribute
+   * selector catches translucent variants such as bg-card/70, which are still
+   * card-coloured surfaces once they sit on the page.
+   */
+  .form-theme-surface :is(.bg-card, [class*="bg-card/"]) {
+    --foreground: var(--card-foreground);
+    --muted-foreground: var(--card-muted-foreground);
+    color: var(--card-foreground);
+  }
+  /*
+   * Form surfaces own their color tokens. These targeted rules prevent the
+   * dashboard's ancestor `.dark` class from applying shadcn's `dark:` utility
+   * variants to a form whose creator has not enabled dark mode.
+   */
+  /*
+   * The shared Input is sized for the dashboard: h-8 with px-2.5. On a form the
+   * respondent is typing a real answer at up to 18px, and 10px of padding puts
+   * the caret against the border. Height comes from padding here so the field
+   * grows with whatever type scale the creator picked, and clears the 44px
+   * touch target on a phone.
+   */
+  .form-theme-surface .form-theme-input {
+    height: auto;
+    padding-inline: 0.875rem;
+    padding-block: 0.625rem;
+  }
+  .form-theme-surface[data-form-mode="light"] .form-theme-input {
+    background-color: transparent !important;
+    color: var(--foreground) !important;
+  }
+  .form-theme-surface[data-form-mode="light"] .form-theme-checkbox {
+    background-color: var(--background) !important;
+    border-color: var(--input) !important;
+    color: var(--foreground) !important;
+  }
+  .form-theme-surface[data-form-mode="light"]
+    .form-theme-checkbox[data-checked] {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary-foreground) !important;
+  }
+  /*
+   * Inside an option row the rule above is wrong: a checked row is already
+   * filled with the accent, and --primary sits close enough to it that the box
+   * disappeared and left a floating tick. Invert against the row instead. This
+   * must live here rather than as a utility on the element, because the rule
+   * above is !important and outranks any class Tailwind emits; matching it
+   * needs the extra .form-theme-option to win on specificity.
+   */
+  .form-theme-surface[data-form-mode="light"]
+    .form-theme-option
+    .form-theme-checkbox[data-checked] {
+    background-color: var(--form-accent-foreground) !important;
+    border-color: var(--form-accent-foreground) !important;
+    color: var(--form-accent) !important;
+  }
+  /*
+   * The view toggles sit directly on the page, not in a card, so the card
+   * border token (a near-white gray) all but vanishes against a pale page.
+   * The border is the page's own text colour at low alpha instead, which
+   * follows whatever the page colour is in either mode, and the fill is a
+   * translucent card so the button lifts off the page the way the landing
+   * page's glass pill does. Both toggles look the same whichever is selected;
+   * the selection is stated by aria-pressed and shown by the form itself.
+   */
+  .form-theme-surface .form-theme-outline-button {
+    background-color: color-mix(in oklch, var(--card) 55%, transparent) !important;
+    border-color: color-mix(in oklch, var(--foreground) 18%, transparent) !important;
+    color: var(--foreground) !important;
+  }
+  .form-theme-surface .form-theme-outline-button:hover {
+    background-color: color-mix(in oklch, var(--card) 85%, transparent) !important;
+    border-color: color-mix(in oklch, var(--foreground) 30%, transparent) !important;
+  }
+  .form-theme-header {
+    font-family: var(--form-header-font);
+    font-size: var(--form-header-size) !important;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .form-theme-question {
+    font-family: var(--form-question-font);
+    font-size: var(--form-question-size) !important;
+    font-optical-sizing: auto;
+    line-height: 1.4;
+  }
+  .form-theme-text {
+    font-family: var(--form-text-font);
+    font-size: var(--form-text-size) !important;
+    font-optical-sizing: auto;
+    line-height: 1.5;
+  }
+  /*
+   * A chosen font variant applies only under the attribute the surface sets
+   * for that role, so a role with no choice keeps the weight each element
+   * already has (headers medium, most text regular). !important because the
+   * elements carry Tailwind weight utilities, which sit in a later layer.
+   */
+  [data-header-variant] .form-theme-header {
+    font-weight: var(--form-header-weight) !important;
+    font-style: var(--form-header-style) !important;
+  }
+  [data-question-variant] .form-theme-question {
+    font-weight: var(--form-question-weight) !important;
+    font-style: var(--form-question-style) !important;
+  }
+  [data-text-variant] .form-theme-text {
+    font-weight: var(--form-text-weight) !important;
+    font-style: var(--form-text-style) !important;
+  }
+  /*
+   * iOS Safari zooms the viewport when a focused field's text is under 16px,
+   * and it does not zoom back out afterwards, so a creator who picks the 14px
+   * type scale hands every iPhone respondent a form that jumps and then stays
+   * magnified. The floor applies only to coarse pointers, so the creator's
+   * chosen size is untouched on desktop where nothing zooms.
+   *
+   * Two classes deep on purpose: .form-theme-text sets font-size with
+   * !important, so matching it needs both !important and more specificity than
+   * a single class.
+   */
+  @media (pointer: coarse) {
+    .form-theme-surface input:not([type="checkbox"]):not([type="radio"]),
+    .form-theme-surface textarea,
+    .form-theme-surface select {
+      font-size: max(16px, var(--form-text-size)) !important;
+    }
+  }
+  .form-theme-accent-bg {
+    background: var(--form-accent);
+    color: var(--form-accent-foreground);
+  }
+  .form-theme-accent-text {
+    color: var(--form-accent);
+  }
+  .form-theme-accent-border {
+    border-color: var(--form-accent);
+  }
+}
+
+@layer utilities {
+  @keyframes list-item-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes question-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes question-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes confirm-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes focus-question-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  /*
+   * Scroll reveal. Driven by IntersectionObserver flipping [data-revealed]
+   * (see components/scroll-reveal.tsx) rather than animation-timeline: view(),
+   * which is Chrome-only and left Safari and Firefox with no animation at all.
+   *
+   * Gated on scripting: enabled so the hidden start state only exists when the
+   * observer can actually undo it. Gated on no-preference so reduced motion
+   * never hides anything in the first place.
+   */
+  @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+    .reveal-on-scroll,
+    .reveal-stagger {
+      opacity: 0;
+      transform: translateY(2rem);
+      transition:
+        opacity 800ms var(--ease-out),
+        transform 800ms var(--ease-out);
+    }
+    .reveal-on-scroll[data-revealed],
+    .reveal-stagger[data-revealed] {
+      opacity: 1;
+      transform: none;
+      transition-delay: var(--reveal-delay, 0ms);
+    }
+    /*
+     * Blur is a filter, not a composited transform, so it is spent only on the
+     * section headings rather than on every staggered card. A dozen cards
+     * resolving a blur at once is a real cost on a mobile GPU; six headings
+     * across the page is not.
+     */
+    .reveal-on-scroll {
+      filter: blur(8px);
+      transition:
+        opacity 800ms var(--ease-out),
+        transform 800ms var(--ease-out),
+        filter 800ms var(--ease-out);
+    }
+    .reveal-on-scroll[data-revealed] {
+      filter: blur(0);
+    }
+    /* Siblings follow each other instead of arriving as one block. */
+    .reveal-stagger:nth-child(2) {
+      --reveal-delay: 70ms;
+    }
+    .reveal-stagger:nth-child(3) {
+      --reveal-delay: 140ms;
+    }
+    .reveal-stagger:nth-child(4) {
+      --reveal-delay: 210ms;
+    }
+    .reveal-stagger:nth-child(n + 5) {
+      --reveal-delay: 280ms;
+    }
+  }
+  /*
+   * Native <details> cannot be transitioned: the browser flips its content
+   * between display:none and visible, so there is no rendered box to animate.
+   * ::details-content provides that box, and interpolate-size makes `auto` a
+   * real animation target. Height is the sanctioned accordion exception to
+   * transform-only motion; no transform reveals content without clipping it.
+   *
+   * Gated on interpolate-size, not on ::details-content. Safari supports the
+   * pseudo-element but cannot interpolate to `auto`, so ungated it kept the
+   * 260ms content-visibility delay with no height motion behind it: the panel
+   * sat still, then snapped, which on a phone read as the page lagging. Where
+   * the height cannot animate, the panel opens and closes at once and the
+   * answer's own fade below carries the motion.
+   */
+  @supports (interpolate-size: allow-keywords) {
+    .faq-item {
+      interpolate-size: allow-keywords;
+    }
+    .faq-item::details-content {
+      block-size: 0;
+      overflow: hidden;
+      transition:
+        block-size 260ms var(--ease-out),
+        content-visibility 260ms allow-discrete;
+    }
+    .faq-item[open]::details-content {
+      block-size: auto;
+    }
+  }
+  /*
+   * Set by components/faq-accordion.tsx while it animates an item closed in a
+   * browser without interpolate-size: `open` is still true until the height
+   * finishes, so the + would otherwise turn back only after the panel shut.
+   */
+  .faq-item[data-closing] summary > [aria-hidden] {
+    rotate: 0deg;
+  }
+  /* Height alone reads mechanical; the answer settles in behind it. */
+  .faq-answer {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity 200ms var(--ease-out),
+      transform 200ms var(--ease-out);
+  }
+  .faq-item[open] .faq-answer {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /*
+   * The answer is inside ::details-content, which is content-visibility:hidden
+   * while closed. A transition cannot start from an unrendered state, so
+   * without a starting style the browser skips straight to opacity 1 and the
+   * fade silently does nothing.
+   */
+  @starting-style {
+    .faq-item[open] .faq-answer {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  .animate-list-item-in {
+    animation: list-item-in 180ms ease-out both;
+  }
+  .animate-question-in {
+    animation: question-in 180ms ease-out both;
+  }
+  .animate-question-out {
+    animation: question-out 130ms ease-out both;
+  }
+  .animate-confirm-in {
+    animation: confirm-in 200ms ease-out both;
+  }
+  .animate-focus-question-in {
+    animation: focus-question-in 260ms var(--ease-out) both;
+  }
+}
+
+/*
+ * The lift for a card being dragged. Shadow and cursor only: the lift *scale*
+ * and the drag offset are one `transform`, so they are set together inline on
+ * the outer wrapper by `use-question-reorder-drag`. Putting a transform here
+ * would be pointless anyway: this class sits on the bordered card, whose
+ * `animate-question-in` keyframe has `both` fill-mode and so keeps a
+ * `transform: scale(1)` in force that outranks any inline style. The shadow
+ * belongs on this element rather than the wrapper so it does not also draw
+ * around the section-break block above the question.
+ *
+ * `position`/`z-index` keep the lifted card above its neighbours while it
+ * passes them. There is no reduced-motion override because nothing here moves.
+ *
+ * Deliberately unlayered, unlike the `@layer utilities` rules above: unlayered
+ * CSS outranks every `@layer`, which is what lets this rule's `box-shadow` and
+ * `z-index` win against Tailwind utilities on the same element. Moving this
+ * into `@layer utilities` "to tidy up" would silently lose the lift.
+ */
+.question-card-dragging {
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 12px 24px -8px rgb(0 0 0 / 0.18);
+  cursor: grabbing;
+}
+
+/*
+ * Base UI keeps the popup mounted while data-ending-style is present, so a
+ * transition remains interruptible on both entry and exit. The individual
+ * scale property composes with the popup's centering translate rather than
+ * replacing it. Dialogs are occasional; the motion only bridges an otherwise
+ * abrupt modal state change.
+ */
+.sharing-dialog-surface {
+  transform-origin: center;
+  opacity: 1;
+  scale: 1;
+  animation: none !important;
+  transition:
+    opacity 200ms var(--ease-out),
+    scale 200ms var(--ease-out);
+}
+
+.sharing-dialog-surface[data-starting-style],
+.sharing-dialog-surface[data-ending-style] {
+  opacity: 0;
+  scale: 0.96;
+}
+
+/*
+ * These target the overlay directly and key off its own transition state.
+ * They must NOT be written as `:has(+ .sharing-dialog-surface)`: the popup
+ * unmounts as soon as its own transition ends, and a `:has()` keyed on it
+ * stops matching in that same frame. That dropped every rule below at once,
+ * snapping the overlay back to its base utilities - full opacity, blur
+ * restored, plus a fresh 180ms fade-out - which painted the entire page
+ * blurred with no dialog on screen for the rest of the close.
+ */
+.sharing-dialog-overlay {
+  opacity: 1;
+  animation: none !important;
+  transition: opacity 200ms var(--ease-out);
+}
+
+/*
+ * `[data-closed]` is load-bearing and must stay alongside the style hooks.
+ * At the very end of the close, the overlay's computed opacity was measured
+ * snapping from ~0 straight back to 1 with blur(4px) still applied, for the
+ * ~30ms before it unmounted - a full-viewport blur with no dialog on screen.
+ * `[data-ending-style]` alone did not survive that (the element is
+ * re-rendered as the popup's transition finishes, so a fresh node picks up
+ * the base `opacity: 1` above). `[data-closed]` is present for the entire
+ * close, including across that re-render, so it keeps the overlay - and its
+ * backdrop-filter - invisible right through to unmount.
+ */
+.sharing-dialog-overlay[data-starting-style],
+.sharing-dialog-overlay[data-ending-style],
+.sharing-dialog-overlay[data-closed] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sharing-dialog-surface {
+    scale: 1;
+    transition: opacity 150ms var(--ease-out);
+  }
+  .sharing-dialog-surface[data-starting-style],
+  .sharing-dialog-surface[data-ending-style] {
+    scale: 1;
+  }
+  .sharing-dialog-overlay {
+    transition: opacity 150ms var(--ease-out);
+  }
+  .animate-list-item-in,
+  .animate-question-in,
+  .animate-question-out,
+  .animate-confirm-in,
+  .animate-focus-question-in {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+    transform: none;
+  }
+  .animate-caret-blink {
+    animation: none;
+  }
+  /*
+   * A spinner is the one case where the motion *is* the message, so slow it
+   * rather than stopping it. A frozen spinner reads as a hung page.
+   */
+  .animate-spin {
+    animation-duration: 2.4s;
+  }
+  .faq-item::details-content {
+    transition: none;
+  }
+  .faq-answer {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  ::view-transition-group(root),
+  ::view-transition-new(root),
+  ::view-transition-old(root) {
+    animation: none;
+  }
+}
+
+/*
+ * The theme-toggle reveal: the outgoing page stays a static screenshot while
+ * the incoming one wipes in through a circle anchored at the button that was
+ * clicked (--theme-toggle-x/-y, set in theme-toggle.tsx). Only the deliberate
+ * click path opts into this. The "d" keyboard shortcut in theme-provider.tsx
+ * calls setTheme directly and stays instant, since it can be pressed often.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: none;
+  }
+  ::view-transition-new(root) {
+    animation: theme-reveal 450ms var(--ease-in-out);
+  }
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(
+      0% at var(--theme-toggle-x, 50%) var(--theme-toggle-y, 50%)
+    );
+  }
+  to {
+    clip-path: circle(
+      150% at var(--theme-toggle-x, 50%) var(--theme-toggle-y, 50%)
+    );
+  }
+}

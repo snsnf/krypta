@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE forms SET\n            title_ciphertext = COALESCE($1, title_ciphertext),\n            schema_ciphertext = COALESCE($2, schema_ciphertext),\n            allow_response_editing = COALESCE($3, allow_response_editing),\n            accepting_responses = COALESCE($4, accepting_responses),\n            closes_at = CASE WHEN $5 THEN $6 ELSE closes_at END,\n            max_responses = CASE WHEN $7 THEN $8 ELSE max_responses END,\n            -- Same present/absent handling as the two above: a null here means\n            -- remove the header, not leave it alone. The subquery is the\n            -- authorisation: a caller can only point this at an attachment\n            -- that already belongs to this form AND was uploaded by an editor\n            -- with a session. The second clause is what keeps the public\n            -- header route from being aimed at a respondent's sealed upload,\n            -- which is always anonymous and so never carries uploaded_by.\n            header_attachment_id = CASE\n                WHEN $11 THEN (\n                    SELECT a.id FROM attachments a\n                    WHERE a.id = $12 AND a.form_id = forms.id\n                      AND a.uploaded_by IS NOT NULL\n                )\n                ELSE header_attachment_id\n            END,\n            -- The answer key describes the questions, so it is written in this\n            -- statement and under this version, never on its own.\n            answer_key_ciphertext = CASE WHEN $13 THEN $14 ELSE answer_key_ciphertext END,\n            version = version + 1\n         WHERE id = $9 AND version = $10 AND deletion_started_at IS NULL\n         RETURNING version",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "version",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Timestamptz",
+        "Bool",
+        "Int4",
+        "Uuid",
+        "Int8",
+        "Bool",
+        "Uuid",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0d098043d6c03a513e58bbcfd727674c47a369dd47b231b4c896d9a5404a2c59"
+}

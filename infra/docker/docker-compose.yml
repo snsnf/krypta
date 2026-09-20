@@ -1,0 +1,154 @@
+# infra/docker/docker-compose.yml
+#
+# Local one-command smoke stack. Mailpit is deliberately the only SMTP target
+# here: plaintext mail stays inside this Docker network and nothing is
+# delivered externally. Do not use these mail settings for a deployment;
+# configure a real provider with SMTP_TLS=starttls or implicit instead.
+# To bootstrap an administrator, set KRYPTA_INITIAL_ADMIN_EMAIL in the Compose
+# environment before the matching account verifies its email. That account must
+# enroll TOTP in Account settings, sign out, then complete a TOTP login before
+# it can open /admin. A public instance without this setting has no admin.
+# The dashboard is local metadata only; Krypta has no central service or
+# product analytics.
+# A fixed project name, distinct from the dev stack's. Both files declare the
+# same volume keys, so under the default project name (the directory,
+# "docker") they shared one database: bringing this stack up reused whatever
+# the dev stack had left behind, which is the opposite of what a smoke test
+# is for.
+name: krypta-smoke
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: krypta
+      POSTGRES_PASSWORD: krypta_dev_password
+      POSTGRES_DB: krypta
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - krypta_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krypta"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    ports:
+      - "127.0.0.1:3900:3900"
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - krypta_garage_data:/var/lib/garage
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://krypta:krypta_dev_password@postgres:5432/krypta
+      REDIS_URL: redis://redis:6379
+      PORT: "8080"
+      S3_ENDPOINT: http://garage:3900
+      S3_ACCESS_KEY: "${S3_ACCESS_KEY}"
+      S3_SECRET_KEY: "${S3_SECRET_KEY}"
+      S3_BUCKET: krypta
+      S3_OPERATION_TIMEOUT_SECONDS: "30"
+      ATTACHMENT_UPLOAD_STALE_SECONDS: "120"
+      ATTACHMENT_CLEANUP_INTERVAL_SECONDS: "60"
+      # First-start-only bootstrap for the exact account that will verify its
+      # email, enroll TOTP, then sign in through TOTP before opening /admin.
+      # Once claimed, changing or removing this value does not grant another
+      # admin. Leaving it unset means this public instance has no admin.
+      KRYPTA_INITIAL_ADMIN_EMAIL: "${KRYPTA_INITIAL_ADMIN_EMAIL:-}"
+      # Local smoke mail only. Production deployments must point these at
+      # their chosen SMTP provider and enable transport encryption.
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_TLS: none
+      MAIL_FROM: "krypta <no-reply@localhost>"
+      WEB_BASE_URL: http://localhost:3000
+      # WebAuthn relying party, required by the API and correct only for this
+      # local smoke stack, which serves the web app on localhost:3000. A real
+      # deployment overrides both with its own domain, and the RP ID must be
+      # the registrable domain rather than the serving host: it is baked into
+      # every credential and cannot be changed later without dead-weighting
+      # every passkey already enrolled.
+      WEBAUTHN_RP_ID: "${WEBAUTHN_RP_ID:-localhost}"
+      WEBAUTHN_ORIGIN: "${WEBAUTHN_ORIGIN:-http://localhost:3000}"
+      INVITE_RATE_LIMIT_PER_HOUR: "20"
+      INVITE_RATE_LIMIT_PER_DAY: "100"
+      INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR: "3"
+      INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR: "30"
+      RECOVER_START_RATE_LIMIT_PER_HOUR: "5"
+      RECOVER_VERIFY_RATE_LIMIT_PER_MINUTE: "5"
+      RECOVER_MAX_ATTEMPTS: "5"
+    ports:
+      - "127.0.0.1:8080:8080"
+    # The image already runs as UID 10001; these drop what the kernel would
+    # otherwise still grant it. The API writes nothing, so the root filesystem
+    # can be read-only outright.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        # This stack has no proxy, so the web app and the API are two origins:
+        # 3000 and 8080. The image's relative default assumes one origin, which
+        # is right behind Traefik in production and wrong here, and a browser
+        # would resolve /api/v1 against port 3000 where nothing answers. The
+        # value is compiled into the browser bundle, so it has to be a build
+        # argument rather than an environment variable.
+        NEXT_PUBLIC_API_BASE: http://localhost:8080/api/v1
+    environment:
+      # Absolute base for Open Graph URLs, read on the server at request time.
+      SITE_URL: http://localhost:3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      - api
+
+volumes:
+  krypta_postgres_data:
+  krypta_garage_data:

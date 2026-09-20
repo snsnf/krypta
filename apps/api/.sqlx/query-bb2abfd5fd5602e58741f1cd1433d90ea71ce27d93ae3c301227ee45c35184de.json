@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT stripe_session_id FROM pending_checkouts WHERE user_id = $1 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "stripe_session_id",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "bb2abfd5fd5602e58741f1cd1433d90ea71ce27d93ae3c301227ee45c35184de"
+}

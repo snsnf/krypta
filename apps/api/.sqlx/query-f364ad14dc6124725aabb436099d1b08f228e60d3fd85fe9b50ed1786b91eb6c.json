@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO account_key_wrappers (id, user_id, method, wrapped_account_key, credential_id)\n         VALUES ($1, $2, 'passkey', $3, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f364ad14dc6124725aabb436099d1b08f228e60d3fd85fe9b50ed1786b91eb6c"
+}

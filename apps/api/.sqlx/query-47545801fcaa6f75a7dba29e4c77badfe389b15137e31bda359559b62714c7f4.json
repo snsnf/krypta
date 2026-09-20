@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH RECURSIVE blocked(pid) AS (\n               SELECT activity.pid\n               FROM pg_stat_activity activity\n               WHERE $1 = ANY(pg_blocking_pids(activity.pid))\n               UNION\n               SELECT activity.pid\n               FROM pg_stat_activity activity\n               JOIN blocked blocker\n                 ON blocker.pid = ANY(pg_blocking_pids(activity.pid))\n             )\n             SELECT count(*) FROM blocked",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "47545801fcaa6f75a7dba29e4c77badfe389b15137e31bda359559b62714c7f4"
+}

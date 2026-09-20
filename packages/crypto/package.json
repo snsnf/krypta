@@ -1,0 +1,21 @@
+{
+  "name": "@krypta/crypto",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@noble/post-quantum": "0.7.1",
+    "libsodium-wrappers-sumo": "0.7.15"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11",
+    "@types/libsodium-wrappers-sumo": "^0.7.8",
+    "typescript": "^5"
+  }
+}

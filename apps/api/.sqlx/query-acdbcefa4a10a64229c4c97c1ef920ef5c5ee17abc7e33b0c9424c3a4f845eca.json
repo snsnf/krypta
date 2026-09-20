@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status, token_hash, accepted_at FROM form_invitations WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "token_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "accepted_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "acdbcefa4a10a64229c4c97c1ef920ef5c5ee17abc7e33b0c9424c3a4f845eca"
+}

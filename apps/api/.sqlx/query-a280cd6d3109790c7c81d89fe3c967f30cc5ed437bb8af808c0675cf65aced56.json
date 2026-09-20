@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id FROM plans WHERE stripe_price_id_monthly = $1 OR stripe_price_id_yearly = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a280cd6d3109790c7c81d89fe3c967f30cc5ed437bb8af808c0675cf65aced56"
+}
