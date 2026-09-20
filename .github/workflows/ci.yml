@@ -82,15 +82,33 @@ jobs:
       # test exactly the same configuration.
       - run: ./scripts/ci.sh prepare
 
+      # Built in its own step rather than through `cargo run` in the next one,
+      # so the compile does not spend the readiness budget: on a cold cache
+      # the build alone outran the old four minutes and the job reported an
+      # unhealthy API while rustc was still working.
+      - name: Build the API
+        working-directory: apps/api
+        run: cargo build --bin api
+
       - name: Start the API
         working-directory: apps/api
         run: |
-          cargo run &
-          for _ in $(seq 1 120); do
+          ./target/debug/api >/tmp/krypta-api.log 2>&1 &
+          api_pid=$!
+          for _ in $(seq 1 60); do
             curl -sf http://localhost:8080/health && exit 0
+            # A binary that exits (an unreachable database, a bad .env) would
+            # otherwise be reported two minutes later as a timeout, with the
+            # reason only in a log nobody printed.
+            if ! kill -0 "$api_pid" 2>/dev/null; then
+              echo "API exited before becoming healthy" >&2
+              cat /tmp/krypta-api.log >&2
+              exit 1
+            fi
             sleep 2
           done
           echo "API did not become healthy" >&2
+          cat /tmp/krypta-api.log >&2
           exit 1
 
       - name: Start the web app
