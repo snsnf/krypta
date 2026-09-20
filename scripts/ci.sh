@@ -369,6 +369,8 @@ integration_checks() {
   clear_rate_limits
   run "rust: forms integration" bash -c "cd '$API' && cargo test --test forms_test -- --test-threads=1"
   clear_rate_limits
+  run "rust: grades integration" bash -c "cd '$API' && cargo test --test grades_test -- --test-threads=1"
+  clear_rate_limits
   run "rust: attachments integration" bash -c "cd '$API' && cargo test --test attachments_test -- --test-threads=1"
   clear_rate_limits
   run "rust: recovery integration" bash -c "cd '$API' && cargo test --test recovery_test -- --test-threads=1"
