@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE attachments\n           SET upload_state = 'cleanup_pending', lifecycle_updated_at = now()\n           WHERE form_id = $1\n             AND upload_state = 'ready'\n             AND claimed_at IS NULL\n             AND upload_completed_at <= now() - $2 * interval '1 second'\n             AND id IS DISTINCT FROM (\n                 SELECT header_attachment_id FROM forms WHERE id = $1\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a43c60f9fc74202accbfd7b64cd7968d573b327a058d7166a3096f8c4ec6209d"
+}

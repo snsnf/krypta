@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS(\n               SELECT 1 FROM form_members target\n               JOIN users recipient ON recipient.id = target.user_id\n               WHERE target.id = $1 AND target.form_id = $2\n                 AND target.state = 'active'\n                 AND target.key_scheme = 'account_sealed_box_v1'\n                 AND target.encrypted_form_data_key = $3\n                 AND target.encrypted_form_private_key = $4\n                 AND recipient.sharing_public_key = $5\n                 AND recipient.sharing_key_version = 1\n                 AND EXISTS (\n                   SELECT 1 FROM form_members owner\n                   WHERE owner.form_id = target.form_id AND owner.user_id = $6\n                     AND owner.role = 'owner' AND owner.state = 'active'\n                 )\n             )",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "5030bec7d88e43f7de86908c8fb958fdb322bf9e073955c4d087e265054e5b26"
+}

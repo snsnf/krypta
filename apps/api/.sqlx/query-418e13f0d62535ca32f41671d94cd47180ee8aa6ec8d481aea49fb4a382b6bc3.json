@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members SET notify_retry_after = NULL WHERE form_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "418e13f0d62535ca32f41671d94cd47180ee8aa6ec8d481aea49fb4a382b6bc3"
+}

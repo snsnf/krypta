@@ -1,0 +1,241 @@
+# infra/docker/docker-compose.dokploy.yml
+#
+# For running krypta on a Dokploy server, as a Docker Compose service.
+#
+# This file exists because Dokploy already runs Traefik on ports 80 and 443
+# with its own Let's Encrypt setup. docker-compose.prod.yml brings its own
+# Traefik, so the two cannot share a host: use that file on a plain server and
+# this one under Dokploy. Everything else is the same stack, and the
+# application code is identical either way.
+#
+# What changes here, and nothing else:
+#   1. No traefik service. Dokploy's proxy terminates TLS and routes.
+#   2. api and web join Dokploy's proxy network as well as the private one,
+#      so its Traefik can reach them. Postgres and Redis stay on the private
+#      network only, unreachable from other apps on the same server.
+#   3. The proxy is trusted by container name (TRUSTED_PROXY_HOSTS,
+#      dokploy-traefik) rather than by the proxy network's subnet. Every app
+#      on the server shares that network, so trusting its whole subnet would
+#      let any of them forward a made-up client address and walk past the
+#      rate limits.
+#
+# Setting it up in Dokploy:
+#   - Create a Compose service, point it at this repository, and set the
+#     compose path to infra/docker/docker-compose.dokploy.yml.
+#   - Put every variable below into the service's Environment tab: DOMAIN,
+#     POSTGRES_PASSWORD (openssl rand -hex 32; hex, not base64, because it
+#     goes inside a URL), the five S3_* values, the SMTP settings, MAIL_FROM,
+#     and DOKPLOY_NETWORK. README.md in this directory explains what each one
+#     means.
+#   - Read the proxy network's name on the server and set DOKPLOY_NETWORK:
+#       docker network ls | grep -i dokploy
+#     The proxy container is normally dokploy-traefik, which is the default for
+#     TRUSTED_PROXY_HOSTS; check with `docker ps --format '{{.Names}}'` and set
+#     it only if yours differs. Leave TRUSTED_PROXY_CIDRS unset: a subnet here
+#     would trust every app on the server, not just the proxy.
+#   - Add the domain twice in Dokploy's Domains tab for this service, both
+#     with HTTPS and Let's Encrypt on:
+#       service api, path /api,  container port 8080
+#       service web, path /,     container port 3000
+#     One hostname with the API under /api is not a preference: the session
+#     cookie is SameSite=Lax and __Host- prefixed, so the browser only keeps
+#     it over HTTPS and only sends it same-site. Splitting the API onto its
+#     own subdomain breaks login.
+#
+# Two things to check after the first deploy:
+#   - Rate limits see real client addresses. Fail a login five times from one
+#     network and confirm a second device is unaffected. If everyone is locked
+#     out at once, TRUSTED_PROXY_CIDRS does not match the proxy network, or
+#     Dokploy's Traefik is forwarding a client-supplied X-Forwarded-For.
+#   - Passkeys are scoped permanently to WEBAUTHN_RP_ID. On a throwaway test
+#     hostname, anything enrolled there is worthless later, which is fine for
+#     a test and not something to carry into production.
+#
+# Building the Rust image takes several minutes and a lot of memory. Once a
+# release tag has published images, set KRYPTA_API_IMAGE and KRYPTA_WEB_IMAGE
+# to those instead and Dokploy will pull rather than build.
+#
+# No `name:` here. Dokploy names the Compose project itself, and the volumes
+# below are prefixed with that name, so they never collide with another app on
+# the same server.
+#
+# The flip side: run this file by hand and Compose names the project after the
+# directory holding it, which is "docker", so the volumes become
+# docker_krypta_postgres_data and friends. Do not do that on a machine that has
+# ever run another stack from this directory; pass `-p` a name of your own, or
+# use docker-compose.prod.yml, which pins its project name for this reason.
+
+x-hardened: &hardened
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+networks:
+  # Dokploy creates and owns this one; the proxy is on it. External so this
+  # file joins it rather than trying to define it.
+  proxy:
+    external: true
+    name: ${DOKPLOY_NETWORK:-dokploy-network}
+  # Everything internal to krypta talks over this one, and Postgres and Redis
+  # are on it alone. Docker picks the subnet; nothing here needs to name it.
+  internal:
+
+volumes:
+  krypta_postgres_data:
+  krypta_redis_data:
+
+services:
+  postgres:
+    <<: *hardened
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_USER: krypta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: krypta
+    # Postgres drops to its own user after chowning its data directory.
+    cap_add: [CHOWN, SETUID, SETGID, FOWNER, DAC_OVERRIDE]
+    volumes:
+      - krypta_postgres_data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krypta"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    <<: *hardened
+    image: redis:7.4.11-alpine
+    # Sessions, rate limits and pending signups live here. Append-only
+    # persistence means a restart logs nobody out.
+    command: ["redis-server", "--appendonly", "yes", "--save", ""]
+    user: "999:999"
+    volumes:
+      - krypta_redis_data:/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    <<: *hardened
+    image: ${KRYPTA_API_IMAGE:-krypta-api:local}
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    read_only: true
+    environment:
+      DATABASE_URL: postgres://krypta:${POSTGRES_PASSWORD}@postgres:5432/krypta
+      REDIS_URL: redis://redis:6379
+      PORT: "8080"
+      S3_ENDPOINT: ${S3_ENDPOINT:?set S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:?set S3_REGION}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      WEB_BASE_URL: https://${DOMAIN:?set DOMAIN}
+      # Defaults to the hostname. Set it to the registrable apex instead
+      # (getkrypta.com while serving forms.getkrypta.com) when more apps will
+      # share accounts: a passkey is scoped to the RP ID and valid from any
+      # host beneath it, and it can never be widened after enrolment.
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-${DOMAIN}}
+      WEBAUTHN_ORIGIN: https://${DOMAIN}
+      # The proxy is trusted by container name, resolved through Docker's DNS
+      # on the proxy network, not by that network's subnet: every app on the
+      # server shares the network, and a subnet would trust all of them. A
+      # name that suddenly resolves to a second container is not trusted
+      # further; the API keeps the address it had and logs the conflict.
+      TRUSTED_PROXY_HOSTS: ${TRUSTED_PROXY_HOSTS:-dokploy-traefik}
+      # Unset on purpose. Kept only so an installation that set it before
+      # keeps booting; remove it from the Environment tab.
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_TLS: ${SMTP_TLS:-starttls}
+      MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
+      KRYPTA_INITIAL_ADMIN_EMAIL: ${KRYPTA_INITIAL_ADMIN_EMAIL:-}
+      # Read only to tell the admin health view whether backups have an
+      # off-site copy. Nothing in this file backs anything up: backup.sh runs
+      # on the host, and under Dokploy you would schedule it there or use
+      # Dokploy's own database backups.
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      # Tuning. Every one of these has a production default in the API's
+      # config.rs and a blank value means "use it", so the whole block can be
+      # left unset. README.md lists what each one does.
+      REGISTER_RATE_LIMIT_PER_HOUR: ${REGISTER_RATE_LIMIT_PER_HOUR:-}
+      REGISTER_EMAIL_RATE_LIMIT_PER_HOUR: ${REGISTER_EMAIL_RATE_LIMIT_PER_HOUR:-}
+      LOGIN_RATE_LIMIT_PER_MINUTE: ${LOGIN_RATE_LIMIT_PER_MINUTE:-}
+      VERIFY_RATE_LIMIT_PER_MINUTE: ${VERIFY_RATE_LIMIT_PER_MINUTE:-}
+      VERIFY_CODE_TTL_SECONDS: ${VERIFY_CODE_TTL_SECONDS:-}
+      VERIFY_MAX_ATTEMPTS: ${VERIFY_MAX_ATTEMPTS:-}
+      RESEND_COOLDOWN_SECONDS: ${RESEND_COOLDOWN_SECONDS:-}
+      PASSKEY_RATE_LIMIT_PER_MINUTE: ${PASSKEY_RATE_LIMIT_PER_MINUTE:-}
+      RECOVER_START_RATE_LIMIT_PER_HOUR: ${RECOVER_START_RATE_LIMIT_PER_HOUR:-}
+      RECOVER_VERIFY_RATE_LIMIT_PER_MINUTE: ${RECOVER_VERIFY_RATE_LIMIT_PER_MINUTE:-}
+      RECOVER_MAX_ATTEMPTS: ${RECOVER_MAX_ATTEMPTS:-}
+      INVITE_RATE_LIMIT_PER_HOUR: ${INVITE_RATE_LIMIT_PER_HOUR:-}
+      INVITE_RATE_LIMIT_PER_DAY: ${INVITE_RATE_LIMIT_PER_DAY:-}
+      INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR: ${INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR:-}
+      INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR: ${INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR:-}
+      RESPONSE_NOTIFY_COOLDOWN_SECONDS: ${RESPONSE_NOTIFY_COOLDOWN_SECONDS:-}
+      RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS: ${RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS:-}
+      S3_OPERATION_TIMEOUT_SECONDS: ${S3_OPERATION_TIMEOUT_SECONDS:-}
+      ATTACHMENT_UPLOAD_STALE_SECONDS: ${ATTACHMENT_UPLOAD_STALE_SECONDS:-}
+      ATTACHMENT_CLEANUP_INTERVAL_SECONDS: ${ATTACHMENT_CLEANUP_INTERVAL_SECONDS:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PORTAL_RETURN_URL: ${STRIPE_PORTAL_RETURN_URL:-}
+      STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
+      STRIPE_PRICE_YEARLY: ${STRIPE_PRICE_YEARLY:-}
+      # Everything else keeps the production defaults from config.rs.
+    networks: [internal, proxy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    # The binary probes itself; the image has no curl. See src/healthcheck.rs.
+    # Dokploy's Traefik routes to a container only while it is healthy, so the
+    # site answers 404 for the first half minute after a deploy.
+    healthcheck:
+      test: ["CMD", "./api", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    <<: *hardened
+    # No build arguments. The API sits under /api on this same hostname, so the
+    # browser's API base is the relative default baked into the image, and the
+    # image is therefore not tied to any domain.
+    image: ${KRYPTA_WEB_IMAGE:-krypta-web:local}
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      # Absolute base for Open Graph and Twitter card URLs, which crawlers
+      # reject when relative. Read on the server at request time, so it
+      # configures a running container rather than a built image.
+      SITE_URL: https://${DOMAIN}
+      # Who operates this instance, for /privacy and /terms. Both pages are
+      # served only when the entity and the contact address are set, and
+      # nothing links to them otherwise: a policy is a promise made by a
+      # particular operator, so shipping one that names somebody else would be
+      # worse than serving no page at all.
+      LEGAL_ENTITY: ${LEGAL_ENTITY:-}
+      LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:-}
+    networks: [internal, proxy]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

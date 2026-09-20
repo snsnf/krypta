@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE account_usage\n         SET forms_used = forms_used + 1,\n             attachment_bytes_used = attachment_bytes_used + $2,\n             updated_at = now()\n         WHERE user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c193bacd90c87b04c11ed2a1630bf6cbdcc414bd3f10aa2e157338d1bcdd1a0d"
+}

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS(\n            SELECT 1\n            FROM users\n            JOIN form_invitations ON form_invitations.id = $2\n            WHERE users.id = $1 AND users.email = form_invitations.invited_email\n         )",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "1c496525cce03be18f78aabd2c8d5bf6868a7af0bd427c2325cd6e7fdb74ebbc"
+}

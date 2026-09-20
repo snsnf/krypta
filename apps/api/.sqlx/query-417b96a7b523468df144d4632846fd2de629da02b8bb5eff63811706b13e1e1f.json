@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members\n         SET notify_failure_count = notify_failure_count + 1,\n             notify_retry_after = now() + make_interval(\n                 mins => least(power(2, notify_failure_count)::int, $2)\n             )\n         WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "417b96a7b523468df144d4632846fd2de629da02b8bb5eff63811706b13e1e1f"
+}

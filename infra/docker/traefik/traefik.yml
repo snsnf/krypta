@@ -1,0 +1,57 @@
+# Traefik static configuration for docker-compose.prod.yml.
+#
+# Only what a deployment needs: two entrypoints, HTTP permanently redirected to
+# HTTPS, Let's Encrypt over the TLS-ALPN challenge, and Docker labels as the
+# only source of routes. The dashboard and API stay off (they are opt-in in
+# Traefik v3 and nothing here opts in), and no container is exposed unless its
+# labels say so.
+#
+# X-Forwarded-For: with no `forwardedHeaders.trustedIPs` on the entrypoint,
+# Traefik discards whatever the client sent and writes the real peer address.
+# The API relies on exactly that, and TRUSTED_PROXY_CIDRS tells it which peer
+# is Traefik. Do not add trustedIPs here unless another proxy sits in front,
+# and if one does, list it in TRUSTED_PROXY_CIDRS too.
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+
+providers:
+  docker:
+    exposedByDefault: false
+    # The compose file mounts the socket read-only. Traefik only needs to
+    # watch containers; a read-write socket would let a compromised proxy
+    # start containers as root on the host.
+    endpoint: "unix:///var/run/docker.sock"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      # Overridden per deployment by --certificatesresolvers.letsencrypt.acme.email
+      # in the compose command, which is where ACME_EMAIL is read.
+      storage: /letsencrypt/acme.json
+      tlsChallenge: {}
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+
+log:
+  level: INFO
+accessLog: {}
+
+# Liveness only, for the compose healthcheck. It answers on Traefik's
+# internal entrypoint (8080 inside the container), which no port publishes.
+ping: {}

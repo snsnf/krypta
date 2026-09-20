@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM attachments\n         WHERE id = $1 AND form_id = $2 AND upload_state = 'cleanup_pending'\n         RETURNING byte_size",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "byte_size",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "729dc56b441edd5f8247349e4890e30bbe4ded357e88f49757a4e1593ea573a2"
+}

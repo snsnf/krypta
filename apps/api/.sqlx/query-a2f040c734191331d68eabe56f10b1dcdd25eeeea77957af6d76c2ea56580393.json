@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT response_count FROM response_usage\n         WHERE user_id = $1 AND period_start = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "response_count",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a2f040c734191331d68eabe56f10b1dcdd25eeeea77957af6d76c2ea56580393"
+}

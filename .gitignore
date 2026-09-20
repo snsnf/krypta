@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# misc
+.DS_Store
+.worktrees/
+
+# local Garage bootstrap config (contains real secrets)
+infra/docker/garage.toml
+
+# production environment (contains real secrets)
+infra/docker/.env.prod
+infra/docker/backups/
+
+# Agent tooling, not part of the product. Kept out of the repository for two
+# reasons: nobody cloning krypta needs it to build or run anything, and some
+# of it redistributes third-party material under its own terms (the security
+# review skill carries OWASP Cheat Sheet content under CC BY-SA 4.0), which
+# has no business entangling this project's licensing.
+.agents/
+.claude/
+skills-lock.json
+.superpowers/
+docs/superpowers/

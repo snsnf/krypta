@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE attachments\n         SET upload_state = 'cleanup_pending', lifecycle_updated_at = now()\n         WHERE id = $1 AND form_id = $2 AND upload_state <> 'cleanup_pending'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6d917a36d7084824b6c5e3dea7b696bde71d36201141fc6892a4dc476f0d08f8"
+}

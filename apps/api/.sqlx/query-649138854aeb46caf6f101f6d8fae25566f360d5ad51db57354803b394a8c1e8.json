@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT owner.user_id\n         FROM form_members owner\n         JOIN users owner_user\n           ON owner_user.id = owner.user_id\n          AND owner_user.suspended_at IS NULL\n         WHERE owner.form_id = $1\n           AND owner.role = 'owner'\n           AND owner.state = 'active'\n         FOR UPDATE OF owner_user",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "649138854aeb46caf6f101f6d8fae25566f360d5ad51db57354803b394a8c1e8"
+}

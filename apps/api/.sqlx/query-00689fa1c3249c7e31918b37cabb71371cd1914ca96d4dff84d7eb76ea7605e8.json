@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_grades\n             SET ciphertext = $2, version = version + 1, updated_at = now()\n             WHERE form_id = $1 AND version = $3\n             RETURNING version",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "version",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "00689fa1c3249c7e31918b37cabb71371cd1914ca96d4dff84d7eb76ea7605e8"
+}

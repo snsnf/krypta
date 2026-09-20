@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COALESCE(\n             account_quotas.max_responses,\n             plans.max_responses_per_period,\n             instance_settings.default_max_responses_per_period\n           ) AS \"max_responses?\"\n           FROM instance_settings\n           LEFT JOIN account_quotas ON account_quotas.user_id = $1\n           LEFT JOIN subscriptions ON subscriptions.user_id = $1\n           LEFT JOIN plans\n             ON $2 AND plans.id = entitled_plan_id(subscriptions.status, subscriptions.plan_id)\n           WHERE instance_settings.id = TRUE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "max_responses?",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "0c70af5c62a94761fd58529ca7983f61098079986507c5fe25f8260dadf210d1"
+}

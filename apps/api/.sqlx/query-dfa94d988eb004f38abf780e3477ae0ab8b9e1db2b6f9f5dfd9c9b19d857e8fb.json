@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT target.form_id, target.id AS member_id,\n                  recipient.sharing_public_key AS \"recipient_sharing_public_key!\",\n                  owner.key_scheme AS \"owner_key_scheme!\",\n                  owner.encrypted_form_data_key AS \"owner_encrypted_form_data_key!\",\n                  owner.encrypted_form_private_key AS \"owner_encrypted_form_private_key!\"\n           FROM form_members owner\n           JOIN forms ON forms.id = owner.form_id AND forms.deletion_started_at IS NULL\n           JOIN form_members target ON target.form_id = owner.form_id\n           JOIN users recipient ON recipient.id = target.user_id\n           WHERE owner.user_id = $1 AND owner.role = 'owner' AND owner.state = 'active'\n             AND owner.key_scheme IS NOT NULL\n             AND owner.encrypted_form_data_key IS NOT NULL\n             AND owner.encrypted_form_private_key IS NOT NULL\n             AND target.state = 'awaiting_keys'\n             AND target.role IN ('editor', 'viewer')\n             AND recipient.sharing_public_key IS NOT NULL\n             AND recipient.sharing_key_version = 1\n           ORDER BY target.created_at, target.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "form_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "member_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "recipient_sharing_public_key!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "owner_key_scheme!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "owner_encrypted_form_data_key!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "owner_encrypted_form_private_key!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "dfa94d988eb004f38abf780e3477ae0ab8b9e1db2b6f9f5dfd9c9b19d857e8fb"
+}

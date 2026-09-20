@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO account_quotas (user_id, max_forms, max_responses) VALUES ($1, 3, 7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0d647ec4c16aa1c2c144b2a12a6b0d026c074747b94dd2bda74a5c3f82c9bfd5"
+}

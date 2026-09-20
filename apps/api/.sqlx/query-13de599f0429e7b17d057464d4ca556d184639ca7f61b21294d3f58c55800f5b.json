@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users SET password_hash = $2, session_generation = session_generation + 1 WHERE id = $1 AND suspended_at IS NULL AND deletion_started_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "13de599f0429e7b17d057464d4ca556d184639ca7f61b21294d3f58c55800f5b"
+}

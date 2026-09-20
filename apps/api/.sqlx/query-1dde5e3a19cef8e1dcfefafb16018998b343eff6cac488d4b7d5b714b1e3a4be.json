@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM form_invitations\n         WHERE status IN ('expired', 'revoked', 'delivery_failed')\n           AND updated_at <= now() - interval '30 days'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "1dde5e3a19cef8e1dcfefafb16018998b343eff6cac488d4b7d5b714b1e3a4be"
+}

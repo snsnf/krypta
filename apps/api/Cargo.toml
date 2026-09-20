@@ -1,0 +1,137 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+
+[dependencies]
+axum = { version = "0.7", features = ["json"] }
+axum-extra = { version = "0.9", features = ["cookie"] }
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "time", "macros", "migrate"] }
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+time = { version = "0.3", features = ["serde", "serde-well-known"] }
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+argon2 = "0.5"
+password-hash = { version = "0.5", features = ["std"] }
+rand = "0.8"
+sha2 = "0.10"
+# TOTP (RFC 6238). `otpauth` gives the enrolment URI authenticator apps scan.
+totp-rs = { version = "6", features = ["otpauth", "qr"] }
+# WebAuthn relying party. Pinned to an exact stable version: 0.6.1-dev is a
+# prerelease, and a crypto-adjacent dependency must not float, the same rule
+# that pins @noble/post-quantum in packages/crypto.
+#
+# `conditional-ui` is what gates discoverable authentication
+# (start_discoverable_authentication, finish_discoverable_authentication, and
+# From<&Passkey> for DiscoverableKey). The name is misleading: we build no
+# autofill UI. `resident-key-support` is the wrong guess, it gates *attested*
+# resident-key registration which we do not use.
+#
+# `danger-allow-state-serialisation` makes PasskeyRegistration and
+# DiscoverableAuthentication serializable so ceremony state can live in Redis
+# rather than process memory. The danger it names is that the state must be
+# single-use and confidential; `passkey::take` deletes on read, and Redis
+# already holds every session.
+webauthn-rs = { version = "=0.5.5", features = [
+    "conditional-ui",
+    "danger-allow-state-serialisation",
+] }
+url = "2"
+# CIDR parsing for TRUSTED_PROXY_CIDRS. Already in the tree through hyper-util.
+ipnet = "2"
+base64 = "0.22"
+thiserror = "1"
+anyhow = "1"
+dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rust-s3 = { version = "0.37", default-features = false, features = ["tokio-rustls-tls", "fail-on-err"] }
+
+# SMTP client. The provider is deployment configuration, not a code
+# dependency: an operator points SMTP_HOST at Postmark, SES, or their own MTA.
+lettre = { version = "0.11", default-features = false, features = ["tokio1-rustls-tls", "smtp-transport", "builder", "pool"] }
+
+# Stripe. Pinned to an exact release-candidate version, deliberately, not the
+# newest stable 0.41.0: the 0.4x line is abandoned (the maintainer moved on to
+# the 1.0 release candidates) and pins hyper 0.14 / hyper-rustls 0.24, which
+# drags in rustls 0.21, past its end of life. `cargo audit` on 0.41.0 fails
+# with four advisories, three of them certificate-validation flaws in
+# rustls-webpki, sitting directly in the stack that talks to Stripe. The RC
+# pulls hyper 1.5 / hyper-rustls 0.27 and audits clean. A payments dependency
+# must not float, so the RC is pinned exactly rather than left on a caret.
+async-stripe = { version = "=1.0.0-rc.8", default-features = false, features = [
+    "rustls-ring",
+    "rustls-tls-native",
+] }
+# Webhook signature verification moved into its own crate in the 1.0 line.
+async-stripe-webhook = "=1.0.0-rc.8"
+# The 1.0 line split request builders out of the main crate, one crate per
+# Stripe product area. Checkout Sessions and the Billing Portal each need
+# their own crate; both are pinned exactly for the same reason as the rest of
+# this block.
+async-stripe-checkout = { version = "=1.0.0-rc.8", default-features = false, features = [
+    "checkout_session",
+    "deserialize",
+] }
+async-stripe-billing = { version = "=1.0.0-rc.8", default-features = false, features = [
+    "billing_portal_session",
+    "deserialize",
+] }
+# Named directly so the webhook handlers can name the types Stripe hands back
+# (CheckoutSession, Subscription, Invoice) without going through a resource
+# crate. async-stripe-webhook already depends on this at the same version, so
+# this adds no new code to the build, only a direct name for it.
+async-stripe-shared = "=1.0.0-rc.8"
+# Rustls now links in two crypto backends: `ring`, requested by
+# `async-stripe`'s `rustls-ring` feature above, and `aws-lc-rs`, pulled in
+# separately by `rust-s3`'s TLS stack (`attohttpc` via `aws-creds`). Rustls
+# 0.23 refuses to guess between them and panics the first time anything
+# builds a `rustls::ClientConfig` with no default provider installed, which
+# is exactly what `stripe::Client::new` does at startup. `main` installs the
+# `ring` provider explicitly (matching `rustls-ring`) before that happens.
+# This dependency exists only to call that one function; it adds no new code
+# to the build, since `ring` is already unified in from `async-stripe`.
+rustls = { version = "=0.23.45", default-features = false, features = [
+    "ring",
+] }
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json", "cookies"] }
+# Reproduces libsodium's crypto_generichash in the integration suites, which
+# have to derive the same auth verifier the browser sends.
+blake2 = "0.10"
+totp-rs = { version = "6", features = ["otpauth"] }
+# Signs webhook payloads in the Stripe verification tests, reproducing what
+# Stripe itself does when computing the Stripe-Signature header.
+hmac = "0.12"
+hex = "0.4"
+
+# Argon2 is deliberately expensive: 256 MiB and three passes, on both sides of
+# every login. Unoptimised that cost is paid perhaps ten times over, in the API
+# under `cargo run` and again in the suites, which derive a verifier per fresh
+# address the way the browser would. Optimising just this crate leaves the rest
+# of the build debuggable and gives the tests back most of their runtime.
+# `dev` covers `test`, which inherits it.
+[profile.dev.package.argon2]
+opt-level = 3
+
+# The lint policy lives here rather than only in scripts/ci.sh, so `cargo
+# clippy` by hand and an editor's inline clippy enforce what CI enforces.
+# `-D warnings` in the gate turns every "warn" below into a build failure, so
+# nothing is enabled here that the tree does not already satisfy.
+[lints.clippy]
+# Priority -1 so a specific lint below can override the group.
+all = { level = "deny", priority = -1 }
+# Named because the handbook calls them out and because a silent regression in
+# any of them is a performance or correctness cost rather than a style one.
+redundant_clone = "deny"
+clone_on_copy = "deny"
+needless_collect = "deny"
+large_enum_variant = "deny"
+# Not on by default. Enabled so the three deliberate Option<Option<T>> sites
+# carry an #[expect] with their reason instead of being invisible.
+option_option = "warn"

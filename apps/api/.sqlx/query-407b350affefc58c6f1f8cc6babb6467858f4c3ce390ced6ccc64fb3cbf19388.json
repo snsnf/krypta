@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO form_members (\n                 id, form_id, user_id, role, state, key_scheme,\n                 encrypted_form_data_key, encrypted_form_private_key,\n                 notify_on_response, notify_failure_count, notify_retry_after\n             ) VALUES (\n                 $1, $2, $3, 'owner', 'active', 'master_wrap_v1', 'k', 'k',\n                 $4, $5,\n                 CASE WHEN $6::bigint IS NULL THEN NULL\n                      ELSE now() + ($6::bigint * interval '1 second') END\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Bool",
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "407b350affefc58c6f1f8cc6babb6467858f4c3ce390ced6ccc64fb3cbf19388"
+}

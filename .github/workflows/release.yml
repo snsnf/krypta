@@ -1,0 +1,197 @@
+# Publishes the two images a self-hoster runs.
+#
+# Tags only: pushing v0.1.0 builds and publishes, and an ordinary commit to
+# main publishes nothing, so main can move without shipping to anyone.
+#
+# Each architecture builds on its own native runner rather than under QEMU.
+# Emulating a Rust compile turns roughly five minutes into the better part of
+# an hour, and both runner types are free for a public repository. The four
+# builds push by digest and a final job stitches each image's two digests into
+# one manifest, which is what lets `docker pull` pick the right architecture
+# without the user naming it.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  # For a publish that failed after the tag was already pushed. The tag is
+  # required and must exist: every image tag is derived from it, so a run
+  # against a plain branch would publish nothing under a version number and
+  # still move `latest` to a commit nobody released. Naming the tag is what
+  # keeps the promise at the top of this file, that main can move without
+  # shipping to anyone.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish, for example v0.1.0"
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.ref }}
+  # Never cancel a half-finished publish: an interrupted manifest merge would
+  # leave tags pointing at one architecture.
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: ${{ matrix.image }} on ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, web]
+        platform: [linux/amd64, linux/arm64]
+        # These match on `platform`, so they add a runner to each existing
+        # combination rather than creating new ones. Four jobs in total.
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      # The tag on a tag push, the tag named in the input on a manual run, so
+      # both paths build exactly what was released rather than whatever the
+      # default branch happens to hold.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      # Lowercased because a GitHub owner may contain capitals and a registry
+      # path may not. A mixed-case name fails at push, after the build.
+      - name: Resolve the image name
+        id: name
+        env:
+          OWNER: ${{ github.repository_owner }}
+          KIND: ${{ matrix.image }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          owner=$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')
+          printf 'image=%s/%s/krypta-%s\n' "$REGISTRY" "$owner" "$KIND" >> "$GITHUB_OUTPUT"
+          printf 'arch=%s\n' "${PLATFORM//\//-}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The API builds from apps/api. The web image needs the repository root
+      # as its context, because it installs the workspace and packages/crypto
+      # with it. Neither takes a build argument: the web image's API base
+      # defaults to the relative /api/v1, which is what keeps one image usable
+      # on any domain.
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ${{ matrix.image == 'api' && 'apps/api' || '.' }}
+          file: apps/${{ matrix.image }}/Dockerfile
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.platform }}
+          outputs: type=image,name=${{ steps.name.outputs.image }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Hand the digest to the publish job
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: digest-${{ matrix.image }}-${{ steps.name.outputs.arch }}
+          path: /tmp/digests/*
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Publish ${{ matrix.image }}
+    runs-on: ubuntu-24.04
+    needs: [build]
+    permissions:
+      contents: read
+      packages: write
+      # Provenance is signed with a short-lived OIDC token rather than a stored
+      # key. It records which workflow, at which commit, produced this image,
+      # so someone can check that what they pull was built from the source they
+      # read. For a product whose claim is that the browser does the
+      # encryption, that link is the difference between auditing the code and
+      # taking our word for the binary.
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, web]
+    steps:
+      - name: Resolve the image name
+        id: name
+        env:
+          OWNER: ${{ github.repository_owner }}
+          KIND: ${{ matrix.image }}
+        run: |
+          owner=$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')
+          printf 'image=%s/%s/krypta-%s\n' "$REGISTRY" "$owner" "$KIND" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: digest-${{ matrix.image }}-*
+          merge-multiple: true
+          path: /tmp/digests
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # v1.2.3 publishes 1.2.3, 1.2 and latest. The two-part tag is what lets
+      # someone take patches without accepting a minor bump.
+      - name: Work out the tags
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ steps.name.outputs.image }}
+          # The explicit `value=` is what makes a manual run publish the right
+          # numbers. Left to itself this action reads the version out of the
+          # git ref, which is a tag on a tag push and a branch on a manual one,
+          # and a branch resolves to no semver tags at all.
+          tags: |
+            type=semver,pattern={{version}},value=${{ inputs.tag || github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag || github.ref_name }}
+            type=raw,value=latest
+
+      - name: Stitch the per-architecture builds into one manifest
+        id: manifest
+        working-directory: /tmp/digests
+        env:
+          IMAGE: ${{ steps.name.outputs.image }}
+          METADATA: ${{ steps.meta.outputs.json }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          # shellcheck disable=SC2046
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$METADATA") \
+            $(printf "${IMAGE}@sha256:%s " *)
+          digest=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" \
+            --format '{{json .Manifest}}' | jq -r .digest)
+          printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Record what produced this image
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-name: ${{ steps.name.outputs.image }}
+          subject-digest: ${{ steps.manifest.outputs.digest }}
+          push-to-registry: true

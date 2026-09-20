@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO attachments (\n                 id, form_id, byte_size, upload_state, upload_completed_at, lifecycle_updated_at\n             )\n             VALUES ($1, $2, 1, 'uploading', NULL, now() - interval '1 hour')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fd4e88a56fd0aead239fa9add34172549d34953068439e6172e2945fb8b4cd10"
+}

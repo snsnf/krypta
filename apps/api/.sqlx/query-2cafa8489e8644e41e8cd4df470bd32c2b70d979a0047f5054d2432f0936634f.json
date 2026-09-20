@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT user_id, role, encrypted_form_data_key, encrypted_form_private_key\n         FROM form_members\n         WHERE form_id = $1 AND user_id IN ($2, $3)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "encrypted_form_data_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "encrypted_form_private_key",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "2cafa8489e8644e41e8cd4df470bd32c2b70d979a0047f5054d2432f0936634f"
+}

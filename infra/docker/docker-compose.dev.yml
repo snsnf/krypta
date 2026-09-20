@@ -1,0 +1,75 @@
+# Native API processes using this dependency stack should use
+# WEB_BASE_URL=http://localhost:3000 for fragment-based invitation links.
+# Optional first-start admin bootstrap for native API runs. Configure this
+# before exposing the instance or verifying the intended administrator:
+# KRYPTA_INITIAL_ADMIN_EMAIL=admin@example.com
+# The exact account must verify its email, enroll TOTP in Account settings, then
+# sign out and complete a TOTP login before /admin is available. Once claimed,
+# changing or removing the variable does not create another administrator. A
+# public instance without this configuration has no administrator. Admin pages
+# contain local account and audit metadata only; they send no central analytics.
+# A fixed project name. Without one, Compose names the project after the
+# directory holding this file, which is "docker": the containers show up as
+# docker-postgres-1 and the volumes as docker_krypta_postgres_data, shared
+# with the smoke stack because it declares the same volume keys. Naming the
+# three stacks apart is what keeps their data apart, and the production file
+# says the same thing at greater length about why it must never be "krypta".
+name: krypta-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: krypta
+      POSTGRES_PASSWORD: krypta_dev_password
+      POSTGRES_DB: krypta
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - krypta_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krypta"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Catches all outbound mail in development: nothing leaves the machine, and
+  # the integration and e2e suites read verification codes back through its
+  # HTTP API on 8025.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    ports:
+      - "127.0.0.1:3900:3900"
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - krypta_garage_data:/var/lib/garage
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  krypta_postgres_data:
+  krypta_garage_data:

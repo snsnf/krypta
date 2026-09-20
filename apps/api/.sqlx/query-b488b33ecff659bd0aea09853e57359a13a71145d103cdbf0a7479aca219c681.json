@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sharing_public_key, sharing_key_version FROM users WHERE email = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sharing_public_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "sharing_key_version",
+        "type_info": "Int2"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "b488b33ecff659bd0aea09853e57359a13a71145d103cdbf0a7479aca219c681"
+}

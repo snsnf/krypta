@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE forms\n         SET attachment_count = attachment_count + 1,\n             attachment_bytes = attachment_bytes + $1\n         WHERE id = $2\n           AND accepting_responses\n           AND deletion_started_at IS NULL\n           AND attachment_count < $3\n           AND attachment_bytes <= $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Uuid",
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cea02cbfe23faae48bcaf32be92ed24ab2397cc14c8beefe516533aebf87aa17"
+}

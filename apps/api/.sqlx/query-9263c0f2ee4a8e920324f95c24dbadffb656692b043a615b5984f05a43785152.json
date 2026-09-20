@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO attachments (id, form_id, byte_size) VALUES ($1, $2, 1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9263c0f2ee4a8e920324f95c24dbadffb656692b043a615b5984f05a43785152"
+}

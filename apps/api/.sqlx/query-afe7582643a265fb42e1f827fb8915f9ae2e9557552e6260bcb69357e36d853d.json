@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE instance_settings\n         SET registration_enabled = COALESCE($1, registration_enabled),\n             register_rate_limit_per_hour = COALESCE($2, register_rate_limit_per_hour),\n             login_rate_limit_per_minute = COALESCE($3, login_rate_limit_per_minute),\n             default_max_forms = COALESCE($4, default_max_forms),\n             default_max_attachment_bytes = COALESCE($5, default_max_attachment_bytes),\n             default_max_responses_per_period = CASE\n                 WHEN $6 THEN $7\n                 ELSE default_max_responses_per_period\n             END,\n             updated_at = now()\n         WHERE id = TRUE\n         RETURNING\n             registration_enabled,\n             register_rate_limit_per_hour,\n             login_rate_limit_per_minute,\n             default_max_forms,\n             default_max_attachment_bytes,\n             default_max_responses_per_period",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "registration_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "register_rate_limit_per_hour",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "login_rate_limit_per_minute",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "default_max_forms",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "default_max_attachment_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "default_max_responses_per_period",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int8",
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "afe7582643a265fb42e1f827fb8915f9ae2e9557552e6260bcb69357e36d853d"
+}

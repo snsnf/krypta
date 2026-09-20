@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_members\n         SET notify_on_response = CASE WHEN $1::boolean IS NOT NULL THEN $1 ELSE notify_on_response END,\n             last_notified_at = CASE WHEN $1::boolean IS TRUE THEN now() ELSE last_notified_at END,\n             notify_failure_count = CASE WHEN $1::boolean IS TRUE THEN 0 ELSE notify_failure_count END,\n             notify_retry_after = CASE WHEN $1::boolean IS TRUE THEN NULL ELSE notify_retry_after END,\n             archived_at = CASE\n                 WHEN $2::boolean IS TRUE THEN now()\n                 WHEN $2::boolean IS FALSE THEN NULL\n                 ELSE archived_at\n             END,\n             updated_at = now()\n         WHERE form_id = $3 AND user_id = $4 AND state = 'active'\n         RETURNING notify_on_response, archived_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "notify_on_response",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "archived_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Bool",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "8f68ad97fe27dfbfa234f9a30942cf470cddf760978ffabd0572c259de0ab7db"
+}

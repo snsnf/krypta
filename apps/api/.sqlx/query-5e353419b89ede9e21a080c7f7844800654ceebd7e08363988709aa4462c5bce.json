@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE subscriptions\n         SET plan_id = 'free',\n             status = $1,\n             cancel_at_period_end = FALSE,\n             updated_at = now()\n         WHERE stripe_customer_id = $2\n           AND (stripe_subscription_id IS NULL OR stripe_subscription_id = $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5e353419b89ede9e21a080c7f7844800654ceebd7e08363988709aa4462c5bce"
+}

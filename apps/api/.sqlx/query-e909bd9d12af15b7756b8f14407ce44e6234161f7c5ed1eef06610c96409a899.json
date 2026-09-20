@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO responses (id, form_id, ciphertext)\n                     VALUES ($1, $2, 'answers')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e909bd9d12af15b7756b8f14407ce44e6234161f7c5ed1eef06610c96409a899"
+}

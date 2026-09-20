@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT accepting_responses, closes_at, max_responses, deletion_started_at\n         FROM forms WHERE id = $1 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "accepting_responses",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "closes_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "max_responses",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "deletion_started_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "0c541c752384d357464d8a7671c2cb40099fa70a2d54c1f3dbd2067ec1e3a130"
+}

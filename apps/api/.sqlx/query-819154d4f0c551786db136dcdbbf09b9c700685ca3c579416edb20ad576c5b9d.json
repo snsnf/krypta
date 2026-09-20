@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n             SET status = $1, token_hash = NULL,\n                 accepted_at = CASE WHEN $1 = 'accepted' THEN now() ELSE NULL END\n             WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "819154d4f0c551786db136dcdbbf09b9c700685ca3c579416edb20ad576c5b9d"
+}

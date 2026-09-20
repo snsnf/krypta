@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO attachments (id, form_id, byte_size, upload_state)\n             VALUES ($1, $2, 1, 'cleanup_pending')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d1ee4ecf7c5be3495033a93c8af488b5242105c674aa688e4ac9278c92596a4a"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n         SET status = 'revoked', token_hash = NULL, updated_at = now()\n         WHERE id = $1 AND form_id = $2\n           AND status IN ('sending', 'pending', 'delivery_failed', 'expired')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "471c5a8633ef9df825eb88504cd182bfaa408af539e953911bd1f273facc920f"
+}

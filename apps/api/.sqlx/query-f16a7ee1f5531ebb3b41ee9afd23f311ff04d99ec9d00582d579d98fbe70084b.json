@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n         SET status = 'delivery_failed', token_hash = NULL, updated_at = now()\n         WHERE status = 'sending' AND updated_at <= now() - interval '5 minutes'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "f16a7ee1f5531ebb3b41ee9afd23f311ff04d99ec9d00582d579d98fbe70084b"
+}

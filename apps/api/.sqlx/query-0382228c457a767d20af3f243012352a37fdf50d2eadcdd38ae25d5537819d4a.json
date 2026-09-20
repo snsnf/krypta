@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COALESCE(\n             account_quotas.max_attachment_bytes,\n             plans.max_attachment_bytes,\n             instance_settings.default_max_attachment_bytes\n           ) AS \"max_attachment_bytes!\"\n           FROM instance_settings\n           LEFT JOIN account_quotas ON account_quotas.user_id = $1\n           LEFT JOIN subscriptions ON subscriptions.user_id = $1\n           LEFT JOIN plans\n             ON $2 AND plans.id = entitled_plan_id(subscriptions.status, subscriptions.plan_id)\n           WHERE instance_settings.id = TRUE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "max_attachment_bytes!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "0382228c457a767d20af3f243012352a37fdf50d2eadcdd38ae25d5537819d4a"
+}

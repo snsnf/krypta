@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO forms (\n            id, title_ciphertext, schema_ciphertext, form_public_key,\n            answer_key_ciphertext, allow_response_editing, accepting_responses,\n            closes_at, max_responses\n         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Bool",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e8d8ecb85e85036f16a434341b7df0e8623e6a16f19c61df5951162b520144b8"
+}

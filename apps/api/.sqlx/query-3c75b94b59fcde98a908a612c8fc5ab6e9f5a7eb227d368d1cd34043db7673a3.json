@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (\n                   SELECT 1 FROM responses WHERE form_id = $1 AND id > $2\n               ) AS \"more!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "more!",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3c75b94b59fcde98a908a612c8fc5ab6e9f5a7eb227d368d1cd34043db7673a3"
+}

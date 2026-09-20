@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO forms (\n                id, title_ciphertext, schema_ciphertext, form_public_key\n             ) VALUES (\n                $1, 'cleanup-title', 'cleanup-schema', 'cleanup-public-key'\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a8eae7e43d388ff076dee8c467968f66b010244c4b20a8a3f224b9510beda07a"
+}

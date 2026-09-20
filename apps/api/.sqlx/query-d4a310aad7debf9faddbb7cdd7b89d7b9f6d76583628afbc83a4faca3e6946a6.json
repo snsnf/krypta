@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT forms_used, attachment_bytes_used\n         FROM account_usage\n         WHERE user_id = $1\n         FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "forms_used",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "attachment_bytes_used",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d4a310aad7debf9faddbb7cdd7b89d7b9f6d76583628afbc83a4faca3e6946a6"
+}

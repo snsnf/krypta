@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT role, encrypted_form_data_key, encrypted_form_private_key\n             FROM form_members WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "encrypted_form_data_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "encrypted_form_private_key",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "892dab24bcb23b0e89765d52e07aabb519c3cc4fd2cc886aa94796a991855395"
+}

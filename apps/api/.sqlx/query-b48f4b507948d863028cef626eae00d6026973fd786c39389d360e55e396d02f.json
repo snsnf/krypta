@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n         SET status = 'expired', token_hash = NULL, expires_at = now() - interval '1 second'\n         WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b48f4b507948d863028cef626eae00d6026973fd786c39389d360e55e396d02f"
+}

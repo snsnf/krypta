@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE forms\n             SET attachment_count = GREATEST(attachment_count - 1, 0),\n                 attachment_bytes = GREATEST(attachment_bytes - $1, 0)\n             WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "86aa450c94c24467905995a7da65f3956977d80141c6ce05d26d7dee248bd2ab"
+}

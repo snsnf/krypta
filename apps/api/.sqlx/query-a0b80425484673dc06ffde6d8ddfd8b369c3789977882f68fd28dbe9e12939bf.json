@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT accepting_responses, deletion_started_at\n             FROM forms WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "accepting_responses",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "deletion_started_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "a0b80425484673dc06ffde6d8ddfd8b369c3789977882f68fd28dbe9e12939bf"
+}

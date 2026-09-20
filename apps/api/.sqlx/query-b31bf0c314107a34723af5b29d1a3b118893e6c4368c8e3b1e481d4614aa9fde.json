@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, role, state, key_scheme,\n                    encrypted_form_data_key, encrypted_form_private_key\n             FROM form_members\n             WHERE form_id = $1 AND user_id = $2\n             FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "state",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "key_scheme",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "encrypted_form_data_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "encrypted_form_private_key",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "b31bf0c314107a34723af5b29d1a3b118893e6c4368c8e3b1e481d4614aa9fde"
+}
