@@ -9,7 +9,8 @@
 #   scripts/ci.sh images        build both Docker images and boot each one
 #   scripts/ci.sh               static and integration
 #
-# `static` needs Postgres and Redis for the unit tests and nothing else.
+# `static` needs `prepare` to have run: its unit tests open real Postgres,
+# Redis and S3 connections, and the S3 credentials live in apps/api/.env.
 # `integration` needs `prepare` to have run, plus the API and web dev servers;
 # `images` needs Docker and the dev stack's Postgres and
 # Redis; it is not part of the default run because a Rust image build takes
@@ -181,9 +182,11 @@ prepare_stack() {
 static_checks() {
   # SQLx checks every query at compile time against the committed `.sqlx`
   # metadata when this is set, and against a live database when it is not.
-  # The static gate promises to need no services, so it must be set here and
-  # not only in the GitHub workflow; without it a stopped dev stack fails
-  # clippy with hundreds of "error communicating with database" lines.
+  # It must be set here and not only in the GitHub workflow: the compile is
+  # meant to consult the committed metadata and never a live database, and
+  # without it a stopped dev stack fails clippy with hundreds of "error
+  # communicating with database" lines instead of the one named failure
+  # require_port gives.
   export SQLX_OFFLINE=true
   run "rust: fmt"        bash -c "cd '$API' && cargo fmt -- --check"
   # Warnings are failures here. The alternative is a build that is permanently
@@ -193,10 +196,13 @@ static_checks() {
   # (LIMIT 200 over form_members), so parallel test threads stamp each other's
   # fixtures' last_notified_at and race each other's due-member windows.
   # The session, passkey, recovery, verification and quota tests open real
-  # Redis and Postgres connections, so this is the one static step with a
-  # service dependency. Skipped with a named failure when either is down,
-  # rather than hanging on the first connection.
-  if require_port localhost 5433 postgres && require_port localhost 6379 redis; then
+  # Redis and Postgres connections, and attachments::cleanup's tests put and
+  # delete real objects in the bucket, so this is the one static step with a
+  # service dependency. Skipped with a named failure when one is down, rather
+  # than hanging on the first connection or reporting a refused S3 request as
+  # a cleanup bug.
+  if require_port localhost 5433 postgres && require_port localhost 6379 redis &&
+    require_port localhost 3900 garage; then
     export_database_url
     run "rust: unit tests" bash -c "cd '$API' && cargo test --bin api -- --test-threads=1"
   fi
