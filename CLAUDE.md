@@ -415,7 +415,7 @@ First time only, `bun run ci:prepare` (or `./scripts/ci.sh prepare`) writes
 and local runs cannot drift. Add a check to the script, not the workflow.
 
 ```bash
-bun run ci:static       # fmt, clippy, types, lint, unit tests, audits, build; Postgres and Redis for the unit tests
+bun run ci:static       # fmt, clippy, types, lint, unit tests, audits, build; needs `bun run ci:prepare` to have run, because the unit tests open Postgres, Redis and the bucket
 bun run ci:integration  # API integration + Playwright; needs `bun run ci:prepare` to have run, plus the API and web dev servers up
 bun run ci:images       # build both Docker images and boot each; needs Docker, Postgres and Redis
 bun run ci               # static and integration

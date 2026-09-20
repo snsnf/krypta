@@ -35,14 +35,16 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
-      # The unit tests open real Redis and Postgres connections. Only those two
-      # services are started; the queries themselves are checked against the
-      # offline cache in apps/api/.sqlx (the script sets SQLX_OFFLINE), so a
-      # query changed without re-running `cargo sqlx prepare` fails the build
-      # rather than passing locally and breaking later.
-      - name: Start Postgres and Redis
-        run: docker compose -f infra/docker/docker-compose.dev.yml up -d --wait postgres redis
-      - run: cp apps/api/.env.example apps/api/.env
+      # The unit tests open real Redis, Postgres and S3 connections (the
+      # attachment cleanup tests put and delete real objects), so the whole dev
+      # stack is started by the same prepare step the integration job uses: it
+      # writes garage.toml, creates the bucket and key, and writes
+      # apps/api/.env from .env.example with those credentials filled in.
+      # The queries themselves are still checked against the offline cache in
+      # apps/api/.sqlx (the script sets SQLX_OFFLINE), so a query changed
+      # without re-running `cargo sqlx prepare` fails the build rather than
+      # passing locally and breaking later.
+      - run: ./scripts/ci.sh prepare
       - run: ./scripts/ci.sh static
 
   # Nothing else builds a Dockerfile before a release tag does, so without
