@@ -278,10 +278,10 @@ impl Config {
             attachment_upload_stale_seconds: setting_or("ATTACHMENT_UPLOAD_STALE_SECONDS", "120")
                 .parse()
                 .context("ATTACHMENT_UPLOAD_STALE_SECONDS must be a number")?,
-            attachment_cleanup_interval_seconds: std::env::var(
+            attachment_cleanup_interval_seconds: setting_or(
                 "ATTACHMENT_CLEANUP_INTERVAL_SECONDS",
+                "60",
             )
-            .unwrap_or_else(|_| "60".to_string())
             .parse()
             .context("ATTACHMENT_CLEANUP_INTERVAL_SECONDS must be a number")?,
             register_rate_limit: setting_or("REGISTER_RATE_LIMIT_PER_HOUR", "5")
@@ -344,16 +344,16 @@ impl Config {
             invite_rate_limit_per_day: setting_or("INVITE_RATE_LIMIT_PER_DAY", "100")
                 .parse()
                 .context("INVITE_RATE_LIMIT_PER_DAY must be a number")?,
-            invite_recipient_rate_limit_per_hour: std::env::var(
+            invite_recipient_rate_limit_per_hour: setting_or(
                 "INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR",
+                "3",
             )
-            .unwrap_or_else(|_| "3".to_string())
             .parse()
             .context("INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR must be a number")?,
-            invite_continuation_rate_limit_per_hour: std::env::var(
+            invite_continuation_rate_limit_per_hour: setting_or(
                 "INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR",
+                "30",
             )
-            .unwrap_or_else(|_| "30".to_string())
             .parse()
             .context("INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR must be a number")?,
             response_notify_cooldown_seconds: setting_or(
@@ -362,10 +362,10 @@ impl Config {
             )
             .parse()
             .context("RESPONSE_NOTIFY_COOLDOWN_SECONDS must be a number")?,
-            response_notify_sweep_interval_seconds: std::env::var(
+            response_notify_sweep_interval_seconds: setting_or(
                 "RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS",
+                "30",
             )
-            .unwrap_or_else(|_| "30".to_string())
             .parse()
             .context("RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS must be a number")?,
             // Required rather than defaulted, deliberately. A localhost default
@@ -501,6 +501,7 @@ mod tests {
             ("INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR", "30"),
             ("WEBAUTHN_RP_ID", "localhost"),
             ("WEBAUTHN_ORIGIN", "http://localhost:3000"),
+            ("RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS", "30"),
         ];
 
         let mut previous = Vec::with_capacity(vars.len() + 1);
@@ -545,6 +546,57 @@ mod tests {
         assert_eq!(setting_or("KRYPTA_TEST_BLANK_TUNING", "42"), "7");
         unsafe { std::env::remove_var("KRYPTA_TEST_BLANK_TUNING") };
         assert_eq!(setting_or("KRYPTA_TEST_BLANK_TUNING", "42"), "42");
+    }
+
+    /// Every tuning key blank at once, through `Config::from_env` rather than
+    /// through `setting_or` alone.
+    ///
+    /// This is the shape `.env.prod.example` ships: the whole tuning block is
+    /// present and empty, because a blank line there means "use the default".
+    /// Four keys used to read `std::env::var` directly and fall back only when
+    /// the variable was absent, so an empty one reached `parse` and the API
+    /// refused to boot with "cannot parse integer from empty string". They
+    /// were the four whose names are long enough that rustfmt wrapped the call
+    /// across lines, which is how they escaped the conversion to `setting_or`.
+    /// Testing the helper on its own cannot catch that, because the broken
+    /// keys never called it.
+    #[test]
+    fn every_blank_tuning_key_still_boots() {
+        let tuning = [
+            "S3_OPERATION_TIMEOUT_SECONDS",
+            "ATTACHMENT_UPLOAD_STALE_SECONDS",
+            "ATTACHMENT_CLEANUP_INTERVAL_SECONDS",
+            "REGISTER_RATE_LIMIT_PER_HOUR",
+            "REGISTER_EMAIL_RATE_LIMIT_PER_HOUR",
+            "LOGIN_RATE_LIMIT_PER_MINUTE",
+            "VERIFY_RATE_LIMIT_PER_MINUTE",
+            "VERIFY_CODE_TTL_SECONDS",
+            "VERIFY_MAX_ATTEMPTS",
+            "RESEND_COOLDOWN_SECONDS",
+            "RECOVER_START_RATE_LIMIT_PER_HOUR",
+            "RECOVER_VERIFY_RATE_LIMIT_PER_MINUTE",
+            "RECOVER_MAX_ATTEMPTS",
+            "INVITE_RATE_LIMIT_PER_HOUR",
+            "INVITE_RATE_LIMIT_PER_DAY",
+            "INVITE_RECIPIENT_RATE_LIMIT_PER_HOUR",
+            "INVITE_CONTINUATION_RATE_LIMIT_PER_HOUR",
+            "RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS",
+            "SMTP_PORT",
+        ];
+        with_test_env(None, || {
+            for name in tuning {
+                // SAFETY: the same single-threaded env discipline the rest of
+                // this module relies on, serialized by `env_lock` inside
+                // `with_test_env`, which also restores each of these.
+                unsafe { std::env::set_var(name, "") };
+            }
+            let config = Config::from_env()?;
+            assert_eq!(config.attachment_cleanup_interval_seconds, 60);
+            assert_eq!(config.invite_recipient_rate_limit_per_hour, 3);
+            assert_eq!(config.invite_continuation_rate_limit_per_hour, 30);
+            assert_eq!(config.response_notify_sweep_interval_seconds, 30);
+            Ok(())
+        });
     }
 
     #[test]
