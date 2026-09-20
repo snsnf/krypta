@@ -457,9 +457,10 @@ Let's Encrypt and routes `/api` to the API and everything else to the web app.
 Postgres and Redis sit on an internal network with no host ports.
 Attachments go to an external S3-compatible store; Garage is only the dev and
 smoke stand-in. `S3_REGION` is configuration because providers such as B2
-reject a signing region that does not match the bucket, and the bucket's
-lifecycle must expire hidden versions or the API's cleanup only ever hides
-objects.
+reject a signing region that does not match the bucket, while R2 requires the
+literal `auto`. On a store that versions objects the bucket's lifecycle must
+expire hidden versions, or the API's cleanup only ever hides them; R2 has no
+versioning, so a delete there is already final.
 
 Two things a future edit would break by accident, plus the client address
 rules in `apps/api/CLAUDE.md` ("Client addresses and trusted proxies"):
