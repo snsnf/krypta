@@ -7,6 +7,7 @@
 #   scripts/ci.sh static        fmt, lint, types, unit tests, dependency audits
 #   scripts/ci.sh integration   every API integration suite and Playwright e2e
 #   scripts/ci.sh images        build both Docker images and boot each one
+#   scripts/ci.sh version vX.Y.Z  every manifest and lockfile names that release
 #   scripts/ci.sh               static and integration
 #
 # `static` needs `prepare` to have run: its unit tests open real Postgres,
@@ -173,6 +174,57 @@ bootstrap_garage() {
   fi
 }
 
+# Every place the product records its version, one "where version" pair per
+# line. krypta is one product shipped as one release, so they all carry the
+# same number: the API reports its Cargo version on the admin health page, and
+# the private workspaces match it so a tag names one thing. Both lockfiles are
+# read too, because bun does not rewrite a workspace's version when only the
+# version changes and would keep the old one indefinitely. Workspaces are
+# found by glob rather than listed, so a new package is covered without an
+# edit here.
+recorded_versions() {
+  printf 'apps/api/Cargo.toml %s\n' \
+    "$(grep -m1 '^version = "' "$API/Cargo.toml" | cut -d'"' -f2)"
+  printf 'apps/api/Cargo.lock %s\n' \
+    "$(awk '/^name = "api"$/ { getline; print; exit }' "$API/Cargo.lock" | cut -d'"' -f2)"
+  local manifest name
+  for manifest in "$ROOT"/apps/*/package.json "$ROOT"/packages/*/package.json; do
+    name="$(grep -m1 '^  "name": "' "$manifest" | cut -d'"' -f4)"
+    printf '%s %s\n' "${manifest#"$ROOT"/}" \
+      "$(grep -m1 '^  "version": "' "$manifest" | cut -d'"' -f4)"
+    printf 'bun.lock(%s) %s\n' "$name" \
+      "$(awk -v key="\"name\": \"$name\"," 'index($0, key) { getline; print; exit }' \
+        "$ROOT/bun.lock" | cut -d'"' -f4)"
+  done
+}
+
+# With a tag, every recorded version must be that tag's. Without one, they
+# must merely agree with each other, which is what the static gate asks on
+# every push so a half-finished bump fails before anyone tags it. The release
+# workflow runs the tagged form against the pushed tag, so a tag cut by hand
+# without scripts/release.sh still cannot publish images whose admin page
+# reports a different version from the one they are tagged with.
+check_versions() {
+  local tag="${1:-}" want
+  if [ -n "$tag" ]; then
+    if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+      printf '\033[31m✗ %s is not a release tag such as v0.2.0\033[0m\n' "$tag"
+      return 1
+    fi
+    want="${tag#v}"
+  else
+    want="$(grep -m1 '^version = "' "$API/Cargo.toml" | cut -d'"' -f2)"
+  fi
+  local where have status=0
+  while read -r where have; do
+    if [ "$have" != "$want" ]; then
+      printf '\033[31m✗ %s records %s, expected %s\033[0m\n' "$where" "${have:-nothing}" "$want"
+      status=1
+    fi
+  done < <(recorded_versions)
+  return $status
+}
+
 prepare_stack() {
   run "stack: garage config" write_garage_config
   run "stack: services up" docker compose -f "$COMPOSE" up -d --wait
@@ -188,6 +240,7 @@ static_checks() {
   # communicating with database" lines instead of the one named failure
   # require_port gives.
   export SQLX_OFFLINE=true
+  run "versions: every manifest agrees" check_versions
   run "rust: fmt"        bash -c "cd '$API' && cargo fmt -- --check"
   # Warnings are failures here. The alternative is a build that is permanently
   # yellow, which trains everyone to stop reading it.
@@ -465,8 +518,9 @@ case "${1:-all}" in
   static) static_checks ;;
   integration) integration_checks ;;
   images) image_checks ;;
+  version) run "versions: every manifest records ${2:-the same version}" check_versions "${2:-}" ;;
   all) static_checks; integration_checks ;;
-  *) echo "usage: $0 [prepare|static|integration|images|all]" >&2; exit 2 ;;
+  *) echo "usage: $0 [prepare|static|integration|images|version [vX.Y.Z]|all]" >&2; exit 2 ;;
 esac
 
 printf '\n'
