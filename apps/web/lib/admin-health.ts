@@ -31,6 +31,8 @@ export interface AdminHealth {
     passkeys: string
     backups: string
   }
+  /** The API's release version. Served only on this admin route. */
+  version: string
 }
 
 /*
