@@ -37,8 +37,30 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Before anything is built, the code at the tag must record the tag's
+  # version everywhere. Without this, v0.2.0 pushed by hand onto code that
+  # still says 0.1.0 publishes images tagged 0.2.0 whose admin page reports
+  # 0.1.0, and nothing notices. scripts/release.sh writes and checks these
+  # together, so this only fails for a tag cut without it.
+  version:
+    name: Version matches the tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      # Through env rather than interpolated into the command: on a manual
+      # run the tag is free text typed into a form.
+      - env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: ./scripts/ci.sh version "$TAG"
+
   build:
     name: ${{ matrix.image }} on ${{ matrix.platform }}
+    needs: version
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
