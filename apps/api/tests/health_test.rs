@@ -53,7 +53,13 @@ async fn the_detailed_report_is_admin_only() {
     assert_eq!(response.status(), 401);
     let body: Value = response.json().await.unwrap();
     assert_eq!(body["success"], Value::Bool(false));
-    for leak in ["postgres", "redis", "backlog"] {
+    for leak in [
+        "postgres",
+        "redis",
+        "backlog",
+        "version",
+        env!("CARGO_PKG_VERSION"),
+    ] {
         assert!(
             !body.to_string().contains(leak),
             "an unauthenticated caller must learn nothing about {leak}"

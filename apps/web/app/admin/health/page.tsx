@@ -70,7 +70,7 @@ export default function AdminHealthPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Checked at{" "}
+          Version {health.version}, checked at{" "}
           {checkedAt === null ? "-" : checkedAt.toLocaleTimeString()}
         </p>
         <Button size="sm" variant="secondary" disabled={pending} onClick={refresh}>

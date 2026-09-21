@@ -126,6 +126,14 @@ pub async fn handler(
                 passkeys: state.config.passkey_status(),
                 backups: state.config.backup_status(),
             },
+            // Admin-only, like everything in this report, and deliberately
+            // on no public route. An exact version on an unauthenticated
+            // endpoint tells a scanner which advisories to try, the same
+            // reason the readiness body names no failing dependency. It is
+            // the manifest version compiled into this binary, so it names the
+            // release a build came from; a from-source build between two tags
+            // still reports the earlier one.
+            "version": env!("CARGO_PKG_VERSION"),
         }),
         serde_json::json!({ "checked_at": checked_at }),
     ))
