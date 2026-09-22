@@ -506,8 +506,19 @@ pub async fn webhook(
         EventObject::CheckoutSessionCompleted(session) => {
             handle_checkout_completed(&mut transaction, *session).await?;
         }
+        // Both carry the whole subscription and are applied the same way.
+        // `.created` is not optional: a card that pays at checkout makes the
+        // subscription active at birth, so Stripe never sends an `.updated`
+        // for it, and without this its status and period end stayed at the
+        // placeholders `checkout.session.completed` writes until the first
+        // renewal changed something.
+        EventObject::CustomerSubscriptionCreated(sub) => {
+            handle_subscription_updated(&mut transaction, *sub, "customer.subscription.created")
+                .await?;
+        }
         EventObject::CustomerSubscriptionUpdated(sub) => {
-            handle_subscription_updated(&mut transaction, *sub).await?;
+            handle_subscription_updated(&mut transaction, *sub, "customer.subscription.updated")
+                .await?;
         }
         EventObject::CustomerSubscriptionDeleted(sub) => {
             handle_subscription_deleted(&mut transaction, *sub).await?;
@@ -663,6 +674,7 @@ async fn handle_checkout_completed(
 async fn handle_subscription_updated(
     transaction: &mut Transaction<'_, Postgres>,
     subscription: stripe_shared::Subscription,
+    event_type: &'static str,
 ) -> Result<(), ApiError> {
     let customer_id = subscription.customer.id().as_str();
     let subscription_id = subscription.id.as_str();
@@ -694,7 +706,8 @@ async fn handle_subscription_updated(
             if found.is_none() {
                 tracing::warn!(
                     price_id = %price_id,
-                    "customer.subscription.updated referenced an unrecognized price id, \
+                    event_type,
+                    "subscription event referenced an unrecognized price id, \
                      leaving plan_id unchanged rather than guessing"
                 );
             }
@@ -725,13 +738,8 @@ async fn handle_subscription_updated(
     .map_err(|error| ApiError::Internal(error.into()))?;
 
     if updated.rows_affected() == 0 {
-        return unmatched_subscription_event(
-            transaction,
-            "customer.subscription.updated",
-            customer_id,
-            subscription_id,
-        )
-        .await;
+        return unmatched_subscription_event(transaction, event_type, customer_id, subscription_id)
+            .await;
     }
 
     Ok(())
