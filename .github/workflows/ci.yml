@@ -130,15 +130,20 @@ jobs:
           cat /tmp/krypta-api.log >&2
           exit 1
 
+      # Output goes to a file rather than the step log, because a background
+      # process's output is lost once its step ends, and that is where next dev
+      # reports each route it compiles and how long it took. The file is
+      # uploaded below whenever the job fails.
       - name: Start the web app
         working-directory: apps/web
         run: |
-          bun run dev &
+          bun run dev >/tmp/krypta-web.log 2>&1 &
           for _ in $(seq 1 60); do
             curl -sf -o /dev/null http://localhost:3000/ && exit 0
             sleep 2
           done
           echo "Web app did not become healthy" >&2
+          tail -n 40 /tmp/krypta-web.log >&2
           exit 1
 
       - run: ./scripts/ci.sh integration
@@ -152,3 +157,17 @@ jobs:
             apps/web/test-results
             apps/web/playwright-report
           if-no-files-found: ignore
+          retention-days: 7
+
+      # The three servers the suite talks to: the API on 8080, the web app on
+      # 3000, and the billing suite's own API on 8081. A failure that looks
+      # like a test problem is often explained here, and without these files
+      # there is no way to see server-side timing or errors after the fact.
+      - name: Upload server logs
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: server-logs
+          path: /tmp/krypta-*.log
+          if-no-files-found: ignore
+          retention-days: 7

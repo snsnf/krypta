@@ -18,5 +18,17 @@ export default defineConfig({
     ...(process.env.PLAYWRIGHT_CHANNEL
       ? { channel: process.env.PLAYWRIGHT_CHANNEL }
       : {}),
+    // In CI, a failing test keeps a trace: every action with its duration, the
+    // network, and the page's state at each step. An error message alone could
+    // not say where a timed-out test spent its budget. The screenshot
+    // filmstrip is left out because it is the costly part, and this suite is
+    // timing-sensitive enough that recording it could change what it records.
+    // Open one with `bunx playwright show-trace <trace.zip>`.
+    ...(process.env.CI
+      ? {
+          trace: { mode: "retain-on-failure" as const, screenshots: false },
+          screenshot: "only-on-failure" as const,
+        }
+      : {}),
   },
 })

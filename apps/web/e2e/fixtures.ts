@@ -411,6 +411,28 @@ export async function waitForInteractive(page: Page) {
 }
 
 /**
+ * Waits for every running CSS animation and transition to finish.
+ *
+ * `boundingBox()` reports where an element is drawn, so a test that measures
+ * and then drives the mouse mid-animation drags between stale coordinates.
+ * The builder's cards animate in (`question-in`) and slide into place after a
+ * reorder, and on a slow CI runner both were still running when the reorder
+ * test measured its handles, so its drag fell short of the midpoint it had to
+ * cross. Infinite animations are skipped because they never finish, and an
+ * animation cancelled while waiting is treated as done.
+ */
+export async function waitForAnimations(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined))
+    )
+  )
+}
+
+/**
  * Unlocks on /unlock, waiting for the app to be interactive first.
  *
  * The submit handler only exists once React hydrates. Clicking before then
