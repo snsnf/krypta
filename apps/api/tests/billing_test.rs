@@ -611,6 +611,86 @@ async fn an_event_for_a_replaced_subscription_does_not_downgrade_the_current_one
         .unwrap();
 }
 
+/// A subscription paid for at checkout is active from birth, so Stripe sends
+/// `customer.subscription.created` for it and never an `.updated`. The row
+/// `checkout.session.completed` wrote holds a placeholder status and no period
+/// end, and `.created` is the only event that ever fills them in.
+#[tokio::test]
+async fn a_created_event_fills_in_what_checkout_could_not() {
+    dotenvy::dotenv().ok();
+    let secret = std::env::var("STRIPE_WEBHOOK_SECRET")
+        .expect("STRIPE_WEBHOOK_SECRET must be set for this test, same as the running server");
+    let db = sqlx::PgPool::connect(&std::env::var("DATABASE_URL").unwrap())
+        .await
+        .unwrap();
+
+    let user_id = uuid::Uuid::now_v7();
+    sqlx::query("INSERT INTO users (id, email, password_hash) VALUES ($1, $2, 'created-sub-test')")
+        .bind(user_id)
+        .bind(format!("created-sub-{user_id}@example.com"))
+        .execute(&db)
+        .await
+        .unwrap();
+
+    let customer_id = format!("cus_created_{}", uuid::Uuid::now_v7());
+    let subscription_id = format!("sub_created_{}", uuid::Uuid::now_v7());
+
+    // Exactly what checkout leaves behind: the plan and ids, a placeholder
+    // status, and no period end.
+    sqlx::query(
+        "INSERT INTO subscriptions (
+             user_id, plan_id, stripe_customer_id, stripe_subscription_id, status
+         ) VALUES ($1, 'pro', $2, $3, 'active')",
+    )
+    .bind(user_id)
+    .bind(&customer_id)
+    .bind(&subscription_id)
+    .execute(&db)
+    .await
+    .unwrap();
+
+    let payload = subscription_event(
+        &format!("evt_created_{}", uuid::Uuid::now_v7()),
+        "customer.subscription.created",
+        &customer_id,
+        &subscription_id,
+        "active",
+    );
+    let timestamp = time::OffsetDateTime::now_utc().unix_timestamp();
+    let response = Client::new()
+        .post(format!("{}/api/v1/billing/webhook", common::base_url()))
+        .header("content-type", "application/json")
+        .header(
+            "stripe-signature",
+            sign_webhook_payload(&payload, &secret, timestamp),
+        )
+        .body(payload)
+        .send()
+        .await
+        .unwrap();
+    assert!(response.status().is_success());
+
+    let period_end = sqlx::query_scalar!(
+        "SELECT current_period_end FROM subscriptions WHERE user_id = $1",
+        user_id,
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(
+        period_end,
+        Some(time::OffsetDateTime::from_unix_timestamp(2).unwrap()),
+        "customer.subscription.created must record the period end from the \
+         subscription item, or a card-paid subscription never gets one"
+    );
+
+    sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(user_id)
+        .execute(&db)
+        .await
+        .unwrap();
+}
+
 /// The returning-subscriber regression.
 ///
 /// Checkout reuses a returning subscriber's stored customer, so until the new
