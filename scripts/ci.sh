@@ -358,7 +358,7 @@ billing_suite() {
       ATTACHMENT_CLEANUP_INTERVAL_SECONDS=3600 \
       RESPONSE_NOTIFY_SWEEP_INTERVAL_SECONDS=3600 \
       exec ./target/debug/api
-  ) >/dev/null 2>&1 &
+  ) >/tmp/krypta-billing-api.log 2>&1 &
   local pid=$!
   local i ready=1
   for i in $(seq 1 60); do

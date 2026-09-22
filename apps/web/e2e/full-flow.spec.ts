@@ -5,6 +5,7 @@ import {
   shareLinkFor,
   unlock,
   verificationCodeFor,
+  waitForAnimations,
   waitForInteractive,
 } from "./fixtures"
 
@@ -617,6 +618,11 @@ sharedAccountTest(
     // capture, listeners on window), so the move needs at least two
     // intermediate steps to fire more than one pointermove, and, per the
     // brief, has to actually cross the second card's midpoint to register.
+    //
+    // Measured only once the cards stop moving: the keyboard move above slides
+    // two of them into place and the newest is still animating in, and a box
+    // read mid-animation puts the drag short of the midpoint on a slow runner.
+    await waitForAnimations(page)
     const firstHandle = page.getByRole("button", { name: "Reorder question 1" })
     const secondHandle = page.getByRole("button", { name: "Reorder question 2" })
     const firstBox = await firstHandle.boundingBox()
