@@ -619,24 +619,24 @@ sharedAccountTest(
     // intermediate steps to fire more than one pointermove, and, per the
     // brief, has to actually cross the second card's midpoint to register.
     //
-    // Measured only once the cards stop moving: the keyboard move above slides
-    // two of them into place and the newest is still animating in, and a box
-    // read mid-animation puts the drag short of the midpoint on a slow runner.
+    // The target is the second CARD's middle, not its handle's: the handle sits
+    // on the card's top edge, so aiming at it never crosses the midpoint. The
+    // test used to do exactly that and passed only when it measured the card
+    // mid-slide, lower than it settles, which overshot by luck on a fast
+    // machine and fell short on a slow one. Measuring once the animations have
+    // finished and aiming at the card makes the drag land the same way on both.
     await waitForAnimations(page)
     const firstHandle = page.getByRole("button", { name: "Reorder question 1" })
-    const secondHandle = page.getByRole("button", { name: "Reorder question 2" })
+    const secondCard = page.getByRole("button", { name: "Reorder question 2" }).locator("..")
     const firstBox = await firstHandle.boundingBox()
-    const secondBox = await secondHandle.boundingBox()
+    const secondBox = await secondCard.boundingBox()
     if (!firstBox || !secondBox) {
-      throw new Error("Reorder handles have no bounding box")
+      throw new Error("Reorder handle or card has no bounding box")
     }
     const startX = firstBox.x + firstBox.width / 2
     const startY = firstBox.y + firstBox.height / 2
-    const secondCenterY = secondBox.y + secondBox.height / 2
-    // Just past the second card's own center/midpoint: a full row pitch below
-    // the first handle's center, plus a small margin, but well short of a
-    // second row pitch so the third card's midpoint is never crossed.
-    const endY = secondCenterY + secondBox.height * 0.1
+    // Past the second card's middle, and far short of the third card's.
+    const endY = secondBox.y + secondBox.height * 0.6
 
     await page.mouse.move(startX, startY)
     await page.mouse.down()
