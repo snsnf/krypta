@@ -217,3 +217,34 @@ jobs:
           subject-name: ${{ steps.name.outputs.image }}
           subject-digest: ${{ steps.manifest.outputs.digest }}
           push-to-registry: true
+
+  # A draft for the tag, opened only after both images have published. It is
+  # never published from here: the commit list has to be rewritten into plain
+  # sentences, and anything an operator must do outside krypta added by hand,
+  # before anyone reads it.
+  notes:
+    name: Draft release notes
+    needs: [publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          # The whole history and every tag, to find the previous release.
+          fetch-depth: 0
+      # Skipped when a release for this tag already exists, so re-running a
+      # failed publish cannot overwrite notes someone has already edited.
+      - env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "A release for $TAG already exists; leaving it alone."
+            exit 0
+          fi
+          ./scripts/release-notes.sh "$TAG" > "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" --draft --verify-tag \
+            --title "krypta ${TAG#v}" --notes-file "$RUNNER_TEMP/notes.md"
