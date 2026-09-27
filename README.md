@@ -6,7 +6,7 @@
 
 <p align="center">Every response is encrypted in the visitor's browser. We store ciphertext. Only you hold the key.</p>
 
-<p align="center"><a href="#getting-started"><b>Getting started</b></a> &nbsp;&middot;&nbsp; <a href="#how-the-encryption-works"><b>How it works</b></a> &nbsp;&middot;&nbsp; <a href="infra/docker/README.md"><b>Deploying</b></a></p>
+<p align="center"><a href="#getting-started"><b>Getting started</b></a> &nbsp;&middot;&nbsp; <a href="#how-the-encryption-works"><b>How it works</b></a> &nbsp;&middot;&nbsp; <a href="infra/docker/README.md"><b>Deploying</b></a> &nbsp;&middot;&nbsp; <a href="https://buymeacoffee.com/krypta"><b>Support</b></a></p>
 
 <p align="center"><img alt="Zero knowledge" src="https://img.shields.io/badge/zero--knowledge-356343?style=for-the-badge"> <img alt="End to end encrypted" src="https://img.shields.io/badge/end--to--end%20encrypted-356343?style=for-the-badge"> <img alt="Post quantum" src="https://img.shields.io/badge/ML--KEM--768%20hybrid-356343?style=for-the-badge"></p>
 
@@ -309,6 +309,12 @@ upgrades, and every setting with what it does.
 | [`apps/web/README.md`](apps/web/README.md) | The client: fonts, form dark mode, its own checks. |
 | [`apps/api/README.md`](apps/api/README.md) | The service: routes, migrations, test suites. |
 | [`SECURITY.md`](SECURITY.md) | The guarantee, its limits, and how to report a vulnerability. |
+
+## Supporting krypta
+
+krypta is free, open source, and built so that nobody running it can read
+what it holds. If it is useful to you, you can support its development on
+[Buy Me a Coffee](https://buymeacoffee.com/krypta).
 
 ## License
 
