@@ -14,6 +14,11 @@ import {
 import type { FontCatalogEntry } from "@/lib/fonts"
 import { loadFontCatalog } from "@/lib/font-catalog-client"
 import { cn } from "@/lib/utils"
+import {
+  FormLanguageContext,
+  formDirection,
+  normalizeFormLanguage,
+} from "@/lib/form-i18n"
 
 interface FormThemeSurfaceProps {
   theme: FormTheme
@@ -40,6 +45,7 @@ export function FormThemeSurface({
   )
   const [fontFailures, setFontFailures] = useState<Set<string>>(() => new Set())
   const theme = normalizeFormTheme(rawTheme)
+  const language = normalizeFormLanguage(theme.language)
   const selectedFamilies = [
     ...new Set(TYPOGRAPHY_ROLES.map((role) => theme.typography[role].font)),
   ]
@@ -127,20 +133,36 @@ export function FormThemeSurface({
     return () => links.forEach((link) => link.remove())
   }, [approvedExternalFamiliesKey, catalog])
 
+  // The Arabic face behind every font stack (see toFontStack), fetched only
+  // for Arabic forms and from this origin like every other font.
+  useEffect(() => {
+    if (language !== "ar") return
+    const link = document.createElement("link")
+    link.rel = "stylesheet"
+    link.href = "/fonts/noto-sans-arabic.css"
+    link.dataset.formLanguageFont = language
+    document.head.appendChild(link)
+    return () => link.remove()
+  }, [language])
+
   return (
     <div
       data-testid="form-theme-surface"
+      dir={formDirection(language)}
+      lang={language}
       data-form-mode={renderMode}
       className={cn("form-theme-surface", className)}
       style={getFormThemeStyle(themedSurface, renderMode)}
       {...getFormVariantAttributes(themedSurface)}
     >
-      {fontError && (
-        <p className="sr-only" role="status">
-          A selected font could not be loaded. Using its role default instead.
-        </p>
-      )}
-      {children}
+      <FormLanguageContext value={language}>
+        {fontError && (
+          <p className="sr-only" role="status">
+            A selected font could not be loaded. Using its role default instead.
+          </p>
+        )}
+        {children}
+      </FormLanguageContext>
     </div>
   )
 }

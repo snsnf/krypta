@@ -297,3 +297,18 @@ describe("font variants", () => {
     expect(fontVariantLabel("300italic")).toBe("Light Italic")
   })
 })
+
+describe("Arabic font fallback", () => {
+  test("adds the self-hosted Arabic font behind every role's font for an Arabic form", () => {
+    const style = getFormThemeStyle({ language: "ar" })
+    for (const role of ["header", "question", "text"] as const) {
+      const stack = style[`--form-${role}-font`]
+      expect(stack).toMatch(/'Noto Sans Arabic', var\(--font-heading\)$/)
+    }
+  })
+
+  test("leaves an English form's font stacks as they were", () => {
+    const style = getFormThemeStyle({})
+    expect(style["--form-text-font"]).not.toContain("Noto Sans Arabic")
+  })
+})
