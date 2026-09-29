@@ -5,9 +5,28 @@ export type QuestionCondition = {
    * evaluator has to detect.
    */
   questionId: string;
-  operator: "is" | "is_not";
-  /** One of the source question's options. */
+  /**
+   * `at_most` and `at_least` compare numerically and are meaningful only when
+   * the source is a rating question. Any other pairing fails open.
+   */
+  operator: "is" | "is_not" | "at_most" | "at_least";
+  /** One of the source question's options, or a rating value such as "2". */
   value: string;
+};
+
+/**
+ * A rating question's range. Stars always start at 1 and run to 3..10; a
+ * numbered scale starts at 0 or 1 and runs to 2..10. A decrypted schema is
+ * untrusted input, so readers normalise through `ratingRange` in
+ * apps/web/lib/question-rating.ts rather than trusting these numbers.
+ */
+export type RatingSettings = {
+  style: "stars" | "scale";
+  min: 0 | 1;
+  max: number;
+  /** Scale only: shown under the lowest and highest values. */
+  minLabel?: string;
+  maxLabel?: string;
 };
 
 export type Question = {
@@ -21,7 +40,8 @@ export type Question = {
     | "number"
     | "email"
     | "date"
-    | "file_upload";
+    | "file_upload"
+    | "rating";
   label: string;
   options?: string[];
   required?: boolean;
@@ -42,6 +62,8 @@ export type Question = {
    * shape could not change.
    */
   allowOther?: boolean;
+  /** Present only when type is "rating". Absent everywhere else. */
+  rating?: RatingSettings;
 };
 
 export type FormThemePreset =
