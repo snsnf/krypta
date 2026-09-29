@@ -232,6 +232,14 @@ export default function DashboardPage() {
   async function handleDuplicate(form: DashboardFormListItem) {
     if (!accountKey || !userId || duplicatingId !== null) return
     setDuplicatingId(form.id)
+    // The menu closes on click and the work takes a few seconds (opening the
+    // original, new keys, the header image), so say that something is
+    // happening.
+    const pending = toast.add({
+      title: "Duplicating the form...",
+      type: "loading",
+      timeout: 0,
+    })
     try {
       await ensureSodiumReady()
       const sharing = await ensureAccountSharingKey({
@@ -239,6 +247,7 @@ export default function DashboardPage() {
         accountKey,
       })
       const copy = await duplicateForm(form.id, accountKey, sharing)
+      toast.close(pending)
       if (!copy.headerCopied) {
         toast.add({
           title: "Copied, but the header image couldn't be copied",
@@ -252,6 +261,7 @@ export default function DashboardPage() {
         `/dashboard/${copy.id}?created=1#key=${encodeURIComponent(copy.formDataKey)}`
       )
     } catch (error) {
+      toast.close(pending)
       setDuplicatingId(null)
       toast.add({
         title: "Could not duplicate the form",
