@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react"
 import type { FormTheme, FormThemePreset, FormTypography } from "@krypta/crypto"
+import { normalizeFormLanguage } from "./form-language"
 
 export const FORM_THEME_PRESETS = {
   forest: { accentColor: "#356343", backgroundColor: "#e8f1e9" },
@@ -229,6 +230,10 @@ export function normalizeFormTheme(
     allowDarkMode: value.allowDarkMode === true,
     layout: value.layout === "focus" ? "focus" : "classic",
   }
+  // Kept only when it changes something, so an English form serialises
+  // exactly as it did before languages existed.
+  const language = normalizeFormLanguage(value.language)
+  if (language !== "en") theme.language = language
   return theme
 }
 
