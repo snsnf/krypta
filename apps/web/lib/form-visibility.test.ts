@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Question } from "@krypta/crypto"
-import { visibleQuestions } from "./form-visibility"
+import { conditionValues, visibleQuestions } from "./form-visibility"
 
 function q(id: string, extra: Partial<Question> = {}): Question {
   return { id, type: "multiple_choice", label: id, options: ["Yes", "No"], ...extra }
@@ -96,5 +96,110 @@ describe("visibleQuestions", () => {
     ]
     // Deliberate: "not Yes" is true until contradicted.
     expect(ids(visibleQuestions(questions, {}))).toEqual(["a", "c"])
+  })
+  const stars = (id: string) =>
+    q(id, {
+      type: "rating",
+      options: undefined,
+      rating: { style: "stars", min: 1, max: 5 },
+    })
+
+  it("shows an `at_most` dependent at and below the bound only", () => {
+    const questions = [
+      stars("a"),
+      q("b", { condition: { questionId: "a", operator: "at_most", value: "2" } }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "1" }))).toEqual(["a", "b"])
+    expect(ids(visibleQuestions(questions, { a: "2" }))).toEqual(["a", "b"])
+    expect(ids(visibleQuestions(questions, { a: "3" }))).toEqual(["a"])
+  })
+
+  it("shows an `at_least` dependent at and above the bound only", () => {
+    const questions = [
+      stars("a"),
+      q("b", { condition: { questionId: "a", operator: "at_least", value: "4" } }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "4" }))).toEqual(["a", "b"])
+    expect(ids(visibleQuestions(questions, { a: "5" }))).toEqual(["a", "b"])
+    expect(ids(visibleQuestions(questions, { a: "3" }))).toEqual(["a"])
+  })
+
+  it("hides a range dependent until the rating is answered", () => {
+    const questions = [
+      stars("a"),
+      q("b", { condition: { questionId: "a", operator: "at_most", value: "2" } }),
+    ]
+    expect(ids(visibleQuestions(questions, {}))).toEqual(["a"])
+    expect(ids(visibleQuestions(questions, { a: "" }))).toEqual(["a"])
+  })
+
+  it("treats a stale out-of-range rating answer as unanswered", () => {
+    const questions = [
+      stars("a"),
+      q("b", { condition: { questionId: "a", operator: "at_most", value: "2" } }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "0" }))).toEqual(["a"])
+  })
+
+  it("never matches a range bound outside the source's range", () => {
+    const questions = [
+      stars("a"),
+      q("b", { condition: { questionId: "a", operator: "at_least", value: "8" } }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "5" }))).toEqual(["a"])
+  })
+
+  it("compares `is` against a rating as a string", () => {
+    const questions = [
+      stars("a"),
+      q("b", { condition: { questionId: "a", operator: "is", value: "3" } }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "3" }))).toEqual(["a", "b"])
+    expect(ids(visibleQuestions(questions, { a: "4" }))).toEqual(["a"])
+  })
+
+  it("fails open on a range operator whose source is a choice question", () => {
+    const questions = [
+      q("a"),
+      q("b", { condition: { questionId: "a", operator: "at_most", value: "Yes" } }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "Yes" }))).toEqual(["a", "b"])
+  })
+
+  it("fails open on an operator this build does not know", () => {
+    const questions = [
+      q("a"),
+      q("b", {
+        condition: {
+          questionId: "a",
+          operator: "contains" as "is",
+          value: "Yes",
+        },
+      }),
+    ]
+    expect(ids(visibleQuestions(questions, { a: "Yes" }))).toEqual(["a", "b"])
+  })
+})
+
+describe("conditionValues", () => {
+  it("lists a choice question's options and a rating's range", () => {
+    expect(conditionValues(q("a"))).toEqual(["Yes", "No"])
+    expect(
+      conditionValues(
+        q("r", {
+          type: "rating",
+          options: undefined,
+          rating: { style: "scale", min: 0, max: 2 },
+        })
+      )
+    ).toEqual(["0", "1", "2"])
+  })
+
+  it("returns null for anything that cannot be a source", () => {
+    expect(conditionValues(undefined)).toBeNull()
+    expect(
+      conditionValues(q("t", { type: "short_text", options: undefined }))
+    ).toBeNull()
+    expect(conditionValues(q("e", { options: [] }))).toBeNull()
   })
 })
