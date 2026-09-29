@@ -256,12 +256,16 @@ export function FocusFormRenderer({
            * spill it over the button below for the length of the animation.
            * The measured element carries a little bottom padding so a focus
            * ring on the last field is not clipped by that same overflow.
+           * It is also a flow-root, so a child's margin cannot collapse out
+           * through it: with an empty question label the field's top margin
+           * did exactly that, the measurement came up 24px short, and the
+           * overflow cut the bottom off the field.
            */}
           <div
             className="-mx-2 overflow-hidden px-2 transition-[height] duration-[280ms] ease-in-out motion-reduce:transition-none"
             style={cardHeight === null ? undefined : { height: cardHeight }}
           >
-            <div ref={questionRef} className="pb-1.5">
+            <div ref={questionRef} className="flow-root pb-1.5">
               <AnimatePresence
                 mode="popLayout"
                 initial={false}
