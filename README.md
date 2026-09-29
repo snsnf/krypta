@@ -80,7 +80,7 @@ server being able to enforce a quota or a close date at all.
 
 | | |
 |---|---|
-| **Nine question types** | Short text, long text, multiple choice, checkboxes, dropdown, number, email, date, file upload. Plus a required toggle and an optional respondent-written "Other". |
+| **Ten question types** | Short text, long text, multiple choice, checkboxes, dropdown, number, email, date, file upload, and rating (stars or a numbered scale). Plus a required toggle and an optional respondent-written "Other". |
 | **Two layouts** | Classic shows a page of questions with section breaks. Focus shows one at a time. Same question types, same rules underneath. |
 | **Conditional questions** | Show a question only when an earlier answer says so. Evaluated entirely in the respondent's browser. |
 | **Anonymous responses** | No account needed. Open a link, fill it in, and the answers are sealed to the form's public key. |

@@ -48,9 +48,9 @@ const STEPS = [
  */
 const FEATURES = [
   {
-    title: "Nine question types",
+    title: "Ten question types",
     icon: ListViewIcon,
-    body: "Short and long text, multiple choice, checkboxes, dropdown, number, email, date, and file upload.",
+    body: "Short and long text, multiple choice, checkboxes, dropdown, number, email, date, file upload, and star or scale ratings.",
     span: "lg:col-span-7",
     tinted: true,
   },
