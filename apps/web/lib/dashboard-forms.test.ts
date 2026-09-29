@@ -15,6 +15,7 @@ vi.mock("./form-grants", () => ({
 
 import type { AccountSharingMaterial } from "./account-sharing-key"
 import {
+  canDuplicate,
   decryptFormList,
   groupDashboardForms,
   type FormListWireItem,
@@ -164,5 +165,18 @@ describe("dashboard form preparation", () => {
 
     expect(form.title).toBe("Form unavailable")
     expect(form.accessState).toBe("unavailable")
+  })
+})
+
+describe("canDuplicate", () => {
+  it("allows owners and editors whose access is ready", () => {
+    expect(canDuplicate({ role: "owner", accessState: "ready" })).toBe(true)
+    expect(canDuplicate({ role: "editor", accessState: "ready" })).toBe(true)
+  })
+
+  it("refuses viewers and anyone whose keys are not ready", () => {
+    expect(canDuplicate({ role: "viewer", accessState: "ready" })).toBe(false)
+    expect(canDuplicate({ role: "owner", accessState: "awaiting" })).toBe(false)
+    expect(canDuplicate({ role: "editor", accessState: "unavailable" })).toBe(false)
   })
 })
