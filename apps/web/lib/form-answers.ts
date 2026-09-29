@@ -10,6 +10,7 @@
  */
 import type { Question } from "@krypta/crypto"
 import { displayAnswer, isEmptyOtherAnswer, isOtherAnswer } from "./form-other"
+import { parseRatingAnswer } from "./question-rating"
 
 export interface FileAnswer {
   attachmentId: string
@@ -134,6 +135,10 @@ function keepableAnswer(
     }
     case "file_upload":
       return isFileAnswer(value) ? value : null
+    case "rating":
+      // Unlike free text, a value outside the range renders as no star or
+      // button selected, so the respondent cannot see it to correct it.
+      return parseRatingAnswer(question, value) !== null ? value : null
     default:
       // A question type this build does not know about, from a form built by a
       // newer one. Failing open matches how an unresolvable visibility
