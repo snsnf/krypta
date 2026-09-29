@@ -2,6 +2,33 @@ import { describe, expect, it } from "vitest"
 import { conditionValues, isRangeOperator } from "./form-visibility"
 import { hasDuplicateOptions } from "./question-options"
 import { FORM_TEMPLATES, instantiateTemplate } from "./form-templates"
+import { DEFAULT_FORM_THEME } from "./form-theme"
+import { DEFAULT_FORM_SETTINGS } from "./form-settings"
+
+/*
+ * Ciphertext is padded to a 1024-byte floor after a 5-byte header
+ * (packages/crypto/src/pad.ts), and nearly every real schema sits under it.
+ * A template published unedited has a fixed length, so one that spilled into
+ * a larger bucket would be recognisable from the size of its ciphertext
+ * alone, which is exactly the inference keeping the choice out of the URL
+ * exists to prevent. Every unedited template must fit the floor.
+ */
+const SCHEMA_BUDGET_BYTES = 1024 - 5
+
+function unEditedSchemaBytes(template: (typeof FORM_TEMPLATES)[number]): number {
+  const start = instantiateTemplate(template)
+  const schema = {
+    questions: start.questions,
+    theme: DEFAULT_FORM_THEME,
+    settings: {
+      ...DEFAULT_FORM_SETTINGS,
+      confirmationMessage: start.confirmationMessage,
+    },
+    // formKeyCommitment is base64 of 32 bytes; 44 covers padded base64.
+    publicKeyCommitment: "x".repeat(44),
+  }
+  return new TextEncoder().encode(JSON.stringify(schema)).length
+}
 
 describe("FORM_TEMPLATES", () => {
   it("ships the five templates in gallery order with unique ids", () => {
@@ -39,6 +66,12 @@ describe("FORM_TEMPLATES", () => {
         for (const question of questions) {
           expect(hasDuplicateOptions(question.options)).toBe(false)
         }
+      })
+
+      it("fits the padding floor when published unedited", () => {
+        expect(unEditedSchemaBytes(template)).toBeLessThanOrEqual(
+          SCHEMA_BUDGET_BYTES
+        )
       })
 
       it("carries a title and a confirmation message", () => {

@@ -44,7 +44,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       {
         key: "rating",
         type: "rating",
-        label: "How would you rate the event?",
+        label: "How was the event?",
         required: true,
         rating: { style: "stars", min: 1, max: 5 },
       },
@@ -54,11 +54,11 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         label: "What went wrong?",
         condition: { key: "rating", operator: "at_most", value: "2" },
       },
-      { key: "enjoyed", type: "long_text", label: "What did you enjoy most?" },
+      { key: "enjoyed", type: "long_text", label: "What was good?" },
       {
         key: "again",
         type: "multiple_choice",
-        label: "Would you come to another event?",
+        label: "Would you return?",
         options: ["Yes", "Maybe", "No"],
       },
     ],
@@ -66,9 +66,9 @@ export const FORM_TEMPLATES: FormTemplate[] = [
   {
     id: "rsvp",
     name: "RSVP",
-    description: "Who is coming, with guest numbers and dietary needs.",
+    description: "Who is coming, how many guests, and dietary needs.",
     title: "RSVP",
-    confirmationMessage: "Thanks, your reply has been recorded.",
+    confirmationMessage: "Thanks for your reply!",
     questions: [
       { key: "name", type: "short_text", label: "Your name", required: true },
       {
@@ -81,15 +81,12 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       {
         key: "guests",
         type: "number",
-        label: "How many guests are you bringing?",
+        label: "How many guests?",
         condition: { key: "attending", operator: "is", value: "Yes" },
       },
-      {
-        key: "diet",
-        type: "short_text",
-        label: "Any dietary requirements?",
-        condition: { key: "attending", operator: "is", value: "Yes" },
-      },
+      // Asked of everyone: a second show-if rule would push an unedited RSVP
+      // past the padding floor (see the size test).
+      { key: "diet", type: "short_text", label: "Any dietary requirements?" },
     ],
   },
   {
@@ -97,19 +94,19 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     name: "Job application",
     description: "Contact details, the role and an encrypted CV upload.",
     title: "Job application",
-    confirmationMessage: "Thanks for applying. We'll be in touch.",
+    confirmationMessage: "Thanks for applying!",
     questions: [
-      { key: "name", type: "short_text", label: "Full name", required: true },
+      { key: "name", type: "short_text", label: "Name", required: true },
       { key: "email", type: "email", label: "Email", required: true },
       {
         key: "role",
         type: "short_text",
-        label: "Which role are you applying for?",
+        label: "Role",
         required: true,
       },
       { key: "cv", type: "file_upload", label: "Your CV", required: true },
-      { key: "fit", type: "long_text", label: "Why are you a good fit?" },
-      { key: "start", type: "date", label: "Earliest start date" },
+      { key: "fit", type: "long_text", label: "Why you?" },
+      { key: "start", type: "date", label: "Start date" },
     ],
   },
   {
@@ -143,22 +140,24 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       { key: "when", type: "date", label: "When did it happen?" },
       { key: "where", type: "short_text", label: "Where did it happen?" },
       { key: "evidence", type: "file_upload", label: "Evidence" },
+      // One optional field rather than a yes/no plus a show-if follow-up:
+      // the rule's extra id would push an unedited report into a larger,
+      // rarer padding bucket, recognisable by size alone.
       {
-        key: "reply",
-        type: "multiple_choice",
-        label: "Would you like a reply?",
-        required: true,
-        options: ["No, keep me anonymous", "Yes"],
-      },
-      {
-        key: "contact",
+        key: "reach",
         type: "short_text",
-        label: "How can we reach you?",
-        condition: { key: "reply", operator: "is", value: "Yes" },
+        label: "Want a reply? Leave a way to reach you (optional)",
       },
     ],
   },
 ]
+
+/*
+ * Every template published unedited must fit the 1024-byte padding floor,
+ * or its fixed size would identify it; form-templates.test.ts enforces this.
+ * Shorten copy before adding questions, and prefer dropping a show-if rule,
+ * which costs a whole extra id.
+ */
 
 /**
  * The template as a new form's starting state: every question gets a fresh
