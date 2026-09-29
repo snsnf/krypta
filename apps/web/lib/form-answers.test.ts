@@ -79,6 +79,19 @@ describe("firstUnansweredIndex", () => {
 
 
 describe("reconcileDraft", () => {
+  test("keeps an in-range rating and drops a stale or malformed one", () => {
+    const rating: Question = {
+      id: "r",
+      type: "rating",
+      label: "r",
+      rating: { style: "stars", min: 1, max: 5 },
+    }
+    expect(reconcileDraft([rating], { r: "4" })).toEqual({ r: "4" })
+    expect(reconcileDraft([rating], { r: "9" })).toEqual({})
+    expect(reconcileDraft([rating], { r: "2.5" })).toEqual({})
+    expect(reconcileDraft([rating], { r: ["4"] })).toEqual({})
+  })
+
   const file = {
     attachmentId: "a",
     filename: "f.pdf",
