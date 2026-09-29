@@ -100,6 +100,12 @@ export type FormTheme = {
   };
   allowDarkMode?: boolean;
   layout?: FormLayout;
+  /**
+   * The language respondents see around the questions. Absent means English.
+   * Readers normalise it (apps/web/lib/form-i18n.ts); an unknown value is
+   * English.
+   */
+  language?: "en" | "ar";
 };
 
 export type FormSettings = {
