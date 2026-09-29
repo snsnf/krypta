@@ -15,6 +15,10 @@ const CHOICE_CHART_CONFIG = {
   count: { label: "Responses", color: "var(--chart-1)" },
 } satisfies ChartConfig
 
+const RATING_CHART_CONFIG = {
+  count: { label: "Responses", color: "var(--chart-1)" },
+} satisfies ChartConfig
+
 // Eight categorical hues in a fixed order (see globals.css). A bar's colour is
 // keyed to its option's position in the QUESTION'S SCHEMA, never to its
 // position in this chart: the bars are sorted by count, so rank-keyed colour
@@ -207,6 +211,61 @@ function NumberSummaryBody({
   )
 }
 
+/*
+ * One colour for every bar: the values are an ordered scale, not categories,
+ * so distinct hues would imply identities the data does not have. Bars run in
+ * value order, never sorted by count, because the shape of the distribution
+ * is the information.
+ */
+function RatingSummaryBody({
+  summary,
+}: {
+  summary: Extract<QuestionSummary, { kind: "rating" }>
+}) {
+  if (summary.answered === 0) {
+    return <p className="text-sm text-muted-foreground">No ratings yet.</p>
+  }
+
+  const data = summary.counts.map((entry) => ({
+    value: String(entry.value),
+    count: entry.count,
+  }))
+
+  return (
+    <div data-testid="rating-summary">
+      <p className="mb-2 flex items-baseline gap-1.5">
+        <span className="text-2xl font-semibold tabular-nums">
+          {summary.mean.toFixed(1)}
+        </span>
+        <span className="text-sm text-muted-foreground">
+          out of {summary.max}
+        </span>
+      </p>
+      <ChartContainer
+        config={RATING_CHART_CONFIG}
+        className="aspect-auto h-40 w-full"
+      >
+        <BarChart data={data} margin={{ top: 20, right: 4, bottom: 0, left: 4 }}>
+          <XAxis
+            dataKey="value"
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis hide allowDecimals={false} />
+          <Bar dataKey="count" fill="var(--chart-1)" radius={4}>
+            <LabelList
+              dataKey="count"
+              position="top"
+              className="fill-foreground text-xs"
+            />
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+    </div>
+  )
+}
+
 function DateSummaryBody({
   summary,
 }: {
@@ -297,6 +356,7 @@ function QuestionSummaryCard({
           <ChoiceSummaryBody summary={summary} question={question} />
         )}
         {summary.kind === "number" && <NumberSummaryBody summary={summary} />}
+        {summary.kind === "rating" && <RatingSummaryBody summary={summary} />}
         {summary.kind === "date" && <DateSummaryBody summary={summary} />}
         {summary.kind === "text" && <TextSummaryBody summary={summary} />}
         {summary.kind === "file" && <FileSummaryBody summary={summary} />}
