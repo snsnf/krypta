@@ -264,8 +264,15 @@ type FormThemeStyle = CSSProperties & {
   colorScheme: "light" | "dark"
 }
 
-function toFontStack(font: string): string {
-  return `'${font.replaceAll("'", "")}', var(--font-heading)`
+/*
+ * An Arabic form puts the self-hosted Noto Sans Arabic behind the chosen font:
+ * the creator's font still draws any Latin text, and Arabic letters, which the
+ * default fonts do not have, get a proper face instead of whatever the device
+ * falls back to.
+ */
+function toFontStack(font: string, language: FormTheme["language"]): string {
+  const arabic = language === "ar" ? " 'Noto Sans Arabic'," : ""
+  return `'${font.replaceAll("'", "")}',${arabic} var(--font-heading)`
 }
 
 type TypographyVariantProperties = Partial<
@@ -353,11 +360,14 @@ export function getFormThemeStyle(
     "--form-accent": accent,
     "--form-accent-foreground": accentForeground,
     "--form-page-background": pageBackground,
-    "--form-header-font": toFontStack(theme.typography.header.font),
+    "--form-header-font": toFontStack(theme.typography.header.font, theme.language),
     "--form-header-size": `${theme.typography.header.size}px`,
-    "--form-question-font": toFontStack(theme.typography.question.font),
+    "--form-question-font": toFontStack(
+      theme.typography.question.font,
+      theme.language
+    ),
     "--form-question-size": `${theme.typography.question.size}px`,
-    "--form-text-font": toFontStack(theme.typography.text.font),
+    "--form-text-font": toFontStack(theme.typography.text.font, theme.language),
     "--form-text-size": `${theme.typography.text.size}px`,
     ...variantProperties(theme.typography),
     "--background": pageBackground,
