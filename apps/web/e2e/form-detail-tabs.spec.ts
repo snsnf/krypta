@@ -61,6 +61,8 @@ test("closed public form blocks submission", async ({
   await page.goto("/unlock")
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
+  await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Closed form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
   await page.getByRole("button", { name: "Publish form" }).click()

@@ -23,7 +23,7 @@ const TEMPLATE_ICONS: Record<string, typeof StarIcon> = {
 }
 
 const CARD_CLASSES =
-  "flex h-full flex-col items-start gap-2 rounded-lg border bg-card p-4 text-left transition-colors duration-150 ease-out focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-muted/50"
+  "flex h-full w-full flex-col items-start gap-2 rounded-lg border bg-card p-4 text-left transition-colors duration-150 ease-out focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-muted/50"
 
 export function TemplateGallery({
   onPick,
