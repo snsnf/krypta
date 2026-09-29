@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Built and merged: email/password auth, encrypted forms and responses, public
 anonymous submission, persistent vault unlock (device-bound key wrapping),
-editable forms, 9 question types plus a client-side-only "required" toggle and
+editable forms, 10 question types plus a client-side-only "required" toggle and
 an optional respondent-written "Other" choice, uploaded and encrypted form
 header images, encrypted file uploads (S3-backed), nonce-based CSP,
 email verification, TOTP 2FA, per-form collaboration, instance administration (`/api/v1/admin/*`,
