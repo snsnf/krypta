@@ -78,3 +78,16 @@ export function groupDashboardForms(forms: DashboardFormListItem[]): {
     shared: forms.filter((form) => form.role !== "owner"),
   }
 }
+
+/**
+ * Owners and Editors can duplicate: the people who can already change the
+ * content. The copy belongs to whoever makes it.
+ */
+export function canDuplicate(
+  form: Pick<DashboardFormListItem, "role" | "accessState">
+): boolean {
+  return (
+    (form.role === "owner" || form.role === "editor") &&
+    form.accessState === "ready"
+  )
+}
