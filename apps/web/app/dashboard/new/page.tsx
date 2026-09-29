@@ -7,25 +7,15 @@ import {
   CheckmarkCircle02Icon,
   Loading03Icon,
 } from "@hugeicons/core-free-icons"
-import {
-  encryptWithKey,
-  formKeyCommitment,
-  generateSealKeyPair,
-  generateSymmetricKey,
-  wrapKey,
-  type FormSchema,
-  type FormSettings,
-  type FormTheme,
-  type Question,
-} from "@krypta/crypto"
-import { ApiClientError, apiFetch } from "@/lib/api"
+import type { FormSettings, FormTheme, Question } from "@krypta/crypto"
+import { ApiClientError } from "@/lib/api"
 import { useAuthStore } from "@/lib/auth-store"
-import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { Button } from "@/components/ui/button"
 import { AppHeader } from "@/components/app-header"
 import { PreviewButton } from "@/components/preview-button"
 import { FormBuilder } from "@/components/form-builder"
+import { createForm } from "@/lib/create-form"
 import { TemplateGallery } from "@/components/template-gallery"
 import { instantiateTemplate, type FormTemplate } from "@/lib/form-templates"
 import { FormSettingsPanel } from "@/components/settings/form-settings-panel"
@@ -39,8 +29,7 @@ import {
 import { toast } from "@/components/ui/toast"
 import { DEFAULT_FORM_THEME } from "@/lib/form-theme"
 import { DEFAULT_FORM_SETTINGS } from "@/lib/form-settings"
-import { reconcileAnswerKey, type AnswerKey } from "@/lib/quiz"
-import { sealAnswerKey } from "@/lib/quiz-sealing"
+import type { AnswerKey } from "@/lib/quiz"
 
 /*
  * A draft has the same three tabs as a published form, so a creator can set
@@ -104,52 +93,18 @@ export default function NewFormPage() {
     }
     setSaving(true)
     try {
-      await ensureSodiumReady()
-
-      const formDataKey = generateSymmetricKey()
-      const { publicKey, privateKey } = generateSealKeyPair()
-      // Binds the key respondents seal to into the schema the link's key
-      // authenticates, so a key swapped in the database is refused.
-      const schema: FormSchema = {
+      const { id, formDataKey } = await createForm({
+        accountKey,
+        title,
         questions,
         theme,
         settings,
-        publicKeyCommitment: formKeyCommitment(publicKey),
-      }
-
-      const titleCiphertext = encryptWithKey(title, formDataKey)
-      const schemaCiphertext = encryptWithKey(
-        JSON.stringify(schema),
-        formDataKey
-      )
-      const wrappedFormDataKey = wrapKey(formDataKey, accountKey)
-      const wrappedFormPrivateKey = wrapKey(privateKey, accountKey)
-
-      const { id } = await apiFetch<{ id: string }>("/forms", {
-        method: "POST",
-        body: JSON.stringify({
-          title_ciphertext: titleCiphertext,
-          schema_ciphertext: schemaCiphertext,
-          form_public_key: publicKey,
-          wrapped_form_private_key: wrappedFormPrivateKey,
-          wrapped_form_data_key: wrappedFormDataKey,
-          // Sealed under the key derived from the private key just generated,
-          // never under the form data key that goes into the link.
-          answer_key_ciphertext: answerKey
-            ? sealAnswerKey(
-                reconcileAnswerKey(questions, answerKey),
-                privateKey
-              )
-            : undefined,
-          // The same plaintext settings a published form's Settings tab
-          // writes. The confirmation message and one-response-per-person are
-          // not here: they sit in `settings`, inside the encrypted schema.
-          allow_response_editing: allowResponseEditing,
-          accepting_responses: acceptingResponses,
-          closes_at: closesAt,
-          max_responses: maxResponses,
-          notify_on_response: notifyOnResponse,
-        }),
+        answerKey,
+        allowResponseEditing,
+        acceptingResponses,
+        closesAt,
+        maxResponses,
+        notifyOnResponse,
       })
 
       // The form data key travels in the URL fragment (not the query string) because fragments are
