@@ -30,4 +30,11 @@ describe("TemplateGallery", () => {
     expect(markup).toContain("sm:grid-cols-2")
     expect(markup).toContain("lg:grid-cols-3")
   })
+
+  it("stretches every card to its column, not to its text", () => {
+    // A <button> is fit-content by default, so short cards came out narrower
+    // than their neighbours.
+    const buttons = markup.match(/<button[^>]*>/g) ?? []
+    for (const button of buttons) expect(button).toMatch(/\bw-full\b/)
+  })
 })
