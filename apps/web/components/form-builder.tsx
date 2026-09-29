@@ -16,7 +16,7 @@ import {
   SquareIcon,
   Sun02Icon,
 } from "@hugeicons/core-free-icons"
-import type { FormTheme, Question } from "@krypta/crypto"
+import type { FormTheme, Question, QuestionCondition } from "@krypta/crypto"
 import { cn } from "@/lib/utils"
 import {
   Alert,
@@ -46,6 +46,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { AnswerKeyEditor } from "@/components/quiz/answer-key-editor"
 import { entryFor, renameOptionInKey, type AnswerKey } from "@/lib/quiz"
 import { distinctOptions, hasDuplicateOptions } from "@/lib/question-options"
+import { conditionValues, isRangeOperator } from "@/lib/form-visibility"
+import { RatingSettingsEditor } from "@/components/rating-settings"
 
 const QUESTION_TYPE_LABELS: Record<Question["type"], string> = {
   short_text: "Short answer",
@@ -80,25 +82,15 @@ const UNDERLINE_INPUT_CLASSES =
 const TYPE_SELECT_CLASSES =
   "h-8 w-40 shrink-0 rounded-lg border border-input bg-transparent px-2 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
 
-const CONDITION_SOURCE_TYPES = new Set([
-  "multiple_choice",
-  "dropdown",
-  "checkboxes",
-])
-
 // How long the broken-condition ring stays up once it starts fading out.
 
 /**
- * Only questions BEFORE this one, and only choice-like ones. Restricting the
- * offer to earlier questions is what makes dependency cycles impossible, and
- * exact-matching free text breaks silently on case and whitespace.
+ * Only questions BEFORE this one, and only ones a condition can match:
+ * choices and ratings, as `conditionValues` defines them. Restricting the
+ * offer to earlier questions is what makes dependency cycles impossible.
  */
 function conditionSources(questions: Question[], index: number): Question[] {
-  return questions
-    .slice(0, index)
-    .filter(
-      (q) => CONDITION_SOURCE_TYPES.has(q.type) && (q.options?.length ?? 0) > 0
-    )
+  return questions.slice(0, index).filter((q) => conditionValues(q) !== null)
 }
 
 interface FormBuilderProps {
@@ -379,6 +371,13 @@ export function FormBuilder({
                   </p>
                 )}
 
+                {q.type === "rating" && (
+                  <RatingSettingsEditor
+                    question={q}
+                    onChange={(rating) => updateQuestion(q.id, { rating })}
+                  />
+                )}
+
                 {OPTION_BASED_TYPES.includes(q.type) && (
                   <div className="mt-2 flex flex-col gap-1">
                     {(q.options ?? []).map((opt, i) => (
@@ -495,10 +494,22 @@ export function FormBuilder({
                   // author may be mid-edit. The warning has to survive the source's
                   // deletion, so it renders whenever a condition exists; only the
                   // editor selects need an eligible source to point at.
+                  //
+                  // A range operator left on a choice source (its source was
+                  // retyped from a rating) is ignored, exactly as the renderer
+                  // fails open on it. A value outside the source's values can
+                  // never be picked, so that one never matches.
+                  const ignoredRange =
+                    condition !== undefined &&
+                    source !== undefined &&
+                    isRangeOperator(condition.operator) &&
+                    source.type !== "rating"
                   const staleValue =
                     condition !== undefined &&
                     source !== undefined &&
-                    !(source.options ?? []).includes(condition.value)
+                    !ignoredRange &&
+                    !(conditionValues(source) ?? []).includes(condition.value)
+                  const ignored = dangling || ignoredRange
 
                   if (condition === undefined && sources.length === 0)
                     return null
@@ -513,7 +524,7 @@ export function FormBuilder({
                               condition: {
                                 questionId: sources[0].id,
                                 operator: "is",
-                                value: sources[0].options?.[0] ?? "",
+                                value: conditionValues(sources[0])?.[0] ?? "",
                               },
                             })
                           }
@@ -534,8 +545,14 @@ export function FormBuilder({
                               updateQuestion(q.id, {
                                 condition: {
                                   questionId: event.target.value,
-                                  operator: condition.operator,
-                                  value: next?.options?.[0] ?? "",
+                                  // Range rules exist only for ratings, so
+                                  // moving to a choice source starts over at is.
+                                  operator:
+                                    isRangeOperator(condition.operator) &&
+                                    next?.type !== "rating"
+                                      ? "is"
+                                      : condition.operator,
+                                  value: conditionValues(next)?.[0] ?? "",
                                 },
                               })
                             }}
@@ -559,8 +576,8 @@ export function FormBuilder({
                               updateQuestion(q.id, {
                                 condition: {
                                   ...condition,
-                                  operator: event.target.value as
-                                    "is" | "is_not",
+                                  operator: event.target
+                                    .value as QuestionCondition["operator"],
                                 },
                               })
                             }
@@ -568,6 +585,12 @@ export function FormBuilder({
                           >
                             <option value="is">is</option>
                             <option value="is_not">is not</option>
+                            {source?.type === "rating" && (
+                              <>
+                                <option value="at_most">is at most</option>
+                                <option value="at_least">is at least</option>
+                              </>
+                            )}
                           </select>
                           <select
                             aria-label="Condition value"
@@ -587,7 +610,7 @@ export function FormBuilder({
                                 {condition.value} (removed)
                               </option>
                             )}
-                            {distinctOptions(source?.options).map((option) => (
+                            {distinctOptions(conditionValues(source) ?? []).map((option) => (
                               <option key={option} value={option}>
                                 {option}
                               </option>
@@ -605,11 +628,11 @@ export function FormBuilder({
                           </button>
                         </div>
                       )}
-                      {(dangling || staleValue) && (
+                      {(ignored || staleValue) && (
                         <Alert variant="destructive" className="mt-2">
                           <HugeiconsIcon icon={AlertCircleIcon} />
                           <AlertTitle>
-                            {dangling
+                            {ignored
                               ? "This condition is ignored"
                               : "This condition never matches"}
                           </AlertTitle>
@@ -619,7 +642,9 @@ export function FormBuilder({
                           <AlertDescription>
                             {dangling
                               ? "This condition points at a question that is no longer a usable source, either because it was deleted or because it is no longer a choice question, so it is ignored and this question always shows."
-                              : "This condition points at an option that no longer exists, so the question stays hidden."}
+                              : ignoredRange
+                                ? "This condition compares numbers, but the question it points at is no longer a rating, so it is ignored and this question always shows."
+                                : "This condition points at an option that no longer exists, so the question stays hidden."}
                             {dangling && sources.length === 0
                               ? " There is no earlier choice question to point it at instead."
                               : null}

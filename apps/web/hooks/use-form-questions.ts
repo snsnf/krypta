@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import type { Question } from "@krypta/crypto"
 import { duplicateQuestion, moveQuestion } from "@/lib/question-order"
 import { useQuestionReorderDrag } from "@/hooks/use-question-reorder-drag"
+import { DEFAULT_RATING } from "@/lib/question-rating"
 
 /*
  * Everything about changing the list of questions, and nothing about drawing
@@ -250,6 +251,11 @@ export function useFormQuestions(
           ? current.options
           : [""]
         : undefined,
+      // Other is a property of a choice question and means nothing on a
+      // rating; the settings travel only with the rating type.
+      allowOther: type === "rating" ? undefined : current?.allowOther,
+      rating:
+        type === "rating" ? (current?.rating ?? { ...DEFAULT_RATING }) : undefined,
     })
   }
 
