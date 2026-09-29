@@ -82,6 +82,7 @@ server being able to enforce a quota or a close date at all.
 |---|---|
 | **Ten question types** | Short text, long text, multiple choice, checkboxes, dropdown, number, email, date, file upload, and rating (stars or a numbered scale). Plus a required toggle and an optional respondent-written "Other". |
 | **Two layouts** | Classic shows a page of questions with section breaks. Focus shows one at a time. Same question types, same rules underneath. |
+| **Starter templates** | Event feedback, RSVP, job application, contact and anonymous report, ready to edit. The choice stays in your browser. |
 | **Conditional questions** | Show a question only when an earlier answer says so. Evaluated entirely in the respondent's browser. |
 | **Anonymous responses** | No account needed. Open a link, fill it in, and the answers are sealed to the form's public key. |
 | **Encrypted uploads** | Any S3-compatible object store holds them, and cannot read them. |

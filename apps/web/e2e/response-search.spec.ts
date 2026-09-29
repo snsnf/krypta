@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 /*
  * Searching responses filters in the browser, over answers the dashboard has
@@ -21,6 +21,7 @@ test("searching narrows the responses without renumbering them", async ({
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Search form")
   await page.getByLabel("Question label").fill("Your name")

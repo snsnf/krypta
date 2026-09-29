@@ -503,3 +503,13 @@ export async function unlockAccount(page: Page, account: SharedAccount) {
   await page.goto("/unlock")
   await unlock(page, account.password)
 }
+
+/**
+ * Leaves the New form gallery for a blank builder. /dashboard/new opens on
+ * the template gallery, so every test that builds a form from scratch passes
+ * through here first.
+ */
+export async function startBlankForm(page: Page) {
+  await page.getByRole("button", { name: /blank form/i }).click()
+  await page.getByRole("textbox", { name: "Form title" }).waitFor()
+}

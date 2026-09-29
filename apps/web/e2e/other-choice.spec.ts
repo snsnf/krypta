@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 /*
  * The Other row is one label wrapping the control, the word and the text box,
@@ -20,6 +20,7 @@ test("tapping anywhere on the Other row selects it, and typing does not undo tha
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Other row form")
   await page.getByLabel("Question label").fill("Pick colours")
@@ -84,6 +85,7 @@ test("a number question says it wants a number", async ({
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Number form")
   await page.getByLabel("Question label").fill("How many")

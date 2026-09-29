@@ -7,6 +7,7 @@ import {
   verificationCodeFor,
   waitForAnimations,
   waitForInteractive,
+  startBlankForm,
 } from "./fixtures"
 
 // Registration is capped at 5/hour/IP server-side (apps/api/src/auth/routes.rs). Tests that
@@ -64,6 +65,7 @@ test("register, create form, submit response, view decrypted response", async ({
   await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
   await page.click('a[href="/dashboard/new"]')
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Feedback form")
   await page.getByRole("textbox", { name: "Question label" }).fill("How was your day?")
   await page.click('button:has-text("Publish form")')
@@ -102,6 +104,7 @@ sharedAccountTest(
   await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
   await page.click('a[href="/dashboard/new"]')
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Original title")
   await page.getByRole("textbox", { name: "Question label" }).fill("First question")
   await page.click('button:has-text("Publish form")')
@@ -151,6 +154,7 @@ sharedAccountTest(
   await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
   await page.click('a[href="/dashboard/new"]')
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Types test form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Your name")
 
@@ -210,6 +214,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("File upload test form")
     await page.getByRole("textbox", { name: "Question label" }).fill("Attach a file")
     await page.getByRole("combobox", { name: "Question type" }).selectOption("file_upload")
@@ -402,6 +407,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("Conditional form")
 
     await page
@@ -497,6 +503,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("Focus conditional form")
 
     await page
@@ -595,6 +602,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("Reorder test form")
 
     const questionLabels = page.getByRole("textbox", { name: "Question label" })
@@ -687,6 +695,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page
       .getByRole("textbox", { name: "Form title" })
       .fill("Reorder breaks a condition")
@@ -742,6 +751,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page
       .getByRole("textbox", { name: "Form title" })
       .fill("Rename me once")
@@ -785,6 +795,7 @@ sharedAccountTest(
     await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
     await page.click('a[href="/dashboard/new"]')
     await page.waitForURL(/\/dashboard\/new/)
+    await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("Contested form")
     await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
     await page.click('button:has-text("Publish form")')

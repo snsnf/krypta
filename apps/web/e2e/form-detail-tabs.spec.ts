@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 async function installIsolatedCorsRoute(page: import("@playwright/test").Page) {
   const isolatedApiBase = process.env.PLAYWRIGHT_API_BASE
@@ -31,6 +31,7 @@ test("form detail page defaults to the Questions tab and switches correctly", as
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Tabs test form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
   await page.click('button:has-text("Publish form")')
@@ -99,6 +100,7 @@ test("limiting to 1 response blocks a second submission in the same browser", as
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Limit-1 form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
   await page.click('button:has-text("Publish form")')
@@ -136,6 +138,7 @@ test("allowing response editing gives a link that updates the stored response", 
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Editable form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
   await page.click('button:has-text("Publish form")')
@@ -182,6 +185,7 @@ test("a response limit closes the form to the next respondent", async ({
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Limited form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Your name")
   await page.click('button:has-text("Publish form")')
@@ -215,6 +219,7 @@ test("the response summary counts each chosen option", async ({
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Summary form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Pick one")
   await page.click('button:has-text("Publish form")')
@@ -253,6 +258,7 @@ test("deleting a response from the Individual view removes it from the table", a
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Deletable form")
   await page.getByRole("textbox", { name: "Question label" }).fill("Your name")
   await page.click('button:has-text("Publish form")')
@@ -289,6 +295,7 @@ test("a draft has every tab, and settings chosen before publishing stick", async
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Draft tabs")
   await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
 

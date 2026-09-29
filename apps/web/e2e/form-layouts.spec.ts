@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 test("classic layout paginates at a section break and submits on the last page", async ({
   page,
@@ -9,6 +9,7 @@ test("classic layout paginates at a section break and submits on the last page",
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Section break form")
   await page.getByLabel("Question label").fill("First question")
@@ -47,6 +48,7 @@ test("focus layout walks one question at a time via the appearance panel and key
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Focus form")
   await page.getByLabel("Question label").fill("First question")
@@ -89,6 +91,7 @@ test("in Focus, a letter chooses an option and Enter moves on without the button
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Shortcut form")
   await page

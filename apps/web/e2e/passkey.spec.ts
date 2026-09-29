@@ -3,6 +3,7 @@ import {
   acknowledgeRecoveryCode,
   verificationCodeFor,
   waitForInteractive,
+  startBlankForm,
 } from "./fixtures"
 
 // This is the one test in the whole passkey plan that drives a real WebAuthn
@@ -52,6 +53,7 @@ test("a passkey opens a vault created before it was enrolled", async ({
   await page.waitForURL(/\/dashboard$/, { timeout: 10_000 })
   await page.click('a[href="/dashboard/new"]')
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await waitForInteractive(page)
   const title = `Passkey proof ${Date.now()}`
   await page.getByRole("textbox", { name: "Form title" }).fill(title)

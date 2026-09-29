@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 /*
  * Two options can end up with the same text while a creator is typing, and
@@ -25,6 +25,7 @@ test("duplicate option text is one choice, and the builder says so", async ({
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Duplicate options")
   await page.getByLabel("Question label").fill("Pick a number")

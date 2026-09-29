@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 /*
  * The radios are sr-only, so the visible label is what a respondent clicks;
@@ -23,6 +23,7 @@ test("a star rating reveals its follow-up at two stars and is summarised", async
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Rating form")
   await page.getByLabel("Question label").fill("How was the event?")
