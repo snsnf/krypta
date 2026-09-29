@@ -65,6 +65,16 @@ vi.mock("@/hooks/use-question-reorder-drag", async () =>
 vi.mock("@/hooks/use-form-questions", async () =>
   vi.importActual("../hooks/use-form-questions")
 )
+vi.mock("@/lib/form-visibility", async () =>
+  vi.importActual("../lib/form-visibility")
+)
+vi.mock("@/lib/question-rating", async () =>
+  vi.importActual("../lib/question-rating")
+)
+vi.mock("@/components/rating-field", async () => vi.importActual("./rating-field"))
+vi.mock("@/components/rating-settings", async () =>
+  vi.importActual("./rating-settings")
+)
 
 import { FormBuilder } from "./form-builder"
 import { DEFAULT_FORM_THEME } from "../lib/form-theme"
@@ -330,5 +340,103 @@ describe("FormBuilder question actions", () => {
     expect(markup).toContain('aria-label="Reorder question 1"')
     expect(markup).toContain('aria-label="Reorder question 2"')
     expect(markup).toContain('aria-label="Duplicate question"')
+  })
+})
+
+function renderBuilder(questionList: Question[]): string {
+  return renderToStaticMarkup(
+    <FormBuilder
+      eyebrowLabel="Editing form"
+      title="A form"
+      onTitleChange={() => undefined}
+      questions={questionList}
+      onQuestionsChange={() => undefined}
+      theme={DEFAULT_FORM_THEME}
+      onThemeChange={() => undefined}
+    />
+  )
+}
+
+const fiveStars: Question = {
+  id: "a",
+  type: "rating",
+  label: "How was it?",
+  rating: { style: "stars", min: 1, max: 5 },
+}
+
+describe("FormBuilder rating questions", () => {
+  it("offers Rating in the question type menu", () => {
+    const markup = renderBuilder([{ id: "a", type: "short_text", label: "Name" }])
+    expect(markup).toContain('<option value="rating">Rating</option>')
+  })
+
+  it("shows star settings and a preview for a rating question", () => {
+    const markup = renderBuilder([fiveStars])
+    expect(markup).toContain('aria-label="Number of stars"')
+    expect(markup).toContain('aria-pressed="true"')
+    expect(markup.match(/name="a-preview"/g)).toHaveLength(5)
+  })
+
+  it("shows scale range and end label inputs for a numbered scale", () => {
+    const markup = renderBuilder([
+      {
+        id: "a",
+        type: "rating",
+        label: "Recommend?",
+        rating: { style: "scale", min: 0, max: 10 },
+      },
+    ])
+    expect(markup).toContain('aria-label="Scale start"')
+    expect(markup).toContain('aria-label="Scale end"')
+    expect(markup).toContain('aria-label="Low end label"')
+    expect(markup).toContain('aria-label="High end label"')
+  })
+
+  it("offers at most and at least only when the source is a rating", () => {
+    const markup = renderBuilder([
+      fiveStars,
+      {
+        id: "b",
+        type: "long_text",
+        label: "What went wrong?",
+        condition: { questionId: "a", operator: "at_most", value: "2" },
+      },
+    ])
+    expect(markup).toContain(
+      '<option value="at_most" selected="">is at most</option>'
+    )
+    expect(markup).toContain('<option value="at_least">is at least</option>')
+    expect(markup).not.toContain("This condition never matches")
+  })
+
+  it("warns when a range bound is outside the source's range", () => {
+    const markup = renderBuilder([
+      fiveStars,
+      {
+        id: "b",
+        type: "long_text",
+        label: "Why?",
+        condition: { questionId: "a", operator: "at_least", value: "8" },
+      },
+    ])
+    expect(markup).toContain("This condition never matches")
+  })
+
+  it("warns about a range operator left on a choice source", () => {
+    const markup = renderBuilder([
+      { id: "a", type: "multiple_choice", label: "Pick", options: ["Yes", "No"] },
+      {
+        id: "b",
+        type: "long_text",
+        label: "Why?",
+        condition: { questionId: "a", operator: "at_most", value: "Yes" },
+      },
+    ])
+    // The evaluator fails open on this pairing, so the warning must say the
+    // question always shows, not that it stays hidden.
+    expect(markup).toContain("This condition is ignored")
+    expect(markup).toContain("no longer a rating")
+    expect(markup).not.toContain("This condition never matches")
+    expect(markup).not.toContain('value="at_least"')
   })
 })
