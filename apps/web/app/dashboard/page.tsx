@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { encryptWithKey } from "@krypta/crypto"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
+  Copy01Icon,
   MoreVerticalIcon,
   PencilEdit02Icon,
   PlusSignIcon,
@@ -18,12 +20,16 @@ import {
 } from "@/lib/account-sharing-key"
 import { useAuthStore } from "@/lib/auth-store"
 import {
+  canDuplicate,
   decryptFormList,
   groupDashboardForms,
   type DashboardFormListItem,
   type FormListWireItem,
 } from "@/lib/dashboard-forms"
 import { provisionPendingMembers } from "@/lib/provisioning"
+import { duplicateForm } from "@/lib/duplicate-form"
+import { ensureSodiumReady } from "@/lib/sodium-ready"
+import { toast } from "@/components/ui/toast"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -114,6 +120,9 @@ export default function DashboardPage() {
   const [renameTitle, setRenameTitle] = useState("")
   const [renameError, setRenameError] = useState<string | null>(null)
   const [renamePending, setRenamePending] = useState(false)
+  const router = useRouter()
+  // Held while a copy is being made, so a second click cannot make a second.
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (userId === null || accountKey === null) {
@@ -216,6 +225,41 @@ export default function DashboardPage() {
               archivedForms: [form, ...prev.archivedForms],
               activeForms: prev.activeForms.filter((f) => f.id !== form.id),
             }
+      })
+    }
+  }
+
+  async function handleDuplicate(form: DashboardFormListItem) {
+    if (!accountKey || !userId || duplicatingId !== null) return
+    setDuplicatingId(form.id)
+    try {
+      await ensureSodiumReady()
+      const sharing = await ensureAccountSharingKey({
+        expectedUserId: userId,
+        accountKey,
+      })
+      const copy = await duplicateForm(form.id, accountKey, sharing)
+      if (!copy.headerCopied) {
+        toast.add({
+          title: "Copied, but the header image couldn't be copied",
+          description: "Add it again from Appearance.",
+          type: "error",
+        })
+      }
+      // The key travels in the fragment, never the query string, exactly as
+      // after publishing a new form.
+      router.push(
+        `/dashboard/${copy.id}?created=1#key=${encodeURIComponent(copy.formDataKey)}`
+      )
+    } catch (error) {
+      setDuplicatingId(null)
+      toast.add({
+        title: "Could not duplicate the form",
+        description:
+          error instanceof ApiClientError && error.code === "rate_limited"
+            ? "This account is at its limit of open forms. Close another form, then try again."
+            : "Something went wrong. Try again.",
+        type: "error",
       })
     }
   }
@@ -490,6 +534,17 @@ export default function DashboardPage() {
                                       size={16}
                                     />
                                     Rename
+                                  </DropdownMenuItem>
+                                ) : null}
+                                {canDuplicate(form) ? (
+                                  <DropdownMenuItem
+                                    disabled={duplicatingId !== null}
+                                    onClick={() => handleDuplicate(form)}
+                                  >
+                                    <HugeiconsIcon icon={Copy01Icon} size={16} />
+                                    {duplicatingId === form.id
+                                      ? "Duplicating..."
+                                      : "Duplicate"}
                                   </DropdownMenuItem>
                                 ) : null}
                                 <DropdownMenuItem
