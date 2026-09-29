@@ -104,18 +104,15 @@ interface FormWire {
 }
 
 /**
- * Fetches and opens one form for a member who holds the account key.
+ * The form itself, opened with the member's own access: title, schema,
+ * plaintext columns and the answer key. No responses, so Duplicate never
+ * downloads what it does not copy.
  *
  * Throws `"Form access is not ready"` for a membership whose keys have not been
  * provisioned yet, and for a payload that does not describe a usable
  * membership. `describeWorkspaceLoadFailure` matches on that exact string to
  * tell "waiting for the owner" apart from "keys unreadable", so rewording it
  * silently reclassifies the screen a collaborator sees.
- */
-/**
- * The form itself, opened with the member's own access: title, schema,
- * plaintext columns and the answer key. No responses, so Duplicate never
- * downloads what it does not copy.
  */
 export async function loadFormDefinition(
   formId: string,
@@ -162,6 +159,7 @@ export async function loadFormDefinition(
   }
 }
 
+/** The form's definition plus every response, opened in this browser. */
 export async function loadFormWorkspace(
   formId: string,
   accountKey: string,
