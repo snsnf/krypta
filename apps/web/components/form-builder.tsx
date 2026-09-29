@@ -57,6 +57,7 @@ const QUESTION_TYPE_LABELS: Record<Question["type"], string> = {
   email: "Email",
   date: "Date",
   file_upload: "File upload",
+  rating: "Rating",
 }
 
 const ANSWER_PREVIEW_PLACEHOLDERS: Partial<Record<Question["type"], string>> = {
