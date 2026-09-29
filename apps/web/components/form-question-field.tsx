@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { RatingField } from "@/components/rating-field"
 import type { AnswerValue, FileAnswer } from "@/hooks/use-public-form-answers"
 import {
   decodeOtherAnswer,
@@ -201,6 +202,16 @@ export function FormQuestionField({
         value={(value as string) ?? ""}
         className="form-theme-input form-theme-text"
         onChange={(e) => onChange(e.target.value)}
+      />
+    )
+  }
+
+  if (question.type === "rating") {
+    return (
+      <RatingField
+        question={question}
+        value={typeof value === "string" ? value : undefined}
+        onChange={onChange}
       />
     )
   }

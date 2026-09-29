@@ -5,6 +5,10 @@ vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
 )
 vi.mock("@/lib/form-other", async () => vi.importActual("../lib/form-other"))
+vi.mock("@/components/rating-field", async () => vi.importActual("./rating-field"))
+vi.mock("@/lib/question-rating", async () =>
+  vi.importActual("../lib/question-rating")
+)
 vi.mock("@/lib/utils", () => ({
   cn: (...values: unknown[]) => values.filter(Boolean).join(" "),
 }))
@@ -45,6 +49,64 @@ function baseProps(question: Question) {
 }
 
 describe("FormQuestionField", () => {
+  it("renders five stars as a named radio group with one radio per star", () => {
+    const question: Question = {
+      id: "r",
+      type: "rating",
+      label: "How was it?",
+      rating: { style: "stars", min: 1, max: 5 },
+    }
+    const markup = renderToStaticMarkup(
+      <FormQuestionField {...baseProps(question)} value="4" />
+    )
+    expect(markup).toContain('role="radiogroup"')
+    expect(markup).toContain('aria-label="How was it?"')
+    expect(markup.match(/type="radio"/g)).toHaveLength(5)
+    expect(markup).toContain('aria-label="4 of 5 stars"')
+    // Attribute order is React's to choose, so find the one checked input.
+    const checked = markup.match(/<input[^>]*checked=""[^>]*>/g) ?? []
+    expect(checked).toHaveLength(1)
+    expect(checked[0]).toContain('value="4"')
+  })
+
+  it("renders a 0 to 10 scale with its end labels", () => {
+    const question: Question = {
+      id: "s",
+      type: "rating",
+      label: "Recommend us?",
+      rating: {
+        style: "scale",
+        min: 0,
+        max: 10,
+        minLabel: "Not likely",
+        maxLabel: "Very likely",
+      },
+    }
+    const markup = renderToStaticMarkup(
+      <FormQuestionField {...baseProps(question)} />
+    )
+    expect(markup.match(/type="radio"/g)).toHaveLength(11)
+    expect(markup).toContain('aria-label="0, on a scale of 0 to 10"')
+    expect(markup).toContain("Not likely")
+    expect(markup).toContain("Very likely")
+    // Not a bare "checked": the scale boxes carry has-[:checked] classes.
+    expect(markup).not.toMatch(/checked=""/)
+  })
+
+  it("marks the first radio required on a required rating", () => {
+    const question: Question = {
+      id: "r",
+      type: "rating",
+      label: "How was it?",
+      required: true,
+      rating: { style: "stars", min: 1, max: 3 },
+    }
+    const markup = renderToStaticMarkup(
+      <FormQuestionField {...baseProps(question)} />
+    )
+    expect(markup).toContain('required=""')
+  })
+
   it("renders a required short_text as a required native input", () => {
     const markup = renderToStaticMarkup(
       <FormQuestionField
