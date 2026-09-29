@@ -2,6 +2,7 @@
 
 import { HugeiconsIcon } from "@hugeicons/react"
 import { FloppyDiskIcon } from "@hugeicons/core-free-icons"
+import { useFormT } from "@/lib/form-i18n"
 
 interface FormDraftNoticeProps {
   /**
@@ -44,6 +45,7 @@ export function FormDraftNotice({
   staleAnswersDropped = false,
   onDiscard,
 }: FormDraftNoticeProps) {
+  const t = useFormT()
   return (
     <div
       data-open={hasDraft}
@@ -62,21 +64,20 @@ export function FormDraftNotice({
               className="size-3 shrink-0 opacity-70 sm:size-3.5"
             />
             <p className="flex-1 text-muted-foreground/85">
-              Your answers are saved on this device so you can finish later.
+              {t("draftSaved")}
             </p>
             <button
               type="button"
               onClick={onDiscard}
-              aria-label="Discard saved answers"
+              aria-label={t("discardSaved")}
               className="relative shrink-0 rounded-md border border-[color-mix(in_oklab,var(--form-accent)_22%,transparent)] px-2 py-0.5 text-foreground/75 transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-[color-mix(in_oklab,var(--form-accent)_10%,transparent)] hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none active:scale-[0.97]"
             >
-              Discard
+              {t("discard")}
             </button>
           </div>
           {staleAnswersDropped && (
-            <p className="mt-1.5 pl-5 text-muted-foreground/85 sm:pl-6">
-              This form has changed since you started, so a few of your saved
-              answers no longer fit it and were cleared.
+            <p className="mt-1.5 ps-5 text-muted-foreground/85 sm:ps-6">
+              {t("draftChanged")}
             </p>
           )}
         </div>

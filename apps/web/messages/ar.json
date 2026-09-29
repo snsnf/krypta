@@ -24,7 +24,7 @@
     "clickToUpload": "انقر للرفع",
     "uploadHint": "مشفّر في متصفحك · الحد الأقصى 10 ميغابايت",
     "encryptingUpload": "جارٍ التشفير والرفع…",
-    "uploaded": "تم الرفع: {name}",
+    "uploadedPrefix": "تم الرفع:",
     "starLabel": "التقييم {value} من {max}",
     "scaleLabel": "{value}، على مقياس من {min} إلى {max}",
     "scaleLabelWithEnd": "{value}، {end}، على مقياس من {min} إلى {max}",

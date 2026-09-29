@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
 vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
 )
@@ -38,6 +39,7 @@ vi.mock("motion/react", () => {
 })
 
 import { FocusFormRenderer } from "./focus-form-renderer"
+import { FormLanguageContext } from "../lib/form-i18n"
 import type { Question } from "@krypta/crypto"
 
 function question(id: string, label: string): Question {
@@ -149,5 +151,22 @@ describe("FocusFormRenderer", () => {
       />
     )
     expect(markup).toContain("This form has no questions yet.")
+  })
+
+  it("speaks Arabic and offers number shortcuts for an Arabic form", () => {
+    const markup = renderToStaticMarkup(
+      <FormLanguageContext value="ar">
+        <FocusFormRenderer
+          title="RSVP"
+          questions={[{ id: "m", type: "multiple_choice", label: "Pick", options: ["x", "y"] }]}
+          answers={{}}
+          {...noopSharedProps}
+        />
+      </FormLanguageContext>
+    )
+    expect(markup).toContain("إرسال")
+    expect(markup).toContain("اضغط رقمًا للاختيار.")
+    expect(markup).not.toContain("Press a letter")
+    expect(markup).not.toContain(">Submit<")
   })
 })

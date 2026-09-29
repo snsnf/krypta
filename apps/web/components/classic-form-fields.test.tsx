@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
 vi.mock("@/components/ui/button", () => ({
   Button: (props: React.ComponentProps<"button">) => <button {...props} />,
 }))
@@ -35,6 +36,7 @@ vi.mock("@/hooks/use-form-steps", async () => {
 })
 
 import { ClassicFormFields } from "./classic-form-fields"
+import { FormLanguageContext } from "../lib/form-i18n"
 import type { Question } from "@krypta/crypto"
 
 function question(id: string, pageBreakBefore?: boolean): Question {
@@ -155,5 +157,15 @@ describe("ClassicFormFields", () => {
       />
     )
     expect(markup).toContain("Waiting for the file upload to finish.")
+  })
+
+  it("labels its buttons in Arabic for an Arabic form", () => {
+    const markup = renderToStaticMarkup(
+      <FormLanguageContext value="ar">
+        <ClassicFormFields title="A form" questions={[question("a")]} answers={{}} {...noopSharedProps} />
+      </FormLanguageContext>
+    )
+    expect(markup).toContain("إرسال")
+    expect(markup).not.toContain(">Submit<")
   })
 })

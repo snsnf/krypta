@@ -39,7 +39,7 @@ export function FormQuestionCard({
       >
         {question.label}
         {question.required && (
-          <span className="form-theme-accent-text ml-0.5">*</span>
+          <span className="form-theme-accent-text ms-0.5">*</span>
         )}
       </label>
       <FormQuestionField

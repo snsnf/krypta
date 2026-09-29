@@ -19,6 +19,7 @@ import {
   isOtherAnswer,
 } from "@/lib/form-other"
 import { distinctOptions } from "@/lib/question-options"
+import { useFormLanguage, useFormT } from "@/lib/form-i18n"
 
 const TEXTAREA_CLASSES =
   "w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -26,9 +27,9 @@ const TEXTAREA_CLASSES =
 const SELECT_CLASSES =
   "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
 
-/* An empty bordered box gives a respondent nothing to act on. Date is the one
-   exception: the browser already renders its own dd/mm/yyyy hint. */
-const ANSWER_PLACEHOLDER = "Your answer"
+/* An empty bordered box gives a respondent nothing to act on, so text fields
+   carry the `yourAnswer` placeholder. Date is the one exception: the browser
+   already renders its own dd/mm/yyyy hint. */
 
 /* A number question looked exactly like a text question. `type="number"` only
    shows its spinners on desktop, on hover, and never on a phone, so the field
@@ -36,8 +37,8 @@ const ANSWER_PLACEHOLDER = "Your answer"
    what actually says so; `inputMode` then gets the numeric keypad up on a
    phone, where the spinners were never going to help. "decimal" rather than
    "numeric" because the question type does not forbid a decimal point, and a
-   keypad without one would make a valid answer untypable. */
-const NUMBER_PLACEHOLDER = "Enter a number"
+   keypad without one would make a valid answer untypable. The placeholder
+   is the `enterNumber` message. */
 
 /**
  * Classic puts every question on the page at once, so an option row has to
@@ -100,10 +101,16 @@ const CHECKBOX_CLASSES: Record<FieldDensity, string> = {
  *
  * Past 26 options the letters run out, so numbering takes over rather than
  * walking off the end of the alphabet into `[`, `\` and `]`.
+ *
+ * `numeric` is for forms in a language whose keyboard does not type Latin
+ * letters (Arabic): the badges are 1 to 9 and so are the keys, and options
+ * past nine have no shortcut.
  */
 const OPTION_SHORTCUT_LIMIT = 26
+const NUMERIC_SHORTCUT_LIMIT = 9
 
-function optionMarker(index: number): string {
+function optionMarker(index: number, numeric: boolean): string {
+  if (numeric) return String(index + 1)
   return index < OPTION_SHORTCUT_LIMIT
     ? String.fromCharCode(65 + index)
     : String(index + 1)
@@ -111,12 +118,21 @@ function optionMarker(index: number): string {
 
 /**
  * Maps a pressed key back to an option index, or -1. Lives here so the badge
- * and the shortcut cannot disagree about which letter means which option.
+ * and the shortcut cannot disagree about which key means which option.
  */
-export function optionShortcutIndex(key: string, optionCount: number): number {
+export function optionShortcutIndex(
+  key: string,
+  optionCount: number,
+  numeric = false
+): number {
   if (key.length !== 1) return -1
-  const index = key.toUpperCase().charCodeAt(0) - 65
-  const usable = Math.min(optionCount, OPTION_SHORTCUT_LIMIT)
+  const index = numeric
+    ? key.charCodeAt(0) - 49
+    : key.toUpperCase().charCodeAt(0) - 65
+  const usable = Math.min(
+    optionCount,
+    numeric ? NUMERIC_SHORTCUT_LIMIT : OPTION_SHORTCUT_LIMIT
+  )
   return index >= 0 && index < usable ? index : -1
 }
 
@@ -154,12 +170,14 @@ export function FormQuestionField({
   uploading,
   uploadError,
 }: FormQuestionFieldProps) {
+  const t = useFormT()
+  const numericMarkers = useFormLanguage() === "ar"
   if (question.type === "short_text") {
     return (
       <Input
         id={question.id}
         required={question.required}
-        placeholder={ANSWER_PLACEHOLDER}
+        placeholder={t("yourAnswer")}
         value={(value as string) ?? ""}
         className="form-theme-input form-theme-text"
         onChange={(e) => onChange(e.target.value)}
@@ -172,7 +190,7 @@ export function FormQuestionField({
       <textarea
         id={question.id}
         required={question.required}
-        placeholder={ANSWER_PLACEHOLDER}
+        placeholder={t("yourAnswer")}
         value={(value as string) ?? ""}
         onChange={(e) => onChange(e.target.value)}
         rows={4}
@@ -196,8 +214,8 @@ export function FormQuestionField({
           question.type === "date"
             ? undefined
             : question.type === "number"
-              ? NUMBER_PLACEHOLDER
-              : ANSWER_PLACEHOLDER
+              ? t("enterNumber")
+              : t("yourAnswer")
         }
         value={(value as string) ?? ""}
         className="form-theme-input form-theme-text"
@@ -226,7 +244,7 @@ export function FormQuestionField({
         className={`${SELECT_CLASSES} form-theme-input form-theme-text`}
       >
         <option className="form-theme-text" value="" disabled>
-          Select an option
+          {t("selectOption")}
         </option>
         {distinctOptions(question.options).map((opt) => (
           <option className="form-theme-text" key={opt} value={opt}>
@@ -266,7 +284,7 @@ export function FormQuestionField({
               </span>
             ) : (
               <span aria-hidden="true" className={OPTION_BADGE_CLASSES}>
-                {optionMarker(i)}
+                {optionMarker(i, numericMarkers)}
               </span>
             )}
             <input
@@ -389,6 +407,7 @@ function OtherChoiceRow({
   onSelect: () => void
   onTextChange: (text: string) => void
 }) {
+  const t = useFormT()
   /*
    * A label wrapping the whole row, so tapping anywhere on it chooses Other.
    * It used to be a div with only the control and the word labelled, which
@@ -453,7 +472,7 @@ function OtherChoiceRow({
             onCheckedChange={onSelect}
           />
         )}
-        Other:
+        {t("other")}:
       </span>
       {/*
        * Only once Other is chosen. A line sitting beside an unselected control
@@ -469,7 +488,7 @@ function OtherChoiceRow({
         <input
           ref={inputRef}
           type="text"
-          aria-label={`Other answer for ${question.label}`}
+          aria-label={t("otherAnswerFor", { question: question.label })}
           value={text}
           onChange={(event) => onTextChange(event.target.value)}
           className="form-theme-text min-w-0 flex-1 cursor-text border-0 border-b border-current/40 bg-transparent px-0 py-0.5 text-inherit transition-colors duration-150 ease-out outline-none focus:border-current"
@@ -502,6 +521,7 @@ function FileUploadField({
   | "uploadError"
 >) {
   const [dragging, setDragging] = useState(false)
+  const t = useFormT()
   const uploaded =
     value && typeof value === "object" && !Array.isArray(value)
       ? (value as FileAnswer)
@@ -559,7 +579,7 @@ function FileUploadField({
               className="animate-spin text-muted-foreground"
             />
             <p className="form-theme-text text-muted-foreground">
-              Encrypting and uploading…
+              {t("encryptingUpload")}
             </p>
           </>
         ) : uploaded ? (
@@ -570,7 +590,7 @@ function FileUploadField({
             <p className="form-theme-text font-medium break-all">
               {/* Keeps the state legible to a screen reader, which otherwise
                   hears only a bare filename. */}
-              <span className="sr-only">Uploaded: </span>
+              <span className="sr-only">{t("uploadedPrefix")} </span>
               {uploaded.filename}
             </p>
             <p className="form-theme-text text-xs text-muted-foreground">
@@ -586,14 +606,14 @@ function FileUploadField({
             />
             <p className="form-theme-text">
               <span className="form-theme-accent-text font-medium">
-                Click to upload
+                {t("clickToUpload")}
               </span>{" "}
               or drag and drop
             </p>
             {/* Mirrors MAX_FILE_BYTES in use-public-form-answers.ts, which
                 owns the actual limit and rejects anything over it. */}
             <p className="form-theme-text text-xs text-muted-foreground">
-              Encrypted in your browser · Max 10MB
+              {t("uploadHint")}
             </p>
           </>
         )}
