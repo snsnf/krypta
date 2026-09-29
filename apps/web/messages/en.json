@@ -24,7 +24,7 @@
     "clickToUpload": "Click to upload",
     "uploadHint": "Encrypted in your browser · Max 10MB",
     "encryptingUpload": "Encrypting and uploading…",
-    "uploaded": "Uploaded: {name}",
+    "uploadedPrefix": "Uploaded:",
     "starLabel": "{value} of {max} stars",
     "scaleLabel": "{value}, on a scale of {min} to {max}",
     "scaleLabelWithEnd": "{value}, {end}, on a scale of {min} to {max}",

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { FormHeaderCard } from "@/components/form-header-card"
 import { FormQuestionCard } from "@/components/form-question-card"
 import { useFormSteps } from "@/hooks/use-form-steps"
+import { useFormT } from "@/lib/form-i18n"
 import type { AnswerValue } from "@/hooks/use-public-form-answers"
 
 interface ClassicFormFieldsProps {
@@ -39,6 +40,7 @@ export function ClassicFormFields({
   submitError,
   onSubmit,
 }: ClassicFormFieldsProps) {
+  const t = useFormT()
   /*
    * Position, resume, the end-of-form test and both advance gates come from
    * the shared step machine. A step here is a page, so Classic keeps what is
@@ -71,7 +73,7 @@ export function ClassicFormFields({
       {pages.length > 1 && (
         <div>
           <p className="form-theme-text text-sm text-muted-foreground">
-            Page {currentIndex + 1} of {pages.length}
+            {t("pageOf", { current: currentIndex + 1, total: pages.length })}
           </p>
           <div className="mt-1 h-1 w-full rounded-full bg-border">
             <div
@@ -119,7 +121,7 @@ export function ClassicFormFields({
               variant="outline"
               onClick={back}
             >
-              Back
+              {t("back")}
             </Button>
           )}
           <Button
@@ -128,16 +130,16 @@ export function ClassicFormFields({
             className="form-theme-accent-bg form-theme-button form-theme-text active:scale-[0.97]"
           >
             {submitting && isLastPage
-              ? "Submitting..."
+              ? t("submitting")
               : isLastPage
-                ? "Submit"
-                : "Next"}
+                ? t("submit")
+                : t("next")}
           </Button>
           {pageInvalid && !submitting && (
             <p className="form-theme-text text-sm text-muted-foreground">
               {stillUploading
-                ? "Waiting for the file upload to finish."
-                : "Answer every required question to continue."}
+                ? t("waitingUpload")
+                : t("answerEveryRequired")}
             </p>
           )}
         </div>

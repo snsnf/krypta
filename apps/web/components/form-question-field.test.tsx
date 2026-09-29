@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
 vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
 )
@@ -32,6 +33,7 @@ vi.mock("@/components/ui/checkbox", () => ({
 }))
 
 import { FormQuestionField, optionShortcutIndex } from "./form-question-field"
+import { FormLanguageContext } from "../lib/form-i18n"
 import type { Question } from "@krypta/crypto"
 
 const noop = () => undefined
@@ -358,5 +360,36 @@ describe("selected-option treatment", () => {
     expect(pick("compact")).toContain(
       "group-has-[:checked]/option:border-[var(--form-accent)]"
     )
+  })
+
+  it("speaks the form's language for an Arabic form", () => {
+    const arabic = (question: Question) =>
+      renderToStaticMarkup(
+        <FormLanguageContext value="ar">
+          <FormQuestionField {...baseProps(question)} />
+        </FormLanguageContext>
+      )
+    const text = arabic({ id: "t", type: "short_text", label: "Name" })
+    expect(text).toContain('placeholder="إجابتك"')
+    expect(text).not.toContain("Your answer")
+    const dropdown = arabic({ id: "d", type: "dropdown", label: "Pick", options: ["x"] })
+    expect(dropdown).toContain("اختر خيارًا")
+    expect(dropdown).not.toContain("Select an option")
+  })
+
+  it("numbers Focus option badges for an Arabic form, where letters cannot be typed", () => {
+    const markup = renderToStaticMarkup(
+      <FormLanguageContext value="ar">
+        <FormQuestionField
+          {...baseProps({ id: "m", type: "multiple_choice", label: "Pick", options: ["x", "y"] })}
+        />
+      </FormLanguageContext>
+    )
+    expect(markup).toMatch(/>1<\/span>/)
+    expect(markup).toMatch(/>2<\/span>/)
+    expect(markup).not.toMatch(/>A<\/span>/)
+    expect(optionShortcutIndex("2", 2, true)).toBe(1)
+    expect(optionShortcutIndex("b", 2, true)).toBe(-1)
+    expect(optionShortcutIndex("b", 2, false)).toBe(1)
   })
 })

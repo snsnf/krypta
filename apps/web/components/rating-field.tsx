@@ -4,6 +4,7 @@ import { useState } from "react"
 import type { Question } from "@krypta/crypto"
 import { cn } from "@/lib/utils"
 import { parseRatingAnswer, ratingRange } from "@/lib/question-rating"
+import { useFormT } from "@/lib/form-i18n"
 
 /*
  * A rating is a radio group underneath, like multiple choice: the radios are
@@ -42,6 +43,7 @@ export function RatingField({
   preview = false,
 }: RatingFieldProps) {
   const [hovered, setHovered] = useState<number | null>(null)
+  const t = useFormT()
   const range = ratingRange(question)
   const picked = parseRatingAnswer(question, value)
   const values = Array.from(
@@ -77,8 +79,15 @@ export function RatingField({
                 ? range.maxLabel
                 : undefined
           const name = stars
-            ? `${option} of ${range.max} stars`
-            : `${option}, ${endLabel ? `${endLabel}, ` : ""}on a scale of ${range.min} to ${range.max}`
+            ? t("starLabel", { value: option, max: range.max })
+            : endLabel
+              ? t("scaleLabelWithEnd", {
+                  value: option,
+                  end: endLabel,
+                  min: range.min,
+                  max: range.max,
+                })
+              : t("scaleLabel", { value: option, min: range.min, max: range.max })
           return (
             <label
               key={option}
@@ -135,7 +144,7 @@ export function RatingField({
       {!stars && (range.minLabel || range.maxLabel) && (
         <div className="form-theme-text mt-1.5 flex justify-between gap-4 text-xs text-muted-foreground">
           <span>{range.minLabel}</span>
-          <span className="text-right">{range.maxLabel}</span>
+          <span className="text-end">{range.maxLabel}</span>
         </div>
       )}
     </div>

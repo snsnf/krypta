@@ -14,6 +14,7 @@ import type { AnswerValue } from "@/hooks/use-public-form-answers"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight02Icon } from "@hugeicons/core-free-icons"
 import { distinctOptions } from "@/lib/question-options"
+import { useFormLanguage, useFormT } from "@/lib/form-i18n"
 
 interface FocusFormRendererProps {
   title: string
@@ -53,6 +54,11 @@ export function FocusFormRenderer({
   submitError,
   onSubmit,
 }: FocusFormRendererProps) {
+  const t = useFormT()
+  // Arabic keyboards do not type Latin letters, so an Arabic form's option
+  // shortcuts are numbers; the badges in FormQuestionField follow the same
+  // language, so the two cannot disagree.
+  const numericShortcuts = useFormLanguage() === "ar"
   /*
    * Position, resume, the end-of-form test and both advance gates come from
    * the shared step machine. What Focus keeps for itself is everything below:
@@ -137,7 +143,11 @@ export function FocusFormRenderer({
       )
         return
 
-      const index = optionShortcutIndex(event.key, options.length)
+      const index = optionShortcutIndex(
+        event.key,
+        options.length,
+        numericShortcuts
+      )
       if (index === -1) return
       event.preventDefault()
       const option = options[index]
@@ -150,7 +160,7 @@ export function FocusFormRenderer({
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [question, onAnswerChange, onToggleCheckbox])
+  }, [question, onAnswerChange, onToggleCheckbox, numericShortcuts])
 
   /*
    * Enter advances when nothing on the page owns the key.
@@ -181,10 +191,10 @@ export function FocusFormRenderer({
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center">
         <p className="form-theme-text mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {title || "Untitled form"}
+          {title || t("untitled")}
         </p>
         <p className="form-theme-text text-muted-foreground">
-          This form has no questions yet.
+          {t("noQuestions")}
         </p>
       </div>
     )
@@ -200,9 +210,13 @@ export function FocusFormRenderer({
     (question.options?.length ?? 0) === 0
       ? null
       : question.type === "checkboxes"
-        ? "Press a letter to toggle an option."
+        ? numericShortcuts
+          ? t("pressNumberToggle")
+          : t("pressLetterToggle")
         : question.type === "multiple_choice"
-          ? "Press a letter to choose."
+          ? numericShortcuts
+            ? t("pressNumberChoose")
+            : t("pressLetterChoose")
           : null
 
   return (
@@ -215,7 +229,7 @@ export function FocusFormRenderer({
        */}
       <div className="mb-3 flex items-baseline justify-between gap-4">
         <p className="form-theme-text text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {title || "Untitled form"}
+          {title || t("untitled")}
         </p>
         <p className="font-mono text-xs text-muted-foreground tabular-nums">
           {String(index + 1).padStart(2, "0")}
@@ -302,7 +316,7 @@ export function FocusFormRenderer({
                   >
                     {question.label}
                     {question.required && (
-                      <span className="form-theme-accent-text ml-1">*</span>
+                      <span className="form-theme-accent-text ms-1">*</span>
                     )}
                   </label>
 
@@ -349,16 +363,17 @@ export function FocusFormRenderer({
             className="form-theme-accent-bg form-theme-button form-theme-text active:scale-[0.97]"
           >
             {submitting && isLast ? (
-              "Submitting..."
+              t("submitting")
             ) : isLast ? (
-              "Submit"
+              t("submit")
             ) : (
               <>
-                Next
+                {t("next")}
                 <HugeiconsIcon
                   icon={ArrowRight02Icon}
                   size={16}
                   strokeWidth={2}
+                  className="rtl:rotate-180"
                 />
               </>
             )}
@@ -377,21 +392,24 @@ export function FocusFormRenderer({
           {invalid && !submitting ? (
             <span className="form-theme-text text-xs text-muted-foreground">
               {stillUploading
-                ? "Waiting for the file upload to finish."
-                : "This question is required."}
+                ? t("waitingUpload")
+                : t("questionRequired")}
             </span>
           ) : (
             <span className="form-theme-text hidden text-xs text-muted-foreground [@media(hover:hover)_and_(pointer:fine)]:inline">
-              press Enter ↵
+              {t("pressEnter")} ↵
             </span>
           )}
           {index > 0 && (
             <button
               type="button"
               onClick={back}
-              className="form-theme-text ml-auto text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+              className="form-theme-text ms-auto text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
             >
-              ← Back
+              <span aria-hidden="true" className="inline-block rtl:rotate-180">
+                ←
+              </span>{" "}
+              {t("back")}
             </button>
           )}
         </div>

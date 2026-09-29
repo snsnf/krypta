@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { useFormT } from "@/lib/form-i18n"
 
 interface FormHeaderCardProps {
   /** Object URL for the decrypted header image, or null when there is none. */
@@ -14,6 +15,7 @@ interface FormHeaderCardProps {
 
 function HeaderImage({ src }: { src: string }) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
+  const t = useFormT()
 
   return (
     <div className="relative aspect-[4/1] overflow-hidden bg-muted">
@@ -39,7 +41,7 @@ function HeaderImage({ src }: { src: string }) {
           role="status"
           className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground"
         >
-          Header image could not be loaded. The form is still available.
+          {t("headerImageFailed")}
         </p>
       )}
     </div>
@@ -52,6 +54,7 @@ export function FormHeaderCard({
   titleInputClassName,
   headerImageUrl = null,
 }: FormHeaderCardProps) {
+  const t = useFormT()
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       {/*
@@ -67,8 +70,8 @@ export function FormHeaderCard({
       <div className="p-5">
         {onTitleChange ? (
           <input
-            placeholder="Untitled form"
-            aria-label="Form title"
+            placeholder={t("untitled")}
+            aria-label={t("formTitle")}
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
             className={cn(
@@ -78,7 +81,7 @@ export function FormHeaderCard({
           />
         ) : (
           <h2 className="form-theme-header font-medium">
-            {title || "Untitled form"}
+            {title || t("untitled")}
           </h2>
         )}
       </div>
