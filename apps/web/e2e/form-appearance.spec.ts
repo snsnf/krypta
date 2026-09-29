@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 type PageCookies = Awaited<ReturnType<ReturnType<Page["context"]>["cookies"]>>
 
@@ -54,6 +54,7 @@ async function loginAndOpenNewForm(
   await unlock(page, account.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 }
 
 test("builder is wide and applies appearance changes live", async ({

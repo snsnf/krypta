@@ -17,7 +17,7 @@ as a third unlock method, per-member response notifications,
 server-enforced form response limits (close date and response cap) alongside an
 encrypted custom confirmation message, quiz mode (scored in members' browsers
 under a member-only key), conditional questions, the Classic and
-Focus layouts, on-device drafts, in-browser response search, post-quantum
+Focus layouts, starter templates, on-device drafts, in-browser response search, post-quantum
 hybrid sealing, padded ciphertext, self-hosted fonts, and Stripe billing for the
 hosted instance (inert on any instance with no Stripe configuration, offering
 free and pro plans). This file and the directory guidance carry the design

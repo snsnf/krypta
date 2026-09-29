@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 /*
  * Draft persistence is browser behavior end to end: a state change, a
@@ -14,6 +14,7 @@ async function publishTwoQuestionForm(
 ) {
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByLabel("Form title").fill(title)
   await page.getByLabel("Question label").fill("First question")
   await page.getByRole("button", { name: "Add question" }).click()

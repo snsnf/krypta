@@ -13,6 +13,7 @@ import {
   verificationCodeFor,
   waitForInteractive,
   type SharedAccount,
+  startBlankForm,
 } from "./fixtures"
 
 const API_BASE =
@@ -32,6 +33,7 @@ async function accountPage(
 async function createForm(page: Page, title: string) {
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill(title)
   await page.getByRole("textbox", { name: "Question label" }).fill("Notes")
   await page.getByRole("button", { name: "Publish form" }).click()

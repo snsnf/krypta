@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
 
 /**
  * Click a `multiple_choice` option the way a respondent does.
@@ -34,6 +34,7 @@ test("a quiz is scored for members and its answers never reach a respondent", as
   await unlock(page, sharedAccount.password)
   await page.getByRole("button", { name: /new form/i }).click()
   await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Geography quiz")
   await page.getByLabel("Question label").fill("Capital of France")

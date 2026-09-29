@@ -6,6 +6,7 @@ import {
   unlockAccount,
   verificationCodeFor,
   waitForInteractive,
+  startBlankForm,
 } from "./fixtures"
 
 // One registration per test via createVerifiedAccount (see full-flow.spec.ts's
@@ -27,6 +28,7 @@ test("a recovered account still decrypts everything it had", async ({
 
   await page.goto("/dashboard/new")
   await waitForInteractive(page)
+  await startBlankForm(page)
   await page.getByRole("textbox", { name: "Form title" }).fill("Pre-recovery form")
   await page.getByRole("textbox", { name: "Question label" }).fill("How was it?")
   await page.getByRole("button", { name: "Publish form" }).click()
