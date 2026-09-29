@@ -504,11 +504,11 @@ export function FormBuilder({
                     source !== undefined &&
                     isRangeOperator(condition.operator) &&
                     source.type !== "rating"
-                  const staleValue =
+                  const missingValue =
                     condition !== undefined &&
                     source !== undefined &&
-                    !ignoredRange &&
                     !(conditionValues(source) ?? []).includes(condition.value)
+                  const staleValue = missingValue && !ignoredRange
                   const ignored = dangling || ignoredRange
 
                   if (condition === undefined && sources.length === 0)
@@ -585,6 +585,16 @@ export function FormBuilder({
                           >
                             <option value="is">is</option>
                             <option value="is_not">is not</option>
+                            {/* Shown as it is, so the row matches the alert
+                                below and picking "is" is a real change rather
+                                than a click on what already looks selected. */}
+                            {ignoredRange && (
+                              <option value={condition.operator}>
+                                {condition.operator === "at_most"
+                                  ? "is at most (ignored)"
+                                  : "is at least (ignored)"}
+                              </option>
+                            )}
                             {source?.type === "rating" && (
                               <>
                                 <option value="at_most">is at most</option>
@@ -605,7 +615,7 @@ export function FormBuilder({
                             }
                             className="rounded-md border border-border bg-background px-2 py-1"
                           >
-                            {staleValue && (
+                            {missingValue && (
                               <option value={condition.value}>
                                 {condition.value} (removed)
                               </option>
