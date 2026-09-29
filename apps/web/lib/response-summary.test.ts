@@ -258,3 +258,52 @@ describe("summarizeResponses", () => {
     expect(summary.skipped).toBe(1)
   })
 })
+
+describe("rating summaries", () => {
+  const rating: Question = {
+    id: "r",
+    type: "rating",
+    label: "How was it?",
+    rating: { style: "stars", min: 1, max: 5 },
+  }
+
+  it("counts every value in the range, including zeros, and averages", async () => {
+    const { summarizeResponses } = await import("./response-summary")
+    const [summary] = summarizeResponses(
+      [rating],
+      [{ r: "5" }, { r: "4" }, { r: "5" }, {}]
+    )
+    if (summary.kind !== "rating") throw new Error("expected a rating summary")
+    expect(summary.counts).toEqual([
+      { value: 1, count: 0 },
+      { value: 2, count: 0 },
+      { value: 3, count: 0 },
+      { value: 4, count: 1 },
+      { value: 5, count: 2 },
+    ])
+    expect(summary.mean).toBeCloseTo(14 / 3)
+    expect(summary.answered).toBe(3)
+    expect(summary.skipped).toBe(1)
+    expect(summary.max).toBe(5)
+  })
+
+  it("counts a stale or non-string answer as skipped, not as data", async () => {
+    const { summarizeResponses } = await import("./response-summary")
+    const [summary] = summarizeResponses(
+      [rating],
+      [{ r: "9" }, { r: ["3"] }, { r: "3" }]
+    )
+    if (summary.kind !== "rating") throw new Error("expected a rating summary")
+    expect(summary.answered).toBe(1)
+    expect(summary.skipped).toBe(2)
+    expect(summary.mean).toBe(3)
+  })
+
+  it("reports a zero mean with nothing answered", async () => {
+    const { summarizeResponses } = await import("./response-summary")
+    const [summary] = summarizeResponses([rating], [{}])
+    if (summary.kind !== "rating") throw new Error("expected a rating summary")
+    expect(summary.answered).toBe(0)
+    expect(summary.mean).toBe(0)
+  })
+})

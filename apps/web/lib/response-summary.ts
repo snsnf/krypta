@@ -5,6 +5,7 @@ import {
   isEmptyOtherAnswer,
   isOtherAnswer,
 } from "./form-other"
+import { parseRatingAnswer, ratingRange } from "./question-rating"
 
 const OTHER_ROW_LABEL = "Other"
 
@@ -23,6 +24,17 @@ export type QuestionSummary = {
       max: number
       mean: number
       median: number
+    }
+  | {
+      kind: "rating"
+      style: "stars" | "scale"
+      min: number
+      max: number
+      // 0 with nothing answered: check `answered` first, as for `number`.
+      mean: number
+      // One entry per value from min to max, zeros included, so a 1 to 5
+      // chart always has five bars and a gap means nobody chose it.
+      counts: { value: number; count: number }[]
     }
   | {
       kind: "date"
@@ -49,6 +61,8 @@ function kindForQuestion(question: Question): SummaryKind {
       return "date"
     case "file_upload":
       return "file"
+    case "rating":
+      return "rating"
     case "short_text":
     case "long_text":
     case "email":
@@ -231,6 +245,39 @@ export function summarizeResponses(
         skipped,
       }
       return { ...base, kind, ...summarizeNumber(numbers) }
+    }
+
+    if (kind === "rating") {
+      // Anything outside the current range is left over from a type or range
+      // change. Counted as skipped, like an unparseable number: a stale value
+      // drawn as a bar reads as real data.
+      const range = ratingRange(question)
+      const counts = new Map<number, number>()
+      for (let value = range.min; value <= range.max; value++) counts.set(value, 0)
+      let total = 0
+      let answered = 0
+      for (const value of answeredValues) {
+        const picked = parseRatingAnswer(question, value)
+        if (picked === null) {
+          skipped++
+          continue
+        }
+        counts.set(picked, (counts.get(picked) ?? 0) + 1)
+        total += picked
+        answered++
+      }
+      return {
+        questionId: question.id,
+        label: question.label,
+        answered,
+        skipped,
+        kind,
+        style: range.style,
+        min: range.min,
+        max: range.max,
+        mean: answered === 0 ? 0 : total / answered,
+        counts: Array.from(counts, ([value, count]) => ({ value, count })),
+      }
     }
 
     switch (kind) {
