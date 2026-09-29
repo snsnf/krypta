@@ -57,6 +57,21 @@ const noopSharedProps = {
 }
 
 describe("FocusFormRenderer", () => {
+  it("contains the field's top margin inside the measured card when the label is empty", () => {
+    // An empty label is 0px tall, so the field's mt-6 would collapse through it
+    // and out of the measured element, and the card would be cut 24px short.
+    // flow-root stops the collapse; the Node-only vitest cannot measure the
+    // layout itself, so this pins the class that does.
+    const markup = renderToStaticMarkup(
+      <FocusFormRenderer
+        title="RSVP"
+        questions={[question("a", "")]}
+        answers={{}}
+        {...noopSharedProps}
+      />
+    )
+    expect(markup).toMatch(/<div class="[^"]*\bflow-root\b[^"]*"><div/)
+  })
   it("shows only the first question and its progress on initial render", () => {
     const markup = renderToStaticMarkup(
       <FocusFormRenderer
