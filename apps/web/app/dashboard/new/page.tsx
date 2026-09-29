@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button"
 import { AppHeader } from "@/components/app-header"
 import { PreviewButton } from "@/components/preview-button"
 import { FormBuilder } from "@/components/form-builder"
+import { TemplateGallery } from "@/components/template-gallery"
+import { instantiateTemplate, type FormTemplate } from "@/lib/form-templates"
 import { FormSettingsPanel } from "@/components/settings/form-settings-panel"
 import {
   Tabs,
@@ -67,6 +69,25 @@ export default function NewFormPage() {
   const [maxResponses, setMaxResponses] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
+  // Gallery first, builder after a pick. Held in memory rather than the URL:
+  // a template slug in a query string would reach proxy and server logs as a
+  // description of what this person is building.
+  const [started, setStarted] = useState(false)
+
+  function handlePick(template: FormTemplate | null) {
+    // Blank keeps today's initial state untouched. A template overrides the
+    // title, the questions and the confirmation message, once, here.
+    if (template) {
+      const start = instantiateTemplate(template)
+      setTitle(start.title)
+      setQuestions(start.questions)
+      setSettings((current) => ({
+        ...current,
+        confirmationMessage: start.confirmationMessage,
+      }))
+    }
+    setStarted(true)
+  }
 
   // Off keeps the key rather than dropping it, so switching back on loses
   // nothing the creator had marked.
@@ -149,6 +170,17 @@ export default function NewFormPage() {
         type: "error",
       })
     }
+  }
+
+  if (!started) {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <AppHeader />
+        <main className="flex-1">
+          <TemplateGallery onPick={handlePick} />
+        </main>
+      </div>
+    )
   }
 
   return (
