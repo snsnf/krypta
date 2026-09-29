@@ -67,9 +67,18 @@ export function RatingField({
         onMouseLeave={() => setHovered(null)}
       >
         {values.map((option, index) => {
+          // aria-label replaces the label's contents, and the end labels sit
+          // outside every radio, so the two end radios say them: they are the
+          // only thing that tells a listener which end of the scale is good.
+          const endLabel =
+            option === range.min
+              ? range.minLabel
+              : option === range.max
+                ? range.maxLabel
+                : undefined
           const name = stars
             ? `${option} of ${range.max} stars`
-            : `${option}, on a scale of ${range.min} to ${range.max}`
+            : `${option}, ${endLabel ? `${endLabel}, ` : ""}on a scale of ${range.min} to ${range.max}`
           return (
             <label
               key={option}

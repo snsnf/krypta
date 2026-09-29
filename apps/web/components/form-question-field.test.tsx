@@ -86,7 +86,12 @@ describe("FormQuestionField", () => {
       <FormQuestionField {...baseProps(question)} />
     )
     expect(markup.match(/type="radio"/g)).toHaveLength(11)
-    expect(markup).toContain('aria-label="0, on a scale of 0 to 10"')
+    // The end labels are the scale's meaning, so the end radios say them.
+    expect(markup).toContain('aria-label="0, Not likely, on a scale of 0 to 10"')
+    expect(markup).toContain('aria-label="5, on a scale of 0 to 10"')
+    expect(markup).toContain(
+      'aria-label="10, Very likely, on a scale of 0 to 10"'
+    )
     expect(markup).toContain("Not likely")
     expect(markup).toContain("Very likely")
     // Not a bare "checked": the scale boxes carry has-[:checked] classes.

@@ -439,4 +439,20 @@ describe("FormBuilder rating questions", () => {
     expect(markup).not.toContain("This condition never matches")
     expect(markup).not.toContain('value="at_least"')
   })
+
+  it("shows a stranded range rule as it is, so choosing is fires a change", () => {
+    const markup = renderBuilder([
+      { id: "a", type: "multiple_choice", label: "Pick", options: ["Yes", "No"] },
+      {
+        id: "b",
+        type: "long_text",
+        label: "Why?",
+        condition: { questionId: "a", operator: "at_most", value: "2" },
+      },
+    ])
+    expect(markup).toContain(
+      '<option value="at_most" selected="">is at most (ignored)</option>'
+    )
+    expect(markup).toContain('<option value="2" selected="">2 (removed)</option>')
+  })
 })
