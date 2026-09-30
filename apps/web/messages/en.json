@@ -38,6 +38,7 @@
     "editLinkNote": "Save this link to edit your response later; it won't be shown again.",
     "footerSeal": "Encrypted in your browser. Only authorized collaborators can read this.",
     "notAccepting": "This form is not accepting responses",
+    "alreadyResponded": "You've already responded",
     "oneResponse": "This form only accepts one response per person.",
     "colorMode": "Form color mode",
     "tooLong": "Your answers are too long to send. Shorten your longest answer and try again.",
