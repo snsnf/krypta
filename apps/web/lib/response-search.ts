@@ -55,10 +55,20 @@ export interface MatchedResponse<T> {
  * mark can be dropped; the base is what stays.
  */
 export function normalizeForSearch(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
+  return (
+    value
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      // Arabic letters people type interchangeably, for the same reason as
+      // the accents above: a respondent writes "أحمد" and whoever searches
+      // types "احمد". NFD has already split the hamza and madda off alef
+      // (U+0653..0655), which \p{Diacritic} does not remove; then taa
+      // marbuta folds to haa and alef maqsura to yaa.
+      .replace(/[\u0653-\u0655]/g, "")
+      .replace(/\u0629/g, "\u0647")
+      .replace(/\u0649/g, "\u064A")
+      .toLowerCase()
+  )
 }
 
 /**
