@@ -442,6 +442,21 @@ translation from reaching a respondent as a raw key. Arabic Focus forms use
 number shortcuts (Arabic keyboards do not type Latin letters); a new
 right-to-left or non-Latin language needs the same check.
 
+Three conventions keep Arabic content right even in an English form or
+the English app. **User-written text sets its own direction:** every input
+and element that shows a question, option, title or answer carries
+`dir="auto"`, so an Arabic answer in an English dashboard reads right to
+left with its punctuation at the correct end; Latin text is unaffected.
+**Respondent components use logical classes** (`ms-`, `ps-`, `start-`,
+`text-start`), never `ml-`/`left-`/`text-left`, and `components.json` sets
+`"rtl": true` so shadcn components arrive that way; existing ones were
+converted with `shadcn migrate rtl`. Base UI reads direction from its own
+`DirectionProvider` (portalled menus do not inherit it from the DOM), which
+`FormThemeSurface` provides. **Search folds Arabic spelling variants**
+(`normalizeForSearch` in `lib/response-search.ts`: hamza forms of alef, taa
+marbuta, alef maqsura, harakat), and the CSV export starts with a byte-order
+mark because Excel otherwise opens UTF-8 Arabic as gibberish.
+
 ## Quiz mode is scored for members only
 
 `lib/quiz.ts`, `lib/quiz-score.ts` and `lib/quiz-sealing.ts`. The answer key
