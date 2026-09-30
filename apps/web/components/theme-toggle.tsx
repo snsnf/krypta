@@ -126,6 +126,10 @@ export function ColorModeSwitch({
     <div
       role="radiogroup"
       aria-label={label}
+      // Sun, monitor and moon have no reading order, and the pill is
+      // positioned from the left; inside a right-to-left form the row would
+      // reverse and leave the pill under the wrong icon.
+      dir="ltr"
       className={cn(
         "relative flex shrink-0 items-center gap-0 rounded-full border border-border bg-muted/50 p-0.5",
         className

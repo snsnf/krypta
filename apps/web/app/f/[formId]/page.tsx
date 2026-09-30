@@ -31,7 +31,6 @@ import { LockKeyIcon } from "@hugeicons/core-free-icons"
 import { Spinner } from "@/components/spinner"
 import {
   ColorModeSwitch,
-  FORM_COLOR_MODE_LABELS,
   revealColorChange,
 } from "@/components/theme-toggle"
 import { usePrefersDark } from "@/hooks/use-prefers-dark"
@@ -259,7 +258,11 @@ export default function PublicFormPage() {
           <ColorModeSwitch
             value={selectedMode ?? "system"}
             label={t("colorMode")}
-            optionLabels={FORM_COLOR_MODE_LABELS}
+            optionLabels={{
+              light: t("colorLight"),
+              system: t("colorSystem"),
+              dark: t("colorDark"),
+            }}
             onChange={(value, x, y) =>
               revealColorChange(x, y, () =>
                 setSelectedMode(value === "system" ? null : value)

@@ -18,13 +18,26 @@ import {
   FormLanguageContext,
   formDirection,
   normalizeFormLanguage,
+  useFormT,
 } from "@/lib/form-i18n"
+
+// A child of the context provider, so it is worded in the form's language.
+function FontFailedNote() {
+  return <>{useFormT()("fontFailed")}</>
+}
 
 interface FormThemeSurfaceProps {
   theme: FormTheme
   children: ReactNode
   className?: string
   mode?: FormRenderMode
+  /**
+   * False where the surface frames app chrome rather than a respondent's
+   * view (the builder workspace, a member's read-only view): the form's fonts
+   * and colours still apply, but direction, language and the respondent
+   * strings stay the app's, which is English for now.
+   */
+  applyLanguage?: boolean
 }
 
 const TYPOGRAPHY_ROLES = ["header", "question", "text"] as const
@@ -39,13 +52,14 @@ export function FormThemeSurface({
   children,
   className,
   mode = "light",
+  applyLanguage = true,
 }: FormThemeSurfaceProps) {
   const [catalog, setCatalog] = useState<readonly FontCatalogEntry[] | null>(
     null
   )
   const [fontFailures, setFontFailures] = useState<Set<string>>(() => new Set())
   const theme = normalizeFormTheme(rawTheme)
-  const language = normalizeFormLanguage(theme.language)
+  const language = applyLanguage ? normalizeFormLanguage(theme.language) : "en"
   const selectedFamilies = [
     ...new Set(TYPOGRAPHY_ROLES.map((role) => theme.typography[role].font)),
   ]
@@ -158,7 +172,7 @@ export function FormThemeSurface({
       <FormLanguageContext value={language}>
         {fontError && (
           <p className="sr-only" role="status">
-            A selected font could not be loaded. Using its role default instead.
+            <FontFailedNote />
           </p>
         )}
         {children}

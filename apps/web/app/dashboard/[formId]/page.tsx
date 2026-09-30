@@ -835,6 +835,8 @@ export default function FormDetailPage() {
               />
             ) : (
               <FormThemeSurface
+                // A member's view inside the app, so the app's language.
+                applyLanguage={false}
                 theme={theme}
                 mode="light"
                 className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8"

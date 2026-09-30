@@ -46,6 +46,14 @@
     "saving": "Saving...",
     "saveChanges": "Save changes",
     "saveFailed": "Something went wrong saving your changes. This link may have expired.",
-    "updated": "Your response was updated."
+    "updated": "Your response was updated.",
+    "orDragDrop": "or drag and drop",
+    "chooseDifferentFile": "Choose a different file",
+    "fileTooLarge": "File is too large (max 10MB).",
+    "uploadFailed": "Upload failed. Please try again.",
+    "colorLight": "Light",
+    "colorSystem": "System",
+    "colorDark": "Dark",
+    "fontFailed": "A selected font could not be loaded. Using its role default instead."
   }
 }

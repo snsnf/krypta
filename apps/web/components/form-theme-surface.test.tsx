@@ -38,4 +38,15 @@ describe("FormThemeSurface language", () => {
     expect(markup).toContain('lang="en"')
     expect(markup).toContain("<span data-probe=\"true\">en</span>")
   })
+
+  it("keeps the app's own language when told not to apply the form's", () => {
+    const markup = renderToStaticMarkup(
+      <FormThemeSurface theme={{ ...DEFAULT_FORM_THEME, language: "ar" }} applyLanguage={false}>
+        <Probe />
+      </FormThemeSurface>
+    )
+    expect(markup).toContain('dir="ltr"')
+    expect(markup).toContain('lang="en"')
+    expect(markup).toContain("<span data-probe=\"true\">en</span>")
+  })
 })
