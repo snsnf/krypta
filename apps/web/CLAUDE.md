@@ -409,6 +409,39 @@ The web image cannot run with a read-only root filesystem as shipped: Next
 writes its image cache under `.next` at runtime, which is why that tree is
 chowned to UID 10001 in `apps/web/Dockerfile` rather than left root-owned.
 
+## Two languages: the app's and the form's
+
+krypta has two languages and they must not be merged. The **app language**
+is the dashboard and builder, for whoever is using them; it is English and
+not yet translated. The **form language** is the text respondents see around
+the questions (buttons, hints, errors, the default thank-you), chosen by the
+creator per form. The creator's own questions, options and confirmation
+message are never translated.
+
+The form language lives in the encrypted `FormTheme` as `language`, never in
+a URL: a locale segment or query parameter would tell request logs what
+language a form is in. `normalizeFormTheme` keeps it only when it is a
+supported non-English value, so an English form serialises exactly as it did
+before languages existed (the starter templates' padding budget depends on
+that). `FormThemeSurface` sets `dir` and `lang`, provides
+`FormLanguageContext`, and for Arabic loads the self-hosted Noto Sans Arabic
+that `toFontStack` puts behind every chosen font.
+
+Strings live in `messages/<language>.json` under `form`. Components read them
+with `useFormT()`; the two public pages, which compute text themselves, use
+`formTranslator(language)` and keep message keys (not English text) in state.
+The context defaults to English on purpose: a component rendered with no
+surface, which is every unit test, renders exactly as it always did.
+`lib/form-language.ts` holds the React-free helpers so the theme normaliser
+never imports `createContext`.
+
+Adding a language is a message file plus an entry in `FORM_LANGUAGES` and
+`FORM_LANGUAGE_LABELS`, and `RIGHT_TO_LEFT` if it is written right to left.
+The key-parity test in `lib/form-i18n.test.ts` is what stops a missing
+translation from reaching a respondent as a raw key. Arabic Focus forms use
+number shortcuts (Arabic keyboards do not type Latin letters); a new
+right-to-left or non-Latin language needs the same check.
+
 ## Quiz mode is scored for members only
 
 `lib/quiz.ts`, `lib/quiz-score.ts` and `lib/quiz-sealing.ts`. The answer key
