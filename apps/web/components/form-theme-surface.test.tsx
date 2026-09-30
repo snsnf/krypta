@@ -11,6 +11,7 @@ vi.mock("@/lib/utils", () => ({
 import { FormThemeSurface } from "./form-theme-surface"
 import { DEFAULT_FORM_THEME } from "../lib/form-theme"
 import { useFormLanguage } from "../lib/form-i18n"
+import { useDirection } from "@base-ui/react/direction-provider"
 
 function Probe() {
   return <span data-probe>{useFormLanguage()}</span>
@@ -48,5 +49,17 @@ describe("FormThemeSurface language", () => {
     expect(markup).toContain('dir="ltr"')
     expect(markup).toContain('lang="en"')
     expect(markup).toContain("<span data-probe=\"true\">en</span>")
+  })
+
+  it("tells Base UI components the form's direction, so menus and popovers open right to left", () => {
+    function DirectionProbe() {
+      return <span data-direction>{useDirection()}</span>
+    }
+    const markup = renderToStaticMarkup(
+      <FormThemeSurface theme={{ ...DEFAULT_FORM_THEME, language: "ar" }}>
+        <DirectionProbe />
+      </FormThemeSurface>
+    )
+    expect(markup).toContain('<span data-direction="true">rtl</span>')
   })
 })
