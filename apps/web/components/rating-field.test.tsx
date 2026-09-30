@@ -43,6 +43,6 @@ describe("RatingField preview", () => {
         <RatingField question={{ id: "r", type: "rating", label: "x" }} value={undefined} />
       </FormLanguageContext>
     )
-    expect(stars).toContain('aria-label="التقييم 4 من 5"')
+    expect(stars).toContain('aria-label="4 من 5 نجوم"')
   })
 })

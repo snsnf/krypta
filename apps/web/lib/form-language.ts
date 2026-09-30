@@ -28,3 +28,11 @@ export function normalizeFormLanguage(value: unknown): FormLanguage {
 export function formDirection(language: FormLanguage): "ltr" | "rtl" {
   return RIGHT_TO_LEFT.has(language) ? "rtl" : "ltr"
 }
+
+// Languages whose keyboards do not type Latin letters, so Focus option
+// shortcuts are numbers there. A new such language joins this set.
+const NUMERIC_SHORTCUTS = new Set<FormLanguage>(["ar"])
+
+export function usesNumericShortcuts(language: FormLanguage): boolean {
+  return NUMERIC_SHORTCUTS.has(language)
+}

@@ -20,6 +20,7 @@ import {
 } from "@/lib/form-other"
 import { distinctOptions } from "@/lib/question-options"
 import { useFormLanguage, useFormT } from "@/lib/form-i18n"
+import { usesNumericShortcuts } from "@/lib/form-language"
 
 const TEXTAREA_CLASSES =
   "w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -110,7 +111,9 @@ const OPTION_SHORTCUT_LIMIT = 26
 const NUMERIC_SHORTCUT_LIMIT = 9
 
 function optionMarker(index: number, numeric: boolean): string {
-  if (numeric) return String(index + 1)
+  // Past nine a number has no single key, so it would promise a shortcut
+  // that does nothing; the badge stays empty instead.
+  if (numeric) return index < NUMERIC_SHORTCUT_LIMIT ? String(index + 1) : ""
   return index < OPTION_SHORTCUT_LIMIT
     ? String.fromCharCode(65 + index)
     : String(index + 1)
@@ -184,7 +187,7 @@ export function FormQuestionField({
   uploadError,
 }: FormQuestionFieldProps) {
   const t = useFormT()
-  const numericMarkers = useFormLanguage() === "ar"
+  const numericMarkers = usesNumericShortcuts(useFormLanguage())
   if (question.type === "short_text") {
     return (
       <Input

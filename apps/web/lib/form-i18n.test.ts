@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import en from "../messages/en.json"
 import ar from "../messages/ar.json"
+import { usesNumericShortcuts } from "./form-language"
 import {
   formDirection,
   formTranslator,
@@ -27,6 +28,13 @@ describe("form language", () => {
     expect("language" in normalizeFormTheme({ language: "en" })).toBe(false)
     expect("language" in normalizeFormTheme({ language: "xx" })).toBe(false)
     expect("language" in normalizeFormTheme({})).toBe(false)
+  })
+})
+
+describe("usesNumericShortcuts", () => {
+  it("numbers shortcuts only where the keyboard cannot type Latin letters", () => {
+    expect(usesNumericShortcuts("ar")).toBe(true)
+    expect(usesNumericShortcuts("en")).toBe(false)
   })
 })
 
