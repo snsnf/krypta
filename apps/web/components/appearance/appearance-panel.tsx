@@ -16,6 +16,11 @@ import {
   getContrastRatio,
 } from "@/lib/form-theme"
 import { cn } from "@/lib/utils"
+import {
+  FORM_LANGUAGES,
+  FORM_LANGUAGE_LABELS,
+  normalizeFormLanguage,
+} from "@/lib/form-language"
 
 /**
  * Absent means this form cannot take an image yet, which is true before it has
@@ -176,6 +181,34 @@ export function AppearancePanel({
             </p>
           </button>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={`${idPrefix}form-language`}>Form language</Label>
+        <select
+          id={`${idPrefix}form-language`}
+          value={normalizeFormLanguage(value.language)}
+          onChange={(event) => {
+            const language = normalizeFormLanguage(event.target.value)
+            // English is the absence of a language, so an English form
+            // serialises exactly as it did before languages existed.
+            onChange({
+              ...value,
+              language: language === "en" ? undefined : language,
+            })
+          }}
+          className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+        >
+          {FORM_LANGUAGES.map((language) => (
+            <option key={language} value={language}>
+              {FORM_LANGUAGE_LABELS[language]}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          The language of the buttons and messages respondents see. Your
+          questions stay exactly as you write them.
+        </p>
       </div>
 
       <Separator />

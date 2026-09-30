@@ -35,6 +35,7 @@ import {
   revealColorChange,
 } from "@/components/theme-toggle"
 import { usePrefersDark } from "@/hooks/use-prefers-dark"
+import { formTranslator, normalizeFormLanguage } from "@/lib/form-i18n"
 import type { FormSettings, FormTheme, Question } from "@krypta/crypto"
 
 export default function PublicFormPage() {
@@ -71,7 +72,12 @@ export default function PublicFormPage() {
   const [alreadySubmitted, setAlreadySubmitted] = useState(false)
   const [editLink, setEditLink] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<FormLoadFailure | null>(null)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  // A message key rather than text, so it is worded in the form's language
+  // when it is shown.
+  const [submitError, setSubmitError] = useState<
+    "tooLong" | "submitFailed" | null
+  >(null)
+  const t = formTranslator(normalizeFormLanguage(theme.language))
 
   useEffect(() => {
     ;(async () => {
@@ -137,12 +143,10 @@ export default function PublicFormPage() {
         return
       }
       if (error instanceof ResponseTooLargeError) {
-        setSubmitError(
-          "Your answers are too long to send. Shorten your longest answer and try again."
-        )
+        setSubmitError("tooLong")
         return
       }
-      setSubmitError("Something went wrong submitting your response.")
+      setSubmitError("submitFailed")
     } finally {
       setSubmitting(false)
     }
@@ -173,10 +177,10 @@ export default function PublicFormPage() {
       >
         <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8">
           <p className="form-theme-header font-medium">
-            You&apos;ve already responded
+            {t("alreadyResponded")}
           </p>
           <p className="form-theme-text mt-2 text-muted-foreground">
-            This form only accepts one response per person.
+            {t("oneResponse")}
           </p>
         </div>
       </FormThemeSurface>
@@ -193,17 +197,15 @@ export default function PublicFormPage() {
         <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8">
           <div className="form-theme-accent-bg mx-auto mb-4 h-1.5 w-12 rounded-full" />
           <p className="form-theme-header animate-confirm-in font-medium">
-            {settings.confirmationMessage ??
-              "Thanks! Your response was submitted."}
+            {settings.confirmationMessage ?? t("thanks")}
           </p>
           <p className="form-theme-text mt-2 text-muted-foreground">
-            It was sealed to this form&apos;s key before it left your browser.
+            {t("sealedNote")}
           </p>
           {editLink && (
-            <div className="mt-4 rounded-lg border border-primary/25 bg-primary/[0.04] p-3 text-left text-sm">
+            <div className="mt-4 rounded-lg border border-primary/25 bg-primary/[0.04] p-3 text-start text-sm">
               <p className="form-theme-text mb-1 font-medium">
-                Save this link to edit your response later; it won&apos;t be
-                shown again.
+                {t("editLinkNote")}
               </p>
               <code className="form-theme-text break-all text-muted-foreground">
                 {editLink}
@@ -225,7 +227,7 @@ export default function PublicFormPage() {
         <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8">
           <FormHeaderCard title={title} headerImageUrl={headerImageUrl} />
           <p className="form-theme-text mt-4 font-medium">
-            This form is not accepting responses
+            {t("notAccepting")}
           </p>
         </div>
       </FormThemeSurface>
@@ -256,7 +258,7 @@ export default function PublicFormPage() {
            */}
           <ColorModeSwitch
             value={selectedMode ?? "system"}
-            label="Form color mode"
+            label={t("colorMode")}
             optionLabels={FORM_COLOR_MODE_LABELS}
             onChange={(value, x, y) =>
               revealColorChange(x, y, () =>
@@ -280,7 +282,7 @@ export default function PublicFormPage() {
           uploadErrors={uploadErrors}
           missingRequired={missingRequired}
           submitting={submitting}
-          submitError={submitError}
+          submitError={submitError && t(submitError)}
           onSubmit={handleSubmit}
         />
       ) : (
@@ -296,7 +298,7 @@ export default function PublicFormPage() {
           uploadErrors={uploadErrors}
           missingRequired={missingRequired}
           submitting={submitting}
-          submitError={submitError}
+          submitError={submitError && t(submitError)}
           onSubmit={handleSubmit}
         />
       )}
@@ -322,8 +324,7 @@ export default function PublicFormPage() {
               strokeWidth={1.8}
               className="form-theme-accent-text size-3 shrink-0 sm:size-3.5"
             />
-            Encrypted in your browser. Only authorized collaborators can read
-            this.
+            {t("footerSeal")}
           </p>
           {/*
            * Inside the seal's card, below a divider, never above the seal. The

@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/form-language", async () =>
+  vi.importActual("../../lib/form-language")
+)
 vi.mock("@/lib/utils", () => ({
   cn: (...values: unknown[]) => values.filter(Boolean).join(" "),
 }))

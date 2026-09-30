@@ -26,6 +26,7 @@ import { FormHeaderCard } from "@/components/form-header-card"
 import { FormThemeSurface } from "@/components/form-theme-surface"
 import { Spinner } from "@/components/spinner"
 import { Button } from "@/components/ui/button"
+import { formTranslator, normalizeFormLanguage } from "@/lib/form-i18n"
 
 export default function EditResponsePage() {
   const { formId } = useParams<{ formId: string }>()
@@ -48,7 +49,11 @@ export default function EditResponsePage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [loadError, setLoadError] = useState<FormLoadFailure | null>(null)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  // A message key rather than text, so it is worded in the form's language.
+  const [submitError, setSubmitError] = useState<
+    "tooLong" | "saveFailed" | null
+  >(null)
+  const t = formTranslator(normalizeFormLanguage(theme.language))
   const [schemaKey, setSchemaKey] = useState<string | null>(null)
   const [hasHeaderImage, setHasHeaderImage] = useState(false)
   const headerImageUrl = useHeaderImage(formId, schemaKey, hasHeaderImage)
@@ -95,14 +100,10 @@ export default function EditResponsePage() {
       setSubmitted(true)
     } catch (error) {
       if (error instanceof ResponseTooLargeError) {
-        setSubmitError(
-          "Your answers are too long to send. Shorten your longest answer and try again."
-        )
+        setSubmitError("tooLong")
         return
       }
-      setSubmitError(
-        "Something went wrong saving your changes. This link may have expired."
-      )
+      setSubmitError("saveFailed")
     } finally {
       setSubmitting(false)
     }
@@ -132,7 +133,7 @@ export default function EditResponsePage() {
         <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8">
           <div className="form-theme-accent-bg mx-auto mb-4 h-1.5 w-12 rounded-full" />
           <p className="form-theme-header animate-confirm-in font-medium">
-            Your response was updated.
+            {t("updated")}
           </p>
         </div>
       </FormThemeSurface>
@@ -165,7 +166,7 @@ export default function EditResponsePage() {
         ))}
         {submitError && (
           <p aria-live="polite" className="text-sm text-destructive">
-            {submitError}
+            {t(submitError)}
           </p>
         )}
         <Button
@@ -175,7 +176,7 @@ export default function EditResponsePage() {
           }
           className="form-theme-accent-bg form-theme-button form-theme-text active:scale-[0.97]"
         >
-          {submitting ? "Saving..." : "Save changes"}
+          {submitting ? t("saving") : t("saveChanges")}
         </Button>
       </form>
     </FormThemeSurface>
