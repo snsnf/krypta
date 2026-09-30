@@ -30,8 +30,18 @@ test("an Arabic form reaches respondents right to left, in Arabic", async ({
   await expect(surface).toHaveAttribute("lang", "ar")
   const submit = respondent.getByRole("button", { name: "إرسال" })
   await expect(submit).toBeDisabled()
-  await respondent.getByLabel("الاسم").fill("سارة")
+  await respondent.getByLabel("الاسم").fill("أحمد")
   await submit.click()
   await expect(respondent.getByText("شكرًا! تم إرسال ردك.")).toBeVisible()
   await context.close()
+
+  // The owner searches without the hamza, as most people type, and still
+  // finds the answer written with it.
+  await page.reload()
+  await page.getByRole("tab", { name: "Responses" }).click()
+  await page.getByRole("button", { name: "Individual" }).click()
+  await page.getByRole("searchbox", { name: "Search responses" }).fill("احمد")
+  const cell = page.getByRole("cell", { name: "أحمد" })
+  await expect(cell).toBeVisible()
+  await expect(cell).toHaveAttribute("dir", "auto")
 })
