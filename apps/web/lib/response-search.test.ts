@@ -30,6 +30,12 @@ describe("normalizeForSearch", () => {
     same("مستشفى", "مستشفي")
     // Harakat are dropped with the other combining marks.
     same("مُحَمَّد", "محمد")
+    // Tatweel stretches a word without changing it; dagger alef is a mark.
+    same("محــمد", "محمد")
+    same("هٰذا", "هذا")
+    // Persian keyboards type yeh and kaf with their own code points.
+    same("علی", "علي")
+    same("کتاب", "كتاب")
   })
 
   test("folds case", () => {

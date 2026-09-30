@@ -548,6 +548,7 @@ export default function DashboardPage() {
               Title
               <Input
                 autoFocus
+                dir="auto"
                 value={renameTitle}
                 onChange={(event) => setRenameTitle(event.target.value)}
                 disabled={renamePending}

@@ -45,7 +45,7 @@ function TabsIndicator({ className, ...props }: TabsPrimitive.Indicator.Props) {
     <TabsPrimitive.Indicator
       data-slot="tabs-indicator"
       className={cn(
-        "absolute bottom-0 h-0.5 start-[var(--active-tab-left)] w-[var(--active-tab-width)] bg-primary transition-[left,width] duration-200 ease-out",
+        "absolute bottom-0 h-0.5 left-[var(--active-tab-left)] w-[var(--active-tab-width)] bg-primary transition-[left,width] duration-200 ease-out",
         className
       )}
       {...props}

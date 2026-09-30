@@ -423,13 +423,41 @@ describe("selected-option treatment", () => {
     expect(optionShortcutIndex("\u0669", 3, true)).toBe(-1)
   })
 
-  it("lets typed text set its own direction, so Arabic answers read right to left in any form", () => {
+  it("lets a typed answer set its own direction, but an empty box follows the form", () => {
+    // HTML resolves dir="auto" on an empty input to ltr, not to the parent, so
+    // an empty box in an Arabic form must carry no dir at all.
     for (const type of ["short_text", "long_text", "email"] as const) {
-      const markup = renderToStaticMarkup(
+      const empty = renderToStaticMarkup(
         <FormQuestionField {...baseProps({ id: "x", type, label: "x" })} />
       )
-      expect(markup).toContain('dir="auto"')
+      expect(empty).not.toContain("dir=")
+      const typed = renderToStaticMarkup(
+        <FormQuestionField {...baseProps({ id: "x", type, label: "x" })} value="أحمد" />
+      )
+      expect(typed).toContain('dir="auto"')
     }
+    // Numbers and dates hold no letters, so auto would force them ltr.
+    for (const type of ["number", "date"] as const) {
+      const typed = renderToStaticMarkup(
+        <FormQuestionField {...baseProps({ id: "x", type, label: "x" })} value="12" />
+      )
+      expect(typed).not.toContain('dir="auto"')
+    }
+  })
+
+  it("lets each option's text set its own direction", () => {
+    const markup = renderToStaticMarkup(
+      <FormQuestionField
+        {...baseProps({ id: "m", type: "multiple_choice", label: "x", options: ["نعم؟"] })}
+      />
+    )
+    expect(markup).toContain('<span dir="auto">نعم؟</span>')
+    const checks = renderToStaticMarkup(
+      <FormQuestionField
+        {...baseProps({ id: "c", type: "checkboxes", label: "x", options: ["لا؟"] })}
+      />
+    )
+    expect(checks).toContain('<span dir="auto">لا؟</span>')
   })
 
   it("shows no badge past nine in an Arabic form, where there is no key to press", () => {

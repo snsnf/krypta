@@ -598,7 +598,7 @@ export default function FormDetailPage() {
       return cells.join(",")
     })
     const csv = csvDocument(headers, rows)
-    const blob = new Blob([csv], { type: "text/csv" })
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url

@@ -195,7 +195,10 @@ export default function PublicFormPage() {
       >
         <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8">
           <div className="form-theme-accent-bg mx-auto mb-4 h-1.5 w-12 rounded-full" />
-          <p className="form-theme-header animate-confirm-in font-medium">
+          <p
+            dir={settings.confirmationMessage ? "auto" : undefined}
+            className="form-theme-header animate-confirm-in font-medium"
+          >
             {settings.confirmationMessage ?? t("thanks")}
           </p>
           <p className="form-theme-text mt-2 text-muted-foreground">

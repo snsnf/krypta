@@ -188,10 +188,15 @@ export function FormQuestionField({
 }: FormQuestionFieldProps) {
   const t = useFormT()
   const numericMarkers = usesNumericShortcuts(useFormLanguage())
+  // A typed answer sets its own direction, but only once it has letters:
+  // HTML resolves dir="auto" on an empty field to ltr rather than to the
+  // parent, which would push an Arabic form's placeholder and caret left.
+  const textDir =
+    typeof value === "string" && value !== "" ? ("auto" as const) : undefined
   if (question.type === "short_text") {
     return (
       <Input
-        dir="auto"
+        dir={textDir}
         id={question.id}
         required={question.required}
         placeholder={t("yourAnswer")}
@@ -205,7 +210,7 @@ export function FormQuestionField({
   if (question.type === "long_text") {
     return (
       <textarea
-        dir="auto"
+        dir={textDir}
         id={question.id}
         required={question.required}
         placeholder={t("yourAnswer")}
@@ -224,7 +229,9 @@ export function FormQuestionField({
   ) {
     return (
       <Input
-        dir="auto"
+        // Numbers and dates hold no letters, so auto would force them ltr in
+        // an Arabic form; only an email address takes its own direction.
+        dir={question.type === "email" ? textDir : undefined}
         id={question.id}
         type={question.type}
         inputMode={question.type === "number" ? "decimal" : undefined}
@@ -266,7 +273,7 @@ export function FormQuestionField({
           {t("selectOption")}
         </option>
         {distinctOptions(question.options).map((opt) => (
-          <option className="form-theme-text" key={opt} value={opt}>
+          <option className="form-theme-text" key={opt} value={opt} dir="auto">
             {opt}
           </option>
         ))}
@@ -315,7 +322,7 @@ export function FormQuestionField({
               onChange={() => onChange(opt)}
               className="sr-only"
             />
-            {opt}
+            <span dir="auto">{opt}</span>
           </label>
         ))}
         {question.allowOther && (
@@ -351,7 +358,7 @@ export function FormQuestionField({
               checked={((value as string[] | undefined) ?? []).includes(opt)}
               onCheckedChange={() => onToggleCheckbox(opt)}
             />
-            {opt}
+            <span dir="auto">{opt}</span>
           </label>
         ))}
         {question.allowOther &&
@@ -505,7 +512,7 @@ function OtherChoiceRow({
        */}
       {selected && (
         <input
-          dir="auto"
+          dir={text !== "" ? "auto" : undefined}
           ref={inputRef}
           type="text"
           aria-label={t("otherAnswerFor", { question: question.label })}
