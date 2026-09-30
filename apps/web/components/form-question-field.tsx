@@ -188,6 +188,7 @@ export function FormQuestionField({
   if (question.type === "short_text") {
     return (
       <Input
+        dir="auto"
         id={question.id}
         required={question.required}
         placeholder={t("yourAnswer")}
@@ -201,6 +202,7 @@ export function FormQuestionField({
   if (question.type === "long_text") {
     return (
       <textarea
+        dir="auto"
         id={question.id}
         required={question.required}
         placeholder={t("yourAnswer")}
@@ -219,6 +221,7 @@ export function FormQuestionField({
   ) {
     return (
       <Input
+        dir="auto"
         id={question.id}
         type={question.type}
         inputMode={question.type === "number" ? "decimal" : undefined}
@@ -499,6 +502,7 @@ function OtherChoiceRow({
        */}
       {selected && (
         <input
+          dir="auto"
           ref={inputRef}
           type="text"
           aria-label={t("otherAnswerFor", { question: question.label })}

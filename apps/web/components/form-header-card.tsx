@@ -70,6 +70,7 @@ export function FormHeaderCard({
       <div className="p-5">
         {onTitleChange ? (
           <input
+            dir="auto"
             placeholder={t("untitled")}
             aria-label={t("formTitle")}
             value={title}
@@ -80,7 +81,7 @@ export function FormHeaderCard({
             )}
           />
         ) : (
-          <h2 className="form-theme-header font-medium">
+          <h2 dir="auto" className="form-theme-header font-medium">
             {title || t("untitled")}
           </h2>
         )}

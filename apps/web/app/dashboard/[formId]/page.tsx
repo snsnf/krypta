@@ -1007,7 +1007,8 @@ export default function FormDetailPage() {
                               {questions.map((q) => (
                                 <th
                                   key={q.id}
-                                  className="border-b border-border px-3 py-2.5 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                  dir="auto"
+                                  className="border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase"
                                 >
                                   {q.label}
                                 </th>
@@ -1045,6 +1046,7 @@ export default function FormDetailPage() {
                                   {questions.map((q) => (
                                     <td
                                       key={q.id}
+                                      dir="auto"
                                       className="border-b border-border px-3 py-2.5"
                                     >
                                       {isFileAnswer(r.answers[q.id]) ? (

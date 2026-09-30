@@ -238,6 +238,7 @@ export function FormBuilder({
                             .filter((qq) => qq.pageBreakBefore).length + 1}
                         </p>
                         <input
+                          dir="auto"
                           type="text"
                           value={q.sectionTitle ?? ""}
                           onChange={(e) =>
@@ -308,6 +309,7 @@ export function FormBuilder({
               <div className="flex-1 p-4 pt-7">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
                   <input
+                    dir="auto"
                     placeholder="Question"
                     aria-label="Question label"
                     value={q.label}
@@ -395,6 +397,7 @@ export function FormBuilder({
                           className="shrink-0 text-muted-foreground/50"
                         />
                         <input
+                          dir="auto"
                           placeholder={`Option ${i + 1}`}
                           aria-label={`Option ${i + 1}`}
                           value={opt}
