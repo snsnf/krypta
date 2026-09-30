@@ -770,6 +770,9 @@ export function FormBuilder({
         {reorderMessage}
       </p>
       <FormThemeSurface
+        // The builder is app chrome: English and left to right whatever the
+        // form's language. Respondents see that language in the preview.
+        applyLanguage={false}
         theme={theme}
         mode={editorRenderMode}
         className="flex-1"

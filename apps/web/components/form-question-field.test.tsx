@@ -392,4 +392,33 @@ describe("selected-option treatment", () => {
     expect(optionShortcutIndex("b", 2, true)).toBe(-1)
     expect(optionShortcutIndex("b", 2, false)).toBe(1)
   })
+
+  it("leaves no English in an Arabic file upload, including its errors", () => {
+    const arabic = (extra: Record<string, unknown>) =>
+      renderToStaticMarkup(
+        <FormLanguageContext value="ar">
+          <FormQuestionField
+            {...baseProps({ id: "f", type: "file_upload", label: "CV" })}
+            {...extra}
+          />
+        </FormLanguageContext>
+      )
+    const empty = arabic({ uploadError: "fileTooLarge" })
+    expect(empty).not.toContain("drag and drop")
+    expect(empty).toContain("أو اسحبه وأفلته هنا")
+    expect(empty).toContain("الملف كبير جدًا")
+    expect(empty).not.toContain("File is too large")
+    const done = arabic({
+      value: { attachmentId: "a1", filename: "cv.pdf", mimeType: "application/pdf", size: 100 },
+    })
+    expect(done).not.toContain("Choose a different file")
+    expect(done).toContain("اختر ملفًا آخر")
+  })
+
+  it("accepts Arabic-Indic and Persian digits as number shortcuts", () => {
+    expect(optionShortcutIndex("\u0661", 3, true)).toBe(0)
+    expect(optionShortcutIndex("\u0663", 3, true)).toBe(2)
+    expect(optionShortcutIndex("\u06F2", 3, true)).toBe(1)
+    expect(optionShortcutIndex("\u0669", 3, true)).toBe(-1)
+  })
 })

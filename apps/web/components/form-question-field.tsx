@@ -117,6 +117,19 @@ function optionMarker(index: number, numeric: boolean): string {
 }
 
 /**
+ * The value of a typed digit, or -1. Arabic and Persian keyboards type their
+ * own digits on the number row (U+0660..0669, U+06F0..06F9), so a respondent
+ * pressing the key under "1" must reach option 1 whichever they produce.
+ */
+function digitValue(key: string): number {
+  const code = key.charCodeAt(0)
+  if (code >= 0x30 && code <= 0x39) return code - 0x30
+  if (code >= 0x660 && code <= 0x669) return code - 0x660
+  if (code >= 0x6f0 && code <= 0x6f9) return code - 0x6f0
+  return -1
+}
+
+/**
  * Maps a pressed key back to an option index, or -1. Lives here so the badge
  * and the shortcut cannot disagree about which key means which option.
  */
@@ -127,7 +140,7 @@ export function optionShortcutIndex(
 ): number {
   if (key.length !== 1) return -1
   const index = numeric
-    ? key.charCodeAt(0) - 49
+    ? digitValue(key) - 1
     : key.toUpperCase().charCodeAt(0) - 65
   const usable = Math.min(
     optionCount,
@@ -594,7 +607,7 @@ function FileUploadField({
               {uploaded.filename}
             </p>
             <p className="form-theme-text text-xs text-muted-foreground">
-              {formatBytes(uploaded.size)} · Choose a different file
+              {formatBytes(uploaded.size)} · {t("chooseDifferentFile")}
             </p>
           </div>
         ) : (
@@ -608,7 +621,7 @@ function FileUploadField({
               <span className="form-theme-accent-text font-medium">
                 {t("clickToUpload")}
               </span>{" "}
-              or drag and drop
+              {t("orDragDrop")}
             </p>
             {/* Mirrors MAX_FILE_BYTES in use-public-form-answers.ts, which
                 owns the actual limit and rejects anything over it. */}
@@ -619,7 +632,11 @@ function FileUploadField({
         )}
       </label>
       {uploadError && (
-        <p className="form-theme-text mt-2 text-destructive">{uploadError}</p>
+        <p className="form-theme-text mt-2 text-destructive">
+          {uploadError === "fileTooLarge" || uploadError === "uploadFailed"
+            ? t(uploadError)
+            : uploadError}
+        </p>
       )}
     </div>
   )

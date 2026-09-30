@@ -211,7 +211,8 @@ export function usePublicFormAnswers(
     if (file.size > MAX_FILE_BYTES) {
       setUploadErrors((prev) => ({
         ...prev,
-        [qid]: "File is too large (max 10MB).",
+        // A message key, worded in the form's language by the field.
+        [qid]: "fileTooLarge",
       }))
       setAnswers((a) => {
         const next = { ...a }
@@ -240,7 +241,7 @@ export function usePublicFormAnswers(
     } catch {
       setUploadErrors((prev) => ({
         ...prev,
-        [qid]: "Upload failed. Please try again.",
+        [qid]: "uploadFailed",
       }))
       setAnswers((a) => {
         const next = { ...a }
