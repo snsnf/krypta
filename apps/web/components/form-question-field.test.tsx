@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/form-language", async () => vi.importActual("../lib/form-language"))
 vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
 vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
@@ -429,5 +430,16 @@ describe("selected-option treatment", () => {
       )
       expect(markup).toContain('dir="auto"')
     }
+  })
+
+  it("shows no badge past nine in an Arabic form, where there is no key to press", () => {
+    const options = Array.from({ length: 10 }, (_, i) => `o${i + 1}`)
+    const markup = renderToStaticMarkup(
+      <FormLanguageContext value="ar">
+        <FormQuestionField {...baseProps({ id: "m", type: "multiple_choice", label: "x", options })} />
+      </FormLanguageContext>
+    )
+    expect(markup).toMatch(/>9<\/span>/)
+    expect(markup).not.toMatch(/>10<\/span>/)
   })
 })

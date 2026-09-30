@@ -15,6 +15,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight02Icon } from "@hugeicons/core-free-icons"
 import { distinctOptions } from "@/lib/question-options"
 import { useFormLanguage, useFormT } from "@/lib/form-i18n"
+import { usesNumericShortcuts } from "@/lib/form-language"
 
 interface FocusFormRendererProps {
   title: string
@@ -58,7 +59,7 @@ export function FocusFormRenderer({
   // Arabic keyboards do not type Latin letters, so an Arabic form's option
   // shortcuts are numbers; the badges in FormQuestionField follow the same
   // language, so the two cannot disagree.
-  const numericShortcuts = useFormLanguage() === "ar"
+  const numericShortcuts = usesNumericShortcuts(useFormLanguage())
   /*
    * Position, resume, the end-of-form test and both advance gates come from
    * the shared step machine. What Focus keeps for itself is everything below:
