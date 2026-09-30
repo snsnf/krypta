@@ -61,12 +61,16 @@ export function normalizeForSearch(value: string): string {
       .replace(/\p{Diacritic}/gu, "")
       // Arabic letters people type interchangeably, for the same reason as
       // the accents above: a respondent writes "أحمد" and whoever searches
-      // types "احمد". NFD has already split the hamza and madda off alef
-      // (U+0653..0655), which \p{Diacritic} does not remove; then taa
-      // marbuta folds to haa and alef maqsura to yaa.
-      .replace(/[\u0653-\u0655]/g, "")
+      // types "احمد". NFD has already split hamza and madda off their base
+      // letters (U+0653..0655: alef, and also waw, yeh and a few Persian
+      // letters), which \p{Diacritic} does not remove; tatweel (U+0640, the
+      // stretching stroke) and dagger alef (U+0670) go too. Then taa marbuta
+      // folds to haa, alef maqsura and Persian yeh to yeh, and Persian kaf to
+      // kaf, since a Persian keyboard types an Arabic name with those.
+      .replace(/[\u0653-\u0655\u0640\u0670]/g, "")
       .replace(/\u0629/g, "\u0647")
-      .replace(/\u0649/g, "\u064A")
+      .replace(/[\u0649\u06CC]/g, "\u064A")
+      .replace(/\u06A9/g, "\u0643")
       .toLowerCase()
   )
 }

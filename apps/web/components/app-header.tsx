@@ -111,7 +111,10 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
               aria-hidden="true"
               className="hidden h-4 w-px shrink-0 bg-border min-[420px]:block"
             />
-            <p className="hidden min-w-0 flex-1 truncate text-sm font-medium min-[420px]:block">
+            <p
+              dir="auto"
+              className="hidden min-w-0 flex-1 truncate text-sm font-medium min-[420px]:block"
+            >
               {formName || "Untitled form"}
             </p>
           </>

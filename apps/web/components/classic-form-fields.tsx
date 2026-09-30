@@ -85,7 +85,7 @@ export function ClassicFormFields({
       )}
 
       {currentQuestions[0]?.sectionTitle && (
-        <h2 className="form-theme-header font-medium">
+        <h2 dir="auto" className="form-theme-header font-medium">
           {currentQuestions[0].sectionTitle}
         </h2>
       )}

@@ -477,4 +477,3 @@ describe("FormBuilder text direction", () => {
     expect(markup).toMatch(/aria-label="Option 1"[^>]*dir="auto"|dir="auto"[^>]*aria-label="Option 1"/)
   })
 })
-

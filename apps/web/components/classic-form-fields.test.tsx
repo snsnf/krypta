@@ -168,4 +168,16 @@ describe("ClassicFormFields", () => {
     expect(markup).toContain("إرسال")
     expect(markup).not.toContain(">Submit<")
   })
+
+  it("lets a section title set its own direction", () => {
+    const markup = renderToStaticMarkup(
+      <ClassicFormFields
+        title="A form"
+        questions={[{ ...question("a"), pageBreakBefore: true, sectionTitle: "القسم الأول" }]}
+        answers={{}}
+        {...noopSharedProps}
+      />
+    )
+    expect(markup).toMatch(/<h2[^>]*dir="auto"[^>]*>القسم الأول/)
+  })
 })
