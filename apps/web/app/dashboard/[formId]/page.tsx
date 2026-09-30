@@ -80,6 +80,7 @@ import { QuizSummary } from "@/components/quiz/quiz-summary"
 import { nextResponseToGrade, scoreResponse } from "@/lib/quiz-score"
 import { sealAnswerKey } from "@/lib/quiz-sealing"
 import { ensureAccountSharingKey } from "@/lib/account-sharing-key"
+import { csvCell, csvDocument } from "@/lib/csv"
 import { loadFormWorkspace } from "@/lib/form-workspace"
 import {
   createFormMutationQueue,
@@ -569,14 +570,6 @@ export default function FormDetailPage() {
     }
   }
 
-  function csvCell(value: string): string {
-    let v = value
-    if (/^[=+\-@]/.test(v)) {
-      v = `'${v}`
-    }
-    return `"${v.replace(/"/g, '""')}"`
-  }
-
   // Exports what is on screen, so a search narrows the file too. The
   // alternative, always exporting everything, silently hands over rows the
   // owner had just filtered out. The responses tab says which of the two is
@@ -604,7 +597,7 @@ export default function FormDetailPage() {
       }
       return cells.join(",")
     })
-    const csv = [headers.join(","), ...rows].join("\n")
+    const csv = csvDocument(headers, rows)
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")

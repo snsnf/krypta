@@ -18,6 +18,20 @@ function response(answers: Record<string, AnswerValue>) {
 }
 
 describe("normalizeForSearch", () => {
+  test("folds the Arabic letters people type interchangeably", () => {
+    const same = (a: string, b: string) =>
+      expect(normalizeForSearch(a)).toBe(normalizeForSearch(b))
+    // Alef with hamza above, below, and madda, all typed as a bare alef.
+    same("أحمد", "احمد")
+    same("إسلام", "اسلام")
+    same("آمنة", "امنه")
+    // Taa marbuta written as haa, and alef maqsura written as yaa.
+    same("مدرسة", "مدرسه")
+    same("مستشفى", "مستشفي")
+    // Harakat are dropped with the other combining marks.
+    same("مُحَمَّد", "محمد")
+  })
+
   test("folds case", () => {
     expect(normalizeForSearch("Lisboa")).toBe("lisboa")
   })
