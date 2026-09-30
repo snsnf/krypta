@@ -14,6 +14,7 @@ import {
 import type { FontCatalogEntry } from "@/lib/fonts"
 import { loadFontCatalog } from "@/lib/font-catalog-client"
 import { cn } from "@/lib/utils"
+import { DirectionProvider } from "@base-ui/react/direction-provider"
 import {
   FormLanguageContext,
   formDirection,
@@ -169,14 +170,19 @@ export function FormThemeSurface({
       style={getFormThemeStyle(themedSurface, renderMode)}
       {...getFormVariantAttributes(themedSurface)}
     >
-      <FormLanguageContext value={language}>
-        {fontError && (
-          <p className="sr-only" role="status">
-            <FontFailedNote />
-          </p>
-        )}
-        {children}
-      </FormLanguageContext>
+      {/* Base UI reads direction from its own provider, not from the DOM, and
+          its menus and popovers render in portals outside this div; without
+          this they would open left to right on an Arabic form. */}
+      <DirectionProvider direction={formDirection(language)}>
+        <FormLanguageContext value={language}>
+          {fontError && (
+            <p className="sr-only" role="status">
+              <FontFailedNote />
+            </p>
+          )}
+          {children}
+        </FormLanguageContext>
+      </DirectionProvider>
     </div>
   )
 }
