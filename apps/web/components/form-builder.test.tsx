@@ -457,3 +457,24 @@ describe("FormBuilder rating questions", () => {
     expect(markup).toContain('<option value="2" selected="">2 (removed)</option>')
   })
 })
+
+describe("FormBuilder text direction", () => {
+  it("lets creator-typed text set its own direction", () => {
+    const markup = renderToStaticMarkup(
+      <FormBuilder
+        eyebrowLabel="Editing form"
+        title="A form"
+        onTitleChange={() => undefined}
+        questions={[
+          { id: "a", type: "multiple_choice", label: "ما اسمك؟", options: ["نعم"] },
+        ]}
+        onQuestionsChange={() => undefined}
+        theme={DEFAULT_FORM_THEME}
+        onThemeChange={() => undefined}
+      />
+    )
+    expect(markup).toMatch(/aria-label="Question label"[^>]*dir="auto"|dir="auto"[^>]*aria-label="Question label"/)
+    expect(markup).toMatch(/aria-label="Option 1"[^>]*dir="auto"|dir="auto"[^>]*aria-label="Option 1"/)
+  })
+})
+

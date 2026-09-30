@@ -421,4 +421,13 @@ describe("selected-option treatment", () => {
     expect(optionShortcutIndex("\u06F2", 3, true)).toBe(1)
     expect(optionShortcutIndex("\u0669", 3, true)).toBe(-1)
   })
+
+  it("lets typed text set its own direction, so Arabic answers read right to left in any form", () => {
+    for (const type of ["short_text", "long_text", "email"] as const) {
+      const markup = renderToStaticMarkup(
+        <FormQuestionField {...baseProps({ id: "x", type, label: "x" })} />
+      )
+      expect(markup).toContain('dir="auto"')
+    }
+  })
 })

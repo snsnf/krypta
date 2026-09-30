@@ -311,6 +311,7 @@ function TextSummaryBody({
         {preview.map((answer, index) => (
           <li
             key={index}
+            dir="auto"
             className="rounded border border-border/60 px-2 py-1"
           >
             {answer}
@@ -349,7 +350,9 @@ function QuestionSummaryCard({
 }) {
   return (
     <div className={CARD_CLASSNAME}>
-      <h3 className="font-medium">{summary.label}</h3>
+      <h3 dir="auto" className="font-medium">
+        {summary.label}
+      </h3>
       <AnsweredSkippedLine answered={summary.answered} skipped={summary.skipped} />
       <div className="mt-3">
         {summary.kind === "choice" && (

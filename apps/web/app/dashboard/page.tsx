@@ -444,7 +444,10 @@ export default function DashboardPage() {
                                 href={`/dashboard/${form.id}`}
                                 className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                               >
-                                <span className="min-w-0 truncate text-sm font-medium">
+                                <span
+                                  dir="auto"
+                                  className="min-w-0 truncate text-sm font-medium"
+                                >
                                   {form.title}
                                 </span>
                                 <span className="shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 text-[0.6875rem] leading-none font-medium text-muted-foreground">
@@ -453,7 +456,10 @@ export default function DashboardPage() {
                               </Link>
                             ) : (
                               <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                                <span className="min-w-0 text-sm text-muted-foreground">
+                                <span
+                                  dir="auto"
+                                  className="min-w-0 text-sm text-muted-foreground"
+                                >
                                   {form.title}
                                 </span>
                                 <span className="shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 text-[0.6875rem] leading-none font-medium text-muted-foreground">

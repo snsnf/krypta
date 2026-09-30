@@ -55,4 +55,19 @@ describe("FormQuestionCard", () => {
     )
     expect(markup).not.toContain("form-theme-accent-text")
   })
+
+  it("lets the label set its own direction, so an Arabic question reads right to left", () => {
+    const markup = renderToStaticMarkup(
+      <FormQuestionCard
+        question={{ id: "q9", type: "short_text", label: "ما اسمك؟" }}
+        value={undefined}
+        onAnswerChange={noop}
+        onToggleCheckbox={noop}
+        onFileSelect={noop}
+        uploading={false}
+        uploadError={undefined}
+      />
+    )
+    expect(markup).toMatch(/<label[^>]*dir="auto"[^>]*>ما اسمك؟/)
+  })
 })

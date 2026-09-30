@@ -190,7 +190,10 @@ export function FocusFormRenderer({
   if (!question) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center">
-        <p className="form-theme-text mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <p
+          dir="auto"
+          className="form-theme-text mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        >
           {title || t("untitled")}
         </p>
         <p className="form-theme-text text-muted-foreground">
@@ -228,7 +231,10 @@ export function FocusFormRenderer({
        * one thing the progress bar communicates only vaguely.
        */}
       <div className="mb-3 flex items-baseline justify-between gap-4">
-        <p className="form-theme-text text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <p
+          dir="auto"
+          className="form-theme-text text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        >
           {title || t("untitled")}
         </p>
         <p className="font-mono text-xs text-muted-foreground tabular-nums">
@@ -312,6 +318,7 @@ export function FocusFormRenderer({
                 >
                   <label
                     htmlFor={question.id}
+                    dir="auto"
                     className="form-theme-header block font-medium"
                   >
                     {question.label}
