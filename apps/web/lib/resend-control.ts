@@ -1,4 +1,4 @@
-import { appTranslator, type AppTranslator } from "./app-i18n"
+import { appTranslator, type AppTranslator } from "./app-translator"
 
 /**
  * The resend button's state and label. The label is worded by `t`, which

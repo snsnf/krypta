@@ -14,6 +14,8 @@ describe("describeApiError", () => {
       ["not_found", "Not found"],
       ["wrong_account", "Use the invited account"],
       ["conflict", "Conflict"],
+      ["checkout_in_progress", "Your payment is still being confirmed. Reload this page in a minute."],
+      ["active_subscription", "Cancel the subscription before deleting this account"],
       ["form_closed", "Form is closed"],
       ["rate_limited", "Too many requests"],
       ["payload_too_large", "File is too large"],

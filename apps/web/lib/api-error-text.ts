@@ -1,5 +1,5 @@
 import { ApiClientError } from "./api"
-import { translateKey, type AppTranslator } from "./app-i18n"
+import { translateKey, type AppTranslator } from "./app-translator"
 import type { AppLanguage } from "./app-locale"
 
 const BY_CODE: Record<string, string> = {
