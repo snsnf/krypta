@@ -55,5 +55,195 @@
     "colorSystem": "System",
     "colorDark": "Dark",
     "fontFailed": "A selected font could not be loaded. Using its role default instead."
+  },
+  "common": {
+    "loading": "Loading",
+    "tryAgain": "Try again",
+    "tryingAgain": "Trying again...",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "email": "Email",
+    "password": "Password",
+    "somethingWrong": "Something went wrong",
+    "vaultInitFailed": "Could not initialize your secure vault. Try again.",
+    "tooManyWait": "Too many attempts. Wait a minute and try again."
+  },
+  "errors": {
+    "unauthorized": "Unauthorized",
+    "notFound": "Not found",
+    "wrongAccount": "Use the invited account",
+    "conflict": "Conflict",
+    "formClosed": "Form is closed",
+    "checkoutInProgress": "Your payment is still being confirmed. Reload this page in a minute.",
+    "activeSubscription": "Cancel the subscription before deleting this account",
+    "rateLimited": "Too many requests",
+    "payloadTooLarge": "File is too large",
+    "internal": "Something went wrong",
+    "invalidRequest": "Invalid request",
+    "codeInvalid": "That code is not valid",
+    "invalidEmail": "Enter a valid email address",
+    "startSetupFirst": "Start setup first",
+    "registrationClosed": "Registration is closed"
+  },
+  "auth": {
+    "signup": {
+      "title": "Create an account",
+      "intro": "Your password never leaves this device. Only a one-way verifier derived from it is sent, and the key it unlocks stays here.",
+      "passwordPlaceholder": "Password (min 12 characters)",
+      "submit": "Sign up",
+      "submitting": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "logIn": "Log in",
+      "loading": "Loading sign up…",
+      "vaultRetryTitle": "Finish setting up your vault",
+      "checkEmailTitle": "Check your email",
+      "checkEmailBody": "We sent a 6-digit code to {email}. Your account is created once you enter it.",
+      "codePlaceholder": "6-digit code",
+      "codeLabel": "Verification code",
+      "codeRejected": "That code was not accepted. Check it and try again.",
+      "resendSent": "A new code is on its way.",
+      "resendWait": "Wait a minute before asking for another code.",
+      "resendFailed": "Could not send another code.",
+      "differentAddress": "Use a different address"
+    },
+    "resend": {
+      "sendingAnother": "Sending another code...",
+      "sendAnotherIn": "Send another code in {seconds}s",
+      "sendAnother": "Send another code"
+    },
+    "login": {
+      "title": "Log in",
+      "submit": "Log in",
+      "submitting": "Logging in...",
+      "passkey": "Sign in with a passkey",
+      "needAccount": "Need an account?",
+      "signUp": "Sign up",
+      "forgot": "Forgot your password?",
+      "invalidCredentials": "Invalid email or password",
+      "twoFactorTitle": "Two-factor code",
+      "twoFactorBody": "Enter the 6-digit code from your authenticator app, or one of your recovery codes.",
+      "twoFactorPlaceholder": "123456",
+      "codeRejected": "That code was not accepted. Enter your password again.",
+      "tooManySignIn": "Too many attempts. Wait a minute and sign in again.",
+      "finishUnlocking": "Finish unlocking",
+      "loading": "Loading sign in…"
+    },
+    "unlock": {
+      "title": "Unlock your account",
+      "body": "Enter your password to decrypt your data on this device.",
+      "submit": "Unlock",
+      "submitting": "Unlocking...",
+      "incorrectPassword": "Incorrect password",
+      "unlockFailed": "Could not unlock your account. Try again.",
+      "sessionLoadFailed": "Could not load your session. Reload and try again.",
+      "loading": "Loading your vault…"
+    },
+    "recover": {
+      "startTitle": "Recover your vault",
+      "startBody": "You'll need the recovery code you saved when you created your account. Without it, this will not work: there is no other way to recover an encrypted vault.",
+      "sendCode": "Send recovery code",
+      "sending": "Sending...",
+      "backToLogin": "Back to log in",
+      "verifyTitle": "Enter your codes",
+      "verifyBody": "Enter the 6-digit code we emailed to {email} and your printed recovery code.",
+      "emailCodePlaceholder": "6-digit email code",
+      "emailCodeLabel": "Emailed code",
+      "recoveryCodeLabel": "Recovery code",
+      "authenticatorLabel": "Authenticator code",
+      "authenticatorHint": "Only if you have two-factor authentication enabled.",
+      "startOver": "Start over",
+      "genericVerifyFailure": "That combination wasn't accepted. Check both codes and try again.",
+      "passwordTitle": "Set a new password",
+      "passwordBody": "Your existing forms and responses stay exactly as they are. A new recovery code is issued once this is done, and the old one stops working.",
+      "newPasswordPlaceholder": "New password (min 12 characters)",
+      "newPasswordLabel": "New password",
+      "setPassword": "Set new password",
+      "settingPassword": "Setting password..."
+    },
+    "recoveryCard": {
+      "title": "Save your recovery code",
+      "body": "This is the only time it is shown. If you forget your password, this code is the only thing that can recover your forms and responses; without it they stay encrypted forever.",
+      "copy": "Copy",
+      "download": "Download",
+      "copied": "Recovery code copied",
+      "copyFailed": "Could not copy",
+      "copyFailedHint": "Select the code and copy it manually.",
+      "notTwoFactor": "This is <strong>not</strong> a two-factor recovery code. Two-factor codes get you back into your account when you lose your authenticator; they cannot decrypt anything. This one decrypts your vault and does nothing for signing in.",
+      "acknowledge": "I have saved this code somewhere safe. I understand it will not be shown again.",
+      "continue": "Continue",
+      "fileTitle": "Krypta vault recovery code",
+      "fileBody": "This recovers your encrypted forms and responses if you forget your\npassword. It is not a two-factor recovery code. Keep it somewhere\nonly you can reach. Nobody can reissue it.\n"
+    }
+  },
+  "header": {
+    "home": "krypta home",
+    "untitled": "Untitled form",
+    "account": "Account",
+    "admin": "Admin",
+    "logOut": "Log out",
+    "accountMenu": "Account menu",
+    "theme": "Theme",
+    "light": "Light",
+    "system": "System",
+    "dark": "Dark",
+    "lightTheme": "Light theme",
+    "systemTheme": "System theme",
+    "darkTheme": "Dark theme",
+    "language": "Language"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "badge": "Error 404",
+    "heading": "Nothing here to unseal.",
+    "body": "This page does not exist, or its link was copied incompletely. A form link carries its key after the hash sign, and stops working when that part is cut off, so check the whole address made it across.",
+    "backToStart": "Back to the start",
+    "openDashboard": "Open my dashboard"
+  },
+  "failure": {
+    "backToForms": "Back to forms",
+    "incompleteLink": {
+      "title": "This link is incomplete",
+      "description": "The part after the hash sign is the key that decrypts the form, and it did not make it into this address. Ask whoever shared the link to send the whole thing."
+    },
+    "incompleteEditLink": {
+      "title": "This link is incomplete",
+      "description": "An edit link carries both your edit token and the form's key after the hash sign, and this address is missing one of them. Open the link exactly as it was saved."
+    },
+    "formGone": {
+      "title": "This form no longer exists",
+      "description": "Its owner has deleted it, or the address is wrong. Nothing you submitted earlier is affected."
+    },
+    "wrongKey": {
+      "title": "This key does not open this form",
+      "description": "The form loaded, but the key in the link could not decrypt it. The link was probably altered when it was copied. Ask for it to be sent again."
+    },
+    "keyMismatch": {
+      "title": "This form cannot be trusted right now",
+      "description": "The key your answers would be encrypted to is not the one this form's owner set up, so someone other than the owner might be able to read them. Nothing has been sent. Let the person who shared the link know."
+    },
+    "unreachable": {
+      "title": "This form could not be loaded",
+      "description": "Something interrupted the request. Check your connection and try again."
+    },
+    "rateLimited": {
+      "title": "Too many people opened this form at once",
+      "description": "Wait a minute, then reload the page."
+    },
+    "formUnavailable": {
+      "title": "This form is no longer available",
+      "description": "It was deleted, or your access to it was removed. It will not appear in your dashboard any more."
+    },
+    "keysPending": {
+      "title": "Waiting for the owner",
+      "description": "You have accepted this form, but its keys are handed over the next time the owner opens their dashboard. Nothing is wrong; come back once they have."
+    },
+    "keysUnreadable": {
+      "title": "This form could not be opened",
+      "description": "Its keys did not open with your account. Reloading usually clears this; if it keeps happening, ask the owner to share the form with you again."
+    },
+    "formsListUnreachable": {
+      "title": "Your forms could not be loaded",
+      "description": "Something interrupted the request. Check your connection and try again."
+    }
   }
 }
