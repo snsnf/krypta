@@ -706,3 +706,12 @@
     );
   }
 }
+
+/* Arabic app: the app fonts have no Arabic letters, so the self-hosted Noto
+   Sans Arabic goes behind them. Mono keeps its own stack (codes are Latin). */
+html[lang="ar"] body {
+  font-family: var(--font-sans), "Noto Sans Arabic", sans-serif;
+}
+html[lang="ar"] .font-heading {
+  font-family: var(--font-heading), "Noto Sans Arabic", sans-serif;
+}
