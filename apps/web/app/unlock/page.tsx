@@ -29,6 +29,10 @@ function UnlockPageContent() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [vaultRetry, setVaultRetry] = useState(false)
+  // Why the password is being asked for again. A flag rather than a stored
+  // message so the effect that sets it needs no translator (and so does not
+  // re-run, refetching the session, when the language changes).
+  const [vaultNotice, setVaultNotice] = useState(false)
   const setSession = useAuthStore((s) => s.setSession)
   const sessionUserId = useRef<string | null>(null)
   // Submitting before /auth/me lands used to fail, because the address it
@@ -55,9 +59,8 @@ function UnlockPageContent() {
           totpVerified: me.second_factor_verified,
         })
         if (vaultRetryRequested) {
-          // The retry screen shows the vault message itself when no error is
-          // set, so none is stored here (and the effect needs no translator).
           setVaultRetry(getPendingAccountKey(me.user_id) !== null)
+          setVaultNotice(true)
         }
       })
       .catch(() => {
@@ -72,6 +75,7 @@ function UnlockPageContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setVaultNotice(false)
     setLoading(true)
     try {
       await sessionLoad.current
@@ -122,6 +126,9 @@ function UnlockPageContent() {
       setLoading(false)
     }
   }
+
+  const shownError =
+    error ?? (vaultNotice ? t("common.vaultInitFailed") : null)
 
   if (vaultRetry) {
     return (
@@ -174,11 +181,11 @@ function UnlockPageContent() {
         />
         <p
           className={`text-sm text-destructive transition-opacity duration-150 ease-out ${
-            error ? "opacity-100" : "h-0 opacity-0"
+            shownError ? "opacity-100" : "h-0 opacity-0"
           }`}
           aria-live="polite"
         >
-          {error}
+          {shownError}
         </p>
         <Button
           type="submit"
