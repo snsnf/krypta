@@ -14,7 +14,9 @@ import { normalizeBase32 } from "@krypta/crypto"
 import { ApiClientError } from "@/lib/api"
 import { completeRecovery, startRecovery, verifyRecovery } from "@/lib/recovery"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CredentialInput } from "@/components/credential-input"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
+import { describeApiError } from "@/lib/api-error-text"
 import { AuthShell } from "@/components/auth-shell"
 import { RecoveryCodeCard } from "@/components/recovery-code-card"
 
@@ -39,11 +41,10 @@ type Step = "email" | "verify" | "password" | "recoveryCode"
 // One message for a wrong emailed code, a wrong recovery code, and a wrong
 // TOTP code. The API deliberately makes them indistinguishable, and the UI
 // must not undo that.
-const GENERIC_VERIFY_FAILURE =
-  "That combination wasn't accepted. Check both codes and try again."
-
 export default function RecoverPage() {
   const router = useRouter()
+  const t = useAppT()
+  const language = useAppLanguage()
   const [step, setStep] = useState<Step>("email")
   const [email, setEmail] = useState("")
   const [pendingToken, setPendingToken] = useState<string | null>(null)
@@ -73,9 +74,7 @@ export default function RecoverPage() {
       setPendingToken(pendingToken)
       setStep("verify")
     } catch (err) {
-      setError(
-        err instanceof ApiClientError ? err.message : "Something went wrong"
-      )
+      setError(describeApiError(err, t, language))
     } finally {
       setLoading(false)
     }
@@ -99,8 +98,8 @@ export default function RecoverPage() {
     } catch (err) {
       setError(
         err instanceof ApiClientError && err.code === "rate_limited"
-          ? "Too many attempts. Wait a minute and try again."
-          : GENERIC_VERIFY_FAILURE
+          ? t("common.tooManyWait")
+          : t("auth.recover.genericVerifyFailure")
       )
     } finally {
       setLoading(false)
@@ -121,9 +120,7 @@ export default function RecoverPage() {
       setNewRecoveryCode(freshCode)
       setStep("recoveryCode")
     } catch (err) {
-      setError(
-        err instanceof ApiClientError ? err.message : "Something went wrong"
-      )
+      setError(describeApiError(err, t, language))
     } finally {
       setLoading(false)
     }
@@ -157,21 +154,19 @@ export default function RecoverPage() {
         <form onSubmit={handleComplete} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Set a new password
+              {t("auth.recover.passwordTitle")}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Your existing forms and responses stay exactly as they are. A new
-              recovery code is issued once this is done, and the old one stops
-              working.
+              {t("auth.recover.passwordBody")}
             </p>
           </div>
-          <Input
+          <CredentialInput
             type="password"
             required
             autoFocus
             minLength={12}
-            placeholder="New password (min 12 characters)"
-            aria-label="New password"
+            placeholder={t("auth.recover.newPasswordPlaceholder")}
+            aria-label={t("auth.recover.newPasswordLabel")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
@@ -191,7 +186,7 @@ export default function RecoverPage() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Setting password..." : "Set new password"}
+            {loading ? t("auth.recover.settingPassword") : t("auth.recover.setPassword")}
           </Button>
         </form>
       </AuthShell>
@@ -204,29 +199,28 @@ export default function RecoverPage() {
         <form onSubmit={handleVerify} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Enter your codes
+              {t("auth.recover.verifyTitle")}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Enter the 6-digit code we emailed to {email} and your printed
-              recovery code.
+              {t("auth.recover.verifyBody", { email })}
             </p>
           </div>
-          <Input
+          <CredentialInput
             required
             autoFocus
             autoComplete="one-time-code"
             inputMode="numeric"
             maxLength={6}
-            placeholder="6-digit email code"
-            aria-label="Emailed code"
+            placeholder={t("auth.recover.emailCodePlaceholder")}
+            aria-label={t("auth.recover.emailCodeLabel")}
             value={emailCode}
             onChange={(e) => setEmailCode(e.target.value)}
           />
-          <Input
+          <CredentialInput
             required
             inputMode="text"
             placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
-            aria-label="Recovery code"
+            aria-label={t("auth.recover.recoveryCodeLabel")}
             className="font-mono"
             value={recoveryCode}
             onChange={(e) =>
@@ -234,16 +228,16 @@ export default function RecoverPage() {
             }
           />
           <div className="flex flex-col gap-1">
-            <Input
+            <CredentialInput
               autoComplete="one-time-code"
               inputMode="text"
-              placeholder="Authenticator code"
-              aria-label="Authenticator code"
+              placeholder={t("auth.recover.authenticatorLabel")}
+              aria-label={t("auth.recover.authenticatorLabel")}
               value={totpCode}
               onChange={(e) => setTotpCode(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Only if you have two-factor authentication enabled.
+              {t("auth.recover.authenticatorHint")}
             </p>
           </div>
           <p
@@ -262,7 +256,7 @@ export default function RecoverPage() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Verifying..." : "Verify"}
+            {loading ? t("common.verifying") : t("common.verify")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             <button
@@ -270,7 +264,7 @@ export default function RecoverPage() {
               onClick={startOver}
               className="text-foreground underline underline-offset-4 hover:no-underline"
             >
-              Start over
+              {t("auth.recover.startOver")}
             </button>
           </p>
         </form>
@@ -283,20 +277,18 @@ export default function RecoverPage() {
       <form onSubmit={handleStart} className="flex flex-col gap-4">
         <div className="mb-2">
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Recover your vault
+            {t("auth.recover.startTitle")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            You&apos;ll need the recovery code you saved when you created your
-            account. Without it, this will not work: there is no other way to
-            recover an encrypted vault.
+            {t("auth.recover.startBody")}
           </p>
         </div>
-        <Input
+        <CredentialInput
           type="email"
           required
           autoFocus
-          placeholder="Email"
-          aria-label="Email"
+          placeholder={t("common.email")}
+          aria-label={t("common.email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -316,7 +308,7 @@ export default function RecoverPage() {
               data-icon="inline-start"
             />
           )}
-          {loading ? "Sending..." : "Send recovery code"}
+          {loading ? t("auth.recover.sending") : t("auth.recover.sendCode")}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
           <Link
@@ -324,7 +316,7 @@ export default function RecoverPage() {
             className="inline-flex items-center gap-1 text-foreground underline underline-offset-4 hover:no-underline"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
-            Back to log in
+            {t("auth.recover.backToLogin")}
           </Link>
         </p>
       </form>

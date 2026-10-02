@@ -28,7 +28,9 @@ import {
 } from "@/lib/vault-access"
 import { resendControlState } from "@/lib/resend-control"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CredentialInput } from "@/components/credential-input"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
+import { describeApiError } from "@/lib/api-error-text"
 import { AuthShell } from "@/components/auth-shell"
 import { RecoveryCodeCard } from "@/components/recovery-code-card"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
@@ -38,6 +40,8 @@ function SignupPageContent() {
   const [authReturn] = useState(() => safeAuthReturn(searchParams.get("next")))
   const beginInteractiveAuth = useRedirectIfAuthenticated(authReturn)
   const router = useRouter()
+  const t = useAppT()
+  const language = useAppLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -84,9 +88,7 @@ function SignupPageContent() {
       setPendingToken(pending_token)
       setResendCooldown(60)
     } catch (err) {
-      setError(
-        err instanceof ApiClientError ? err.message : "Something went wrong"
-      )
+      setError(describeApiError(err, t, language))
     } finally {
       setLoading(false)
     }
@@ -133,7 +135,7 @@ function SignupPageContent() {
       setVaultRetry(false)
       showRecoveryCode()
     } catch {
-      setError("Could not initialize your secure vault. Try again.")
+      setError(t("common.vaultInitFailed"))
     } finally {
       setLoading(false)
     }
@@ -184,14 +186,14 @@ function SignupPageContent() {
     } catch (err) {
       if (err instanceof AccountSharingKeyError) {
         setVaultRetry(true)
-        setError("Could not initialize your secure vault. Try again.")
+        setError(t("common.vaultInitFailed"))
         return
       }
       setCode("")
       setError(
         err instanceof ApiClientError && err.code === "rate_limited"
-          ? "Too many attempts. Wait a minute and try again."
-          : "That code was not accepted. Check it and try again."
+          ? t("common.tooManyWait")
+          : t("auth.signup.codeRejected")
       )
     } finally {
       setLoading(false)
@@ -208,13 +210,13 @@ function SignupPageContent() {
         method: "POST",
         body: JSON.stringify({ pending_token: pendingToken }),
       })
-      setNotice("A new code is on its way.")
+      setNotice(t("auth.signup.resendSent"))
       setResendCooldown(60)
     } catch (err) {
       setError(
         err instanceof ApiClientError && err.code === "rate_limited"
-          ? "Wait a minute before asking for another code."
-          : "Could not send another code."
+          ? t("auth.signup.resendWait")
+          : t("auth.signup.resendFailed")
       )
     } finally {
       setResendLoading(false)
@@ -244,7 +246,7 @@ function SignupPageContent() {
     return () => window.clearTimeout(timer)
   }, [resendCooldown])
 
-  const resendControl = resendControlState(resendCooldown, resendLoading)
+  const resendControl = resendControlState(resendCooldown, resendLoading, t)
 
   if (recoveryCode !== null) {
     return (
@@ -260,13 +262,13 @@ function SignupPageContent() {
         <form onSubmit={handleVaultRetry} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Finish setting up your vault
+              {t("auth.signup.vaultRetryTitle")}
             </h1>
             <p
               className="mt-1.5 text-sm text-muted-foreground"
               aria-live="polite"
             >
-              {error ?? "Could not initialize your secure vault. Try again."}
+              {error ?? t("common.vaultInitFailed")}
             </p>
           </div>
           <Button type="submit" disabled={loading}>
@@ -277,7 +279,7 @@ function SignupPageContent() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Trying again..." : "Try again"}
+            {loading ? t("common.tryingAgain") : t("common.tryAgain")}
           </Button>
         </form>
       </AuthShell>
@@ -290,21 +292,20 @@ function SignupPageContent() {
         <form onSubmit={handleCodeSubmit} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Check your email
+              {t("auth.signup.checkEmailTitle")}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              We sent a 6-digit code to {email}. Your account is created once
-              you enter it.
+              {t("auth.signup.checkEmailBody", { email })}
             </p>
           </div>
-          <Input
+          <CredentialInput
             required
             autoFocus
             autoComplete="one-time-code"
             inputMode="numeric"
             maxLength={6}
-            placeholder="6-digit code"
-            aria-label="Verification code"
+            placeholder={t("auth.signup.codePlaceholder")}
+            aria-label={t("auth.signup.codeLabel")}
             value={code}
             onChange={(e) => setCode(e.target.value)}
           />
@@ -332,7 +333,7 @@ function SignupPageContent() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Verifying..." : "Verify"}
+            {loading ? t("common.verifying") : t("common.verify")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             <button
@@ -349,7 +350,7 @@ function SignupPageContent() {
               onClick={startOver}
               className="text-foreground underline underline-offset-4 hover:no-underline"
             >
-              Use a different address
+              {t("auth.signup.differentAddress")}
             </button>
           </p>
         </form>
@@ -362,27 +363,26 @@ function SignupPageContent() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="mb-2">
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Create an account
+            {t("auth.signup.title")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Your password never leaves this device. Only a one-way verifier
-            derived from it is sent, and the key it unlocks stays here.
+            {t("auth.signup.intro")}
           </p>
         </div>
-        <Input
+        <CredentialInput
           type="email"
           required
-          placeholder="Email"
-          aria-label="Email"
+          placeholder={t("common.email")}
+          aria-label={t("common.email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Input
+        <CredentialInput
           type="password"
           required
           minLength={12}
-          placeholder="Password (min 12 characters)"
-          aria-label="Password"
+          placeholder={t("auth.signup.passwordPlaceholder")}
+          aria-label={t("common.password")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -406,10 +406,10 @@ function SignupPageContent() {
               data-icon="inline-start"
             />
           )}
-          {loading ? "Creating account..." : "Sign up"}
+          {loading ? t("auth.signup.submitting") : t("auth.signup.submit")}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("auth.signup.haveAccount")}{" "}
           <Link
             href={
               authReturn === "/invitations/accept"
@@ -418,7 +418,7 @@ function SignupPageContent() {
             }
             className="text-foreground underline underline-offset-4 hover:no-underline"
           >
-            Log in
+            {t("auth.signup.logIn")}
           </Link>
         </p>
       </form>
@@ -427,10 +427,11 @@ function SignupPageContent() {
 }
 
 function SignupFallback() {
+  const t = useAppT()
   return (
     <AuthShell>
       <p role="status" className="text-sm text-muted-foreground">
-        Loading sign up…
+        {t("auth.signup.loading")}
       </p>
     </AuthShell>
   )

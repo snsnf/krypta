@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/components/ui/toast"
+import { useAppT } from "@/lib/app-i18n"
 
 interface RecoveryCodeCardProps {
   code: string
@@ -29,16 +30,17 @@ interface RecoveryCodeCardProps {
  * account keeps working until the day the password is forgotten.
  */
 export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
+  const t = useAppT()
   const [acknowledged, setAcknowledged] = useState(false)
 
   async function copyCode() {
     try {
       await navigator.clipboard.writeText(code)
-      toast.add({ title: "Recovery code copied", type: "success" })
+      toast.add({ title: t("auth.recoveryCard.copied"), type: "success" })
     } catch {
       toast.add({
-        title: "Could not copy",
-        description: "Select the code and copy it manually.",
+        title: t("auth.recoveryCard.copyFailed"),
+        description: t("auth.recoveryCard.copyFailedHint"),
         type: "error",
       })
     }
@@ -47,13 +49,12 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
   function downloadCode() {
     const blob = new Blob(
       [
-        "Krypta vault recovery code\n\n",
+        `${t("auth.recoveryCard.fileTitle")}\n\n`,
         `${code}\n\n`,
-        "This recovers your encrypted forms and responses if you forget your\n",
-        "password. It is not a two-factor recovery code. Keep it somewhere\n",
-        "only you can reach. Nobody can reissue it.\n",
+        t("auth.recoveryCard.fileBody"),
       ],
-      { type: "text/plain" }
+      // UTF-8 stated outright: the text may be Arabic.
+      { type: "text/plain;charset=utf-8" }
     )
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -69,16 +70,15 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
     <div className="flex flex-col gap-4">
       <div className="mb-2">
         <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-          Save your recovery code
+          {t("auth.recoveryCard.title")}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          This is the only time it is shown. If you forget your password, this
-          code is the only thing that can recover your forms and responses;
-          without it they stay encrypted forever.
+          {t("auth.recoveryCard.body")}
         </p>
       </div>
 
       <p
+        dir="ltr"
         data-testid="recovery-code"
         className="rounded-lg border border-primary/25 bg-primary/[0.04] p-4 text-center font-mono text-sm leading-6 tracking-wide break-all select-all"
       >
@@ -94,7 +94,7 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
           onClick={copyCode}
         >
           <HugeiconsIcon icon={Copy01Icon} size={14} data-icon="inline-start" />
-          Copy
+          {t("auth.recoveryCard.copy")}
         </Button>
         <Button
           type="button"
@@ -108,15 +108,16 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
             size={14}
             data-icon="inline-start"
           />
-          Download
+          {t("auth.recoveryCard.download")}
         </Button>
       </div>
 
       <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-        This is <strong className="font-medium text-foreground">not</strong> a
-        two-factor recovery code. Two-factor codes get you back into your
-        account when you lose your authenticator; they cannot decrypt anything.
-        This one decrypts your vault and does nothing for signing in.
+        {t.rich("auth.recoveryCard.notTwoFactor", {
+          strong: (chunks) => (
+            <strong className="font-medium text-foreground">{chunks}</strong>
+          ),
+        })}
       </p>
 
       <label className="flex items-start gap-3 text-sm">
@@ -126,8 +127,7 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
           onCheckedChange={(checked) => setAcknowledged(checked === true)}
         />
         <span>
-          I have saved this code somewhere safe. I understand it will not be
-          shown again.
+          {t("auth.recoveryCard.acknowledge")}
         </span>
       </label>
 
@@ -137,7 +137,7 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
           size={16}
           data-icon="inline-start"
         />
-        Continue
+        {t("auth.recoveryCard.continue")}
       </Button>
     </div>
   )
