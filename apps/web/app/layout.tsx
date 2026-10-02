@@ -5,6 +5,9 @@ import { Geist_Mono, Outfit, Schibsted_Grotesk } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toast"
+import { AppLocaleProvider } from "@/components/app-locale-provider"
+import { getAppLanguage } from "@/lib/app-locale-server"
+import { formDirection } from "@/lib/form-language"
 import { cn } from "@/lib/utils"
 
 const bodyFont = Schibsted_Grotesk({
@@ -68,9 +71,11 @@ export default async function RootLayout({
   // which the nonce CSP blocks unless it is given the same nonce proxy.ts
   // generated for this request.
   const nonce = (await headers()).get("x-nonce") ?? undefined
+  const language = await getAppLanguage()
   return (
     <html
-      lang="en"
+      lang={language}
+      dir={formDirection(language)}
       suppressHydrationWarning
       className={cn(
         "antialiased",
@@ -80,11 +85,22 @@ export default async function RootLayout({
         headingFont.variable
       )}
     >
+      {language === "ar" && (
+        <head>
+          {/* Self-hosted, like every font: the face behind the app fonts for Arabic.
+              A generated file under public/, not a CSS import, and only Arabic
+              pages need it, hence the manual link. */}
+          {/* eslint-disable-next-line @next/next/no-css-tags */}
+          <link rel="stylesheet" href="/fonts/noto-sans-arabic.css" />
+        </head>
+      )}
       <body>
-        <ThemeProvider nonce={nonce}>
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <AppLocaleProvider language={language}>
+          <ThemeProvider nonce={nonce}>
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </AppLocaleProvider>
       </body>
     </html>
   )
