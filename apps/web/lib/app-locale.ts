@@ -46,13 +46,49 @@ export function parseAcceptLanguage(
   return null
 }
 
+/*
+ * Routes whose content is still English only. The browser's language
+ * preference does not apply there, because it would mirror English text right
+ * to left; an explicit choice (the cookie) still does. Each stage that
+ * translates a route removes it from this list. "/" is the landing page alone.
+ */
+const UNTRANSLATED_ROUTES = [
+  "/",
+  "/dashboard",
+  "/admin",
+  "/invitations",
+  "/privacy",
+  "/terms",
+  "/security",
+]
+
+// Public forms take the form's own language, never the viewer's.
+const ALWAYS_ENGLISH_ROUTES = ["/f"]
+
+function onRoute(pathname: string, route: string): boolean {
+  return route === "/"
+    ? pathname === "/"
+    : pathname === route || pathname.startsWith(`${route}/`)
+}
+
+export function isUntranslatedRoute(pathname: string): boolean {
+  return UNTRANSLATED_ROUTES.some((route) => onRoute(pathname, route))
+}
+
 export function resolveAppLanguage(input: {
   cookie?: string | null
   acceptLanguage?: string | null
+  /** The request path, when known (the proxy forwards it as x-pathname). */
+  pathname?: string | null
 }): AppLanguage {
-  return (
-    supported(input.cookie) ?? parseAcceptLanguage(input.acceptLanguage) ?? "en"
-  )
+  const { pathname } = input
+  if (pathname && ALWAYS_ENGLISH_ROUTES.some((route) => onRoute(pathname, route))) {
+    return "en"
+  }
+  const chosen = supported(input.cookie)
+  if (chosen !== null) return chosen
+  if (pathname && isUntranslatedRoute(pathname)) return "en"
+  return parseAcceptLanguage(input.acceptLanguage) ?? "en"
 }
 
 /**

@@ -7,5 +7,8 @@ export async function getAppLanguage(): Promise<AppLanguage> {
   return resolveAppLanguage({
     cookie: cookieStore.get(LOCALE_COOKIE)?.value,
     acceptLanguage: headerStore.get("accept-language"),
+    // Set by proxy.ts on every document request, overwriting anything the
+    // client sent, so a request cannot choose its own route.
+    pathname: headerStore.get("x-pathname"),
   })
 }
