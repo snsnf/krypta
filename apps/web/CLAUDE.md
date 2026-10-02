@@ -80,7 +80,9 @@ out before investigating the app.
 `e2e/form-appearance.spec.ts` asserts no horizontal overflow at 375px, and
 the header is where that fails: a form page carries Share, Copy link, Export
 CSV or Save, the theme toggle, Account, Admin and Log out. Below `sm` the
-account items fold into one menu in `components/app-header.tsx`, the
+account items fold into one menu in `components/app-header.tsx` (which also
+holds the language choice as radio items; from `sm` it is an icon-only globe
+menu beside the theme toggle), the
 secondary form actions drop their labels behind `hidden sm:inline` spans
 while keeping an `aria-label` equal to the old text (so every existing
 `getByRole` still resolves at desktop width), and Save and Publish shorten
@@ -412,8 +414,11 @@ chowned to UID 10001 in `apps/web/Dockerfile` rather than left root-owned.
 ## Two languages: the app's and the form's
 
 krypta has two languages and they must not be merged. The **app language**
-is the dashboard and builder, for whoever is using them; it is English and
-not yet translated. The **form language** is the text respondents see around
+is the dashboard, builder and the screens around signing in, for whoever is
+using them; it is English or Arabic, and today only the sign-up, login, unlock
+and recovery screens, the header, the not-found page and the shared
+"unavailable" messages are translated (the dashboard, builder, settings,
+sharing, admin, landing and emails are still English). The **form language** is the text respondents see around
 the questions (buttons, hints, errors, the default thank-you), chosen by the
 creator per form. The creator's own questions, options and confirmation
 message are never translated.
@@ -426,6 +431,32 @@ before languages existed (the starter templates' padding budget depends on
 that). `FormThemeSurface` sets `dir` and `lang`, provides
 `FormLanguageContext`, and for Arabic loads the self-hosted Noto Sans Arabic
 that `toFontStack` puts behind every chosen font.
+
+The app language is resolved on the server by `getAppLanguage()` in
+`lib/app-locale-server.ts`: the `krypta-locale` cookie, then `Accept-Language`
+by q-value, then English, with nothing unrecognised ever reaching a page. No
+locale is ever in a URL and there is no middleware, so `proxy.ts` and the CSP
+are untouched. The cookie is written only when someone explicitly picks a
+language (`language-switcher.tsx`), never by default, because `/privacy`
+promises that the only cookies are the sign-in ones plus this one; adding any
+other cookie means changing that page in the same commit. The root layout sets
+`<html lang dir>`, provides `AppLanguageContext` and Base UI's
+`DirectionProvider`, and for Arabic links the self-hosted Noto Sans Arabic
+behind the app fonts (`globals.css`). Components read the language with
+`useAppT()`; the server-safe translator lives in `lib/app-translator.ts`
+because a Server Component (`not-found.tsx`) must not import the module that
+holds the React context, and a test asserts that file never imports React.
+**`app/f/layout.tsx` pins English and left to right for every public form
+route**, so an Arabic browser opening an English form still gets one; the
+form's own surface then applies the form's language. The API's English error
+`message` is never shown: `describeApiError` (`lib/api-error-text.ts`) maps each
+known code, and each of the five known `bad_request` texts, to a translated key
+whose English value equals the server's string, and an unknown message shows
+verbatim in English but never in Arabic. Email, password and code inputs use
+`CredentialInput` (left to right, aligned to the reading edge in a
+right-to-left page). Load failures are `{ key, retryable }` and are worded at
+render by `failureText`, since they are created in async handlers where no
+language is known.
 
 Strings live in `messages/<language>.json` under `form`. Components read them
 with `useFormT()`; the two public pages, which compute text themselves, use
