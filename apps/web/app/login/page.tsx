@@ -23,7 +23,9 @@ import {
   retryPendingVault,
 } from "@/lib/vault-access"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CredentialInput } from "@/components/credential-input"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
+import { describeApiError } from "@/lib/api-error-text"
 import { AuthShell } from "@/components/auth-shell"
 import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated"
 
@@ -32,6 +34,8 @@ function LoginPageContent() {
   const [authReturn] = useState(() => safeAuthReturn(searchParams.get("next")))
   const beginInteractiveAuth = useRedirectIfAuthenticated(authReturn)
   const router = useRouter()
+  const t = useAppT()
+  const language = useAppLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -134,15 +138,13 @@ function LoginPageContent() {
   function handleLoginError(err: unknown): void {
     if (err instanceof AccountSharingKeyError) {
       setVaultRetry(true)
-      setError("Could not initialize your secure vault. Try again.")
+      setError(t("common.vaultInitFailed"))
       return
     }
     setError(
-      err instanceof ApiClientError
-        ? err.code === "unauthorized"
-          ? "Invalid email or password"
-          : err.message
-        : "Something went wrong"
+      err instanceof ApiClientError && err.code === "unauthorized"
+        ? t("auth.login.invalidCredentials")
+        : describeApiError(err, t, language)
     )
   }
 
@@ -157,7 +159,7 @@ function LoginPageContent() {
       setVaultRetry(false)
       router.replace(authReturn)
     } catch {
-      setError("Could not initialize your secure vault. Try again.")
+      setError(t("common.vaultInitFailed"))
     } finally {
       setLoading(false)
     }
@@ -184,7 +186,7 @@ function LoginPageContent() {
     } catch (err) {
       if (err instanceof AccountSharingKeyError) {
         setVaultRetry(true)
-        setError("Could not initialize your secure vault. Try again.")
+        setError(t("common.vaultInitFailed"))
         return
       }
       // The handle is spent on any attempt, so a retry has to start from the
@@ -193,8 +195,8 @@ function LoginPageContent() {
       setCode("")
       setError(
         err instanceof ApiClientError && err.code === "rate_limited"
-          ? "Too many attempts. Wait a minute and sign in again."
-          : "That code was not accepted. Enter your password again."
+          ? t("auth.login.tooManySignIn")
+          : t("auth.login.codeRejected")
       )
     } finally {
       setLoading(false)
@@ -207,13 +209,13 @@ function LoginPageContent() {
         <form onSubmit={handleVaultRetry} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Finish unlocking
+              {t("auth.login.finishUnlocking")}
             </h1>
             <p
               className="mt-1.5 text-sm text-muted-foreground"
               aria-live="polite"
             >
-              {error ?? "Could not initialize your secure vault. Try again."}
+              {error ?? t("common.vaultInitFailed")}
             </p>
           </div>
           <Button type="submit" disabled={loading}>
@@ -224,7 +226,7 @@ function LoginPageContent() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Trying again..." : "Try again"}
+            {loading ? t("common.tryingAgain") : t("common.tryAgain")}
           </Button>
         </form>
       </AuthShell>
@@ -237,20 +239,19 @@ function LoginPageContent() {
         <form onSubmit={handleCodeSubmit} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Two-factor code
+              {t("auth.login.twoFactorTitle")}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Enter the 6-digit code from your authenticator app, or one of your
-              recovery codes.
+              {t("auth.login.twoFactorBody")}
             </p>
           </div>
-          <Input
+          <CredentialInput
             required
             autoFocus
             autoComplete="one-time-code"
             inputMode="text"
-            placeholder="123456"
-            aria-label="Two-factor code"
+            placeholder={t("auth.login.twoFactorPlaceholder")}
+            aria-label={t("auth.login.twoFactorTitle")}
             value={code}
             onChange={(e) => setCode(e.target.value)}
           />
@@ -270,7 +271,7 @@ function LoginPageContent() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Verifying..." : "Verify"}
+            {loading ? t("common.verifying") : t("common.verify")}
           </Button>
         </form>
       </AuthShell>
@@ -281,21 +282,21 @@ function LoginPageContent() {
     <AuthShell>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <h1 className="mb-2 font-heading text-2xl font-medium tracking-[-0.01em]">
-          Log in
+          {t("auth.login.title")}
         </h1>
-        <Input
+        <CredentialInput
           type="email"
           required
-          placeholder="Email"
-          aria-label="Email"
+          placeholder={t("common.email")}
+          aria-label={t("common.email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Input
+        <CredentialInput
           type="password"
           required
-          placeholder="Password"
-          aria-label="Password"
+          placeholder={t("common.password")}
+          aria-label={t("common.password")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -319,7 +320,7 @@ function LoginPageContent() {
               data-icon="inline-start"
             />
           )}
-          {loading ? "Logging in..." : "Log in"}
+          {loading ? t("auth.login.submitting") : t("auth.login.submit")}
         </Button>
         {passkeySupported && (
           <Button
@@ -333,11 +334,11 @@ function LoginPageContent() {
               size={16}
               data-icon="inline-start"
             />
-            Sign in with a passkey
+            {t("auth.login.passkey")}
           </Button>
         )}
         <p className="text-center text-sm text-muted-foreground">
-          Need an account?{" "}
+          {t("auth.login.needAccount")}{" "}
           <Link
             href={
               authReturn === "/invitations/accept"
@@ -346,7 +347,7 @@ function LoginPageContent() {
             }
             className="text-foreground underline underline-offset-4 hover:no-underline"
           >
-            Sign up
+            {t("auth.login.signUp")}
           </Link>
         </p>
         <p className="text-center text-sm text-muted-foreground">
@@ -354,7 +355,7 @@ function LoginPageContent() {
             href="/recover"
             className="text-foreground underline underline-offset-4 hover:no-underline"
           >
-            Forgot your password?
+            {t("auth.login.forgot")}
           </Link>
         </p>
       </form>
@@ -363,10 +364,11 @@ function LoginPageContent() {
 }
 
 function LoginFallback() {
+  const t = useAppT()
   return (
     <AuthShell>
       <p role="status" className="text-sm text-muted-foreground">
-        Loading sign in…
+        {t("auth.login.loading")}
       </p>
     </AuthShell>
   )

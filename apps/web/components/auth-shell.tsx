@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { KryptaLogo } from "@/components/krypta-logo"
+import { AuthLanguageToggle } from "@/components/language-switcher"
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center px-6 py-16">
+    <div className="relative flex min-h-svh flex-col items-center justify-center px-6 py-16">
+      <AuthLanguageToggle />
       <Link
         href="/"
         className="mb-10 flex items-center gap-2 font-heading text-lg font-medium tracking-tight transition-opacity duration-150 ease-out hover:opacity-70"

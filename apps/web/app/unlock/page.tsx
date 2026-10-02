@@ -13,11 +13,13 @@ import { safeAuthReturn } from "@/lib/auth-return"
 import { getPendingAccountKey, useAuthStore } from "@/lib/auth-store"
 import { retryPendingVault, unlockVaultWithPassword } from "@/lib/vault-access"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CredentialInput } from "@/components/credential-input"
+import { useAppT } from "@/lib/app-i18n"
 import { AuthShell } from "@/components/auth-shell"
 
 function UnlockPageContent() {
   const router = useRouter()
+  const t = useAppT()
   const searchParams = useSearchParams()
   const [authReturn] = useState(() => safeAuthReturn(searchParams.get("next")))
   const [vaultRetryRequested] = useState(
@@ -53,8 +55,9 @@ function UnlockPageContent() {
           totpVerified: me.second_factor_verified,
         })
         if (vaultRetryRequested) {
+          // The retry screen shows the vault message itself when no error is
+          // set, so none is stored here (and the effect needs no translator).
           setVaultRetry(getPendingAccountKey(me.user_id) !== null)
-          setError("Could not initialize your secure vault. Try again.")
         }
       })
       .catch(() => {
@@ -76,7 +79,7 @@ function UnlockPageContent() {
       // Reaching here without a session means /auth/me failed rather than that
       // the password is wrong, so do not blame the password.
       if (!userId) {
-        setError("Could not load your session. Reload and try again.")
+        setError(t("auth.unlock.sessionLoadFailed"))
         return
       }
       await unlockVaultWithPassword(password)
@@ -87,17 +90,17 @@ function UnlockPageContent() {
           sessionUserId.current !== null &&
             getPendingAccountKey(sessionUserId.current) !== null
         )
-        setError("Could not initialize your secure vault. Try again.")
+        setError(t("common.vaultInitFailed"))
       } else if (err instanceof ApiClientError) {
         setError(
           err.code === "unauthorized"
-            ? "Incorrect password"
+            ? t("auth.unlock.incorrectPassword")
             : err.code === "rate_limited"
-              ? "Too many attempts. Wait a minute and try again."
-              : "Could not unlock your account. Try again."
+              ? t("common.tooManyWait")
+              : t("auth.unlock.unlockFailed")
         )
       } else {
-        setError("Could not unlock your account. Try again.")
+        setError(t("auth.unlock.unlockFailed"))
       }
     } finally {
       setLoading(false)
@@ -114,7 +117,7 @@ function UnlockPageContent() {
       setVaultRetry(false)
       router.replace(authReturn)
     } catch {
-      setError("Could not initialize your secure vault. Try again.")
+      setError(t("common.vaultInitFailed"))
     } finally {
       setLoading(false)
     }
@@ -126,13 +129,13 @@ function UnlockPageContent() {
         <form onSubmit={handleVaultRetry} className="flex flex-col gap-4">
           <div className="mb-2">
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Finish unlocking
+              {t("auth.login.finishUnlocking")}
             </h1>
             <p
               className="mt-1.5 text-sm text-muted-foreground"
               aria-live="polite"
             >
-              {error ?? "Could not initialize your secure vault. Try again."}
+              {error ?? t("common.vaultInitFailed")}
             </p>
           </div>
           <Button type="submit" disabled={loading}>
@@ -143,7 +146,7 @@ function UnlockPageContent() {
                 data-icon="inline-start"
               />
             )}
-            {loading ? "Trying again..." : "Try again"}
+            {loading ? t("common.tryingAgain") : t("common.tryAgain")}
           </Button>
         </form>
       </AuthShell>
@@ -155,17 +158,17 @@ function UnlockPageContent() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="mb-2">
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Unlock your account
+            {t("auth.unlock.title")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Enter your password to decrypt your data on this device.
+            {t("auth.unlock.body")}
           </p>
         </div>
-        <Input
+        <CredentialInput
           type="password"
           required
-          placeholder="Password"
-          aria-label="Password"
+          placeholder={t("common.password")}
+          aria-label={t("common.password")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -189,7 +192,7 @@ function UnlockPageContent() {
               data-icon="inline-start"
             />
           )}
-          {loading ? "Unlocking..." : "Unlock"}
+          {loading ? t("auth.unlock.submitting") : t("auth.unlock.submit")}
         </Button>
       </form>
     </AuthShell>
@@ -197,10 +200,11 @@ function UnlockPageContent() {
 }
 
 function UnlockFallback() {
+  const t = useAppT()
   return (
     <AuthShell>
       <p role="status" className="text-sm text-muted-foreground">
-        Loading your vault…
+        {t("auth.unlock.loading")}
       </p>
     </AuthShell>
   )
