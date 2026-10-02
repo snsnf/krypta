@@ -7,6 +7,15 @@ const STEP_MS = 22
 const LOCK_STAGGER_STEPS = 1
 const LOCK_AFTER_STEPS = 4
 
+/**
+ * Whether the text may be scrambled. Every glyph is drawn in its own
+ * inline-block cell, which is fine for Latin letters but breaks the joining
+ * of Arabic (and Syriac, Thaana, Persian), so such text is shown plain.
+ */
+export function canScramble(text: string): boolean {
+  return !/[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(text)
+}
+
 interface CipherRevealProps {
   text: string
   className?: string
@@ -44,7 +53,7 @@ export function CipherReveal({ text, className }: CipherRevealProps) {
     ).matches
     // `display` is already initialized to `text`, so reduced motion needs no
     // state update. Just skip the scramble entirely.
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || !canScramble(text)) {
       return
     }
 

@@ -6,6 +6,7 @@ import { useTheme } from "next-themes"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ComputerIcon, Moon02Icon, Sun02Icon } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
+import { useAppT, type AppTranslator } from "@/lib/app-i18n"
 
 export type ColorModeChoice = "light" | "system" | "dark"
 
@@ -183,14 +184,24 @@ export const FORM_COLOR_MODE_LABELS: Record<ColorModeChoice, string> = {
   dark: "Dark",
 }
 
-const SITE_THEME_LABELS: Record<ColorModeChoice, string> = {
-  light: "Light theme",
-  system: "System theme",
-  dark: "Dark theme",
+/** The site theme control's accessible names, in the app's language. */
+export function siteThemeLabels(t: AppTranslator): {
+  label: string
+  optionLabels: Record<ColorModeChoice, string>
+} {
+  return {
+    label: t("header.theme"),
+    optionLabels: {
+      light: t("header.lightTheme"),
+      system: t("header.systemTheme"),
+      dark: t("header.darkTheme"),
+    },
+  }
 }
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { label, optionLabels } = siteThemeLabels(useAppT())
   // The resolved theme is unknown until next-themes hydrates from
   // localStorage. useSyncExternalStore reports `false` for the server render
   // and the first client render, then lets React reconcile to `true` once
@@ -216,8 +227,8 @@ export function ThemeToggle() {
   return (
     <ColorModeSwitch
       value={active}
-      label="Theme"
-      optionLabels={SITE_THEME_LABELS}
+      label={label}
+      optionLabels={optionLabels}
       onChange={(value, x, y) => revealColorChange(x, y, () => setTheme(value))}
     />
   )

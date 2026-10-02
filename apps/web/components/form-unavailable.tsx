@@ -4,7 +4,8 @@ import type { FormTheme } from "@krypta/crypto"
 import Link from "next/link"
 import { FormThemeSurface } from "@/components/form-theme-surface"
 import { KryptaLogo } from "@/components/krypta-logo"
-import type { FormLoadFailure } from "@/lib/form-load-failure"
+import { useAppT } from "@/lib/app-i18n"
+import { failureText, type FormLoadFailure } from "@/lib/form-load-failure"
 import type { FormRenderMode } from "@/lib/form-theme"
 
 interface FormUnavailableProps {
@@ -24,6 +25,11 @@ export function FormUnavailable({
   theme,
   mode = "light",
 }: FormUnavailableProps) {
+  // Under /f the app language is pinned to English, so a respondent's error
+  // page never takes the viewer's language; the form's own language is not
+  // known here, the form did not load.
+  const t = useAppT()
+  const { title, description } = failureText(t, failure)
   return (
     <FormThemeSurface
       theme={theme}
@@ -36,10 +42,10 @@ export function FormUnavailable({
       >
         <div className="form-theme-accent-bg mx-auto mb-5 h-1.5 w-12 rounded-full opacity-60" />
         <h1 className="form-theme-header font-medium text-balance">
-          {failure.title}
+          {title}
         </h1>
         <p className="form-theme-text mt-3 text-pretty text-muted-foreground">
-          {failure.description}
+          {description}
         </p>
         {failure.retryable && (
           <button
@@ -47,7 +53,7 @@ export function FormUnavailable({
             onClick={() => window.location.reload()}
             className="form-theme-button form-theme-accent-bg mt-6 inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-medium"
           >
-            Try again
+            {t("common.tryAgain")}
           </button>
         )}
       </div>

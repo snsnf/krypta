@@ -16,6 +16,8 @@ import { useAuthStore } from "@/lib/auth-store"
 import { clearPersistedAccountKey } from "@/lib/device-key"
 import { KryptaLogo } from "@/components/krypta-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageMenu, LanguageRadioItems } from "@/components/language-switcher"
+import { useAppT } from "@/lib/app-i18n"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -40,6 +42,7 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
   const setAdminMetadata = useAuthStore((s) => s.setAdminMetadata)
   const clear = useAuthStore((s) => s.clear)
   const { theme, setTheme } = useTheme()
+  const t = useAppT()
 
   useEffect(() => {
     if (
@@ -99,7 +102,7 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
       <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-2 py-3 sm:gap-3 sm:px-4">
         <Link
           href="/dashboard"
-          aria-label="krypta home"
+          aria-label={t("header.home")}
           className="flex shrink-0 items-center gap-2 font-heading text-base font-medium tracking-tight transition-opacity duration-150 ease-out hover:opacity-70"
         >
           <KryptaLogo className="h-6 w-auto text-brand" />
@@ -115,11 +118,11 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
               dir="auto"
               className="hidden min-w-0 flex-1 truncate text-sm font-medium min-[420px]:block"
             >
-              {formName || "Untitled form"}
+              {formName || t("header.untitled")}
             </p>
           </>
         )}
-        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-3">
+        <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-3">
           {actions}
           {/*
            * Below sm the header has room for the form's own actions and one
@@ -129,28 +132,29 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
            */}
           <div className="hidden items-center gap-3 sm:flex">
             <ThemeToggle />
+            <LanguageMenu />
             <Link
               href="/dashboard/settings"
               className="text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
             >
-              Account
+              {t("header.account")}
             </Link>
             {showAdmin && (
               <Link
                 href="/admin"
                 className="text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
               >
-                Admin
+                {t("header.admin")}
               </Link>
             )}
             <button
               type="button"
               onClick={handleLogout}
-              aria-label="Log out"
+              aria-label={t("header.logOut")}
               className="flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
             >
               <HugeiconsIcon icon={Logout03Icon} size={14} />
-              Log out
+              {t("header.logOut")}
             </button>
           </div>
           <div className="sm:hidden">
@@ -160,7 +164,7 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
                   <Button
                     variant="outline"
                     size="icon-sm"
-                    aria-label="Account menu"
+                    aria-label={t("header.accountMenu")}
                   />
                 }
               >
@@ -168,11 +172,11 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
-                  Account
+                  {t("header.account")}
                 </DropdownMenuItem>
                 {showAdmin && (
                   <DropdownMenuItem render={<Link href="/admin" />}>
-                    Admin
+                    {t("header.admin")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -182,21 +186,23 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
                 >
                   <DropdownMenuRadioItem value="light">
                     <HugeiconsIcon icon={Sun02Icon} size={14} />
-                    Light
+                    {t("header.light")}
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="system">
                     <HugeiconsIcon icon={ComputerIcon} size={14} />
-                    System
+                    {t("header.system")}
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="dark">
                     <HugeiconsIcon icon={Moon02Icon} size={14} />
-                    Dark
+                    {t("header.dark")}
                   </DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
+                <LanguageRadioItems />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => void handleLogout()}>
                   <HugeiconsIcon icon={Logout03Icon} size={14} />
-                  Log out
+                  {t("header.logOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -13,14 +13,23 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAppLanguage, useAppT } from "@/lib/app-i18n"
 import { APP_LANGUAGES, localeCookie, type AppLanguage } from "@/lib/app-locale"
-import { FORM_LANGUAGE_LABELS, normalizeFormLanguage } from "@/lib/form-language"
+import {
+  FORM_LANGUAGE_LABELS,
+  normalizeFormLanguage,
+} from "@/lib/form-language"
 
 /**
  * Remembers an explicit choice and re-renders from the server, which reads the
  * cookie for `<html lang dir>`. Nothing is written until someone picks.
  */
-function chooseLanguage(language: AppLanguage, router: { refresh: () => void }) {
-  document.cookie = localeCookie(language, window.location.protocol === "https:")
+function chooseLanguage(
+  language: AppLanguage,
+  router: { refresh: () => void }
+) {
+  document.cookie = localeCookie(
+    language,
+    window.location.protocol === "https:"
+  )
   router.refresh()
 }
 
@@ -72,7 +81,14 @@ export function LanguageMenu() {
           }
         >
           {APP_LANGUAGES.map((language) => (
-            <DropdownMenuRadioItem key={language} value={language} lang={language}>
+            <DropdownMenuRadioItem
+              key={language}
+              value={language}
+              lang={language}
+              // Radio items stay open by default; choosing a language reloads
+              // the page's text, so the menu should get out of the way.
+              closeOnClick
+            >
               {FORM_LANGUAGE_LABELS[language]}
             </DropdownMenuRadioItem>
           ))}
@@ -89,10 +105,19 @@ export function LanguageRadioItems() {
   return (
     <DropdownMenuRadioGroup
       value={current}
-      onValueChange={(value) => chooseLanguage(normalizeFormLanguage(value), router)}
+      onValueChange={(value) =>
+        chooseLanguage(normalizeFormLanguage(value), router)
+      }
     >
       {APP_LANGUAGES.map((language) => (
-        <DropdownMenuRadioItem key={language} value={language} lang={language}>
+        <DropdownMenuRadioItem
+          key={language}
+          value={language}
+          lang={language}
+          // Radio items stay open by default; choosing a language reloads
+          // the page's text, so the menu should get out of the way.
+          closeOnClick
+        >
           {FORM_LANGUAGE_LABELS[language]}
         </DropdownMenuRadioItem>
       ))}

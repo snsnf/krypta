@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import en from "../messages/en.json"
 import ar from "../messages/ar.json"
@@ -48,5 +49,15 @@ describe("app message catalogue", () => {
 
   it("keeps the respondent form messages out of the app catalogue", () => {
     expect(appKeys(en).some((key) => key.startsWith("form."))).toBe(false)
+  })
+})
+
+describe("the server-safe translator module", () => {
+  it("never imports React, so a Server Component can use it", () => {
+    // not-found.tsx and the root layout run on the server, where a module that
+    // calls createContext is a build error. The context lives in app-i18n.ts.
+    const source = readFileSync(new URL("./app-translator.ts", import.meta.url), "utf8")
+    expect(source).not.toMatch(/from\s+["']react["']/)
+    expect(source).toContain("export function appTranslator")
   })
 })

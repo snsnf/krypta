@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { Button } from "@/components/ui/button"
-import type { FormLoadFailure } from "@/lib/form-load-failure"
+import { useAppT } from "@/lib/app-i18n"
+import { failureText, type FormLoadFailure } from "@/lib/form-load-failure"
 
 interface WorkspaceUnavailableProps {
   failure: FormLoadFailure
@@ -19,6 +20,8 @@ export function WorkspaceUnavailable({
   failure,
   showDashboardLink = true,
 }: WorkspaceUnavailableProps) {
+  const t = useAppT()
+  const { title, description } = failureText(t, failure)
   return (
     <div className="flex min-h-svh flex-col">
       <AppHeader />
@@ -29,15 +32,15 @@ export function WorkspaceUnavailable({
         >
           <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-primary/40" />
           <h1 className="font-heading text-xl font-medium tracking-[-0.01em] text-balance">
-            {failure.title}
+            {title}
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-pretty text-muted-foreground">
-            {failure.description}
+            {description}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
             {failure.retryable && (
               <Button type="button" onClick={() => window.location.reload()}>
-                Try again
+                {t("common.tryAgain")}
               </Button>
             )}
             {showDashboardLink && (
@@ -46,7 +49,7 @@ export function WorkspaceUnavailable({
                 render={<Link href="/dashboard" />}
                 nativeButton={false}
               >
-                Back to forms
+                {t("failure.backToForms")}
               </Button>
             )}
           </div>

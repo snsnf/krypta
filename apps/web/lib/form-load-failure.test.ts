@@ -1,9 +1,15 @@
 import { describe, expect, test } from "vitest"
 import { ApiClientError } from "./api"
 import { FormKeyMismatchError } from "./load-public-form"
+import { appTranslator } from "./app-i18n"
 import {
+  FORMS_LIST_UNREACHABLE,
+  INCOMPLETE_EDIT_LINK,
+  INCOMPLETE_LINK,
   describeFormLoadFailure,
   describeWorkspaceLoadFailure,
+  failureText,
+  type FormLoadFailure,
 } from "./form-load-failure"
 
 describe("describeFormLoadFailure", () => {
@@ -11,7 +17,7 @@ describe("describeFormLoadFailure", () => {
     const failure = describeFormLoadFailure(
       new ApiClientError("not_found", "Not found")
     )
-    expect(failure.title).toBe("This form no longer exists")
+    expect(failure.key).toBe("formGone")
     expect(failure.retryable).toBe(false)
   })
 
@@ -32,20 +38,19 @@ describe("describeFormLoadFailure", () => {
     const failure = describeFormLoadFailure(
       new ApiClientError("rate_limited", "Too many requests")
     )
-    expect(failure.title).toBe("Too many people opened this form at once")
-    expect(failure.description).toBe("Wait a minute, then reload the page.")
+    expect(failure.key).toBe("rateLimited")
     expect(failure.retryable).toBe(true)
   })
 
   test("a swapped public key is reported as untrustworthy, never as a bad link", () => {
     const failure = describeFormLoadFailure(new FormKeyMismatchError())
-    expect(failure.title).toBe("This form cannot be trusted right now")
+    expect(failure.key).toBe("keyMismatch")
     expect(failure.retryable).toBe(false)
   })
 
   test("a failure after the form arrived is blamed on the key", () => {
     const failure = describeFormLoadFailure(new Error("incorrect key"))
-    expect(failure.title).toBe("This key does not open this form")
+    expect(failure.key).toBe("wrongKey")
     expect(failure.retryable).toBe(false)
   })
 })
@@ -55,7 +60,7 @@ describe("describeWorkspaceLoadFailure", () => {
     const failure = describeWorkspaceLoadFailure(
       new ApiClientError("not_found", "Not found")
     )
-    expect(failure.title).toBe("This form is no longer available")
+    expect(failure.key).toBe("formUnavailable")
     expect(failure.retryable).toBe(false)
   })
 
@@ -63,13 +68,46 @@ describe("describeWorkspaceLoadFailure", () => {
     const failure = describeWorkspaceLoadFailure(
       new Error("Form access is not ready")
     )
-    expect(failure.title).toBe("Waiting for the owner")
+    expect(failure.key).toBe("keysPending")
     expect(failure.retryable).toBe(true)
   })
 
   test("anything else that failed after the form arrived blames the keys", () => {
-    expect(describeWorkspaceLoadFailure(new Error("bad mac")).title).toBe(
-      "This form could not be opened"
+    expect(describeWorkspaceLoadFailure(new Error("bad mac")).key).toBe(
+      "keysUnreadable"
     )
+  })
+})
+
+describe("failureText", () => {
+  const en = appTranslator("en")
+  const ar = appTranslator("ar")
+
+  test("keeps every English title exactly as it was", () => {
+    const titles: [FormLoadFailure, string][] = [
+      [INCOMPLETE_LINK, "This link is incomplete"],
+      [INCOMPLETE_EDIT_LINK, "This link is incomplete"],
+      [FORMS_LIST_UNREACHABLE, "Your forms could not be loaded"],
+      [describeFormLoadFailure(new ApiClientError("not_found", "x")), "This form no longer exists"],
+      [describeFormLoadFailure(new FormKeyMismatchError()), "This form cannot be trusted right now"],
+      [describeFormLoadFailure(new Error("k")), "This key does not open this form"],
+      [describeFormLoadFailure(new TypeError("net")), "This form could not be loaded"],
+      [describeFormLoadFailure(new ApiClientError("rate_limited", "x")), "Too many people opened this form at once"],
+      [describeWorkspaceLoadFailure(new ApiClientError("not_found", "x")), "This form is no longer available"],
+      [describeWorkspaceLoadFailure(new Error("Form access is not ready")), "Waiting for the owner"],
+      [describeWorkspaceLoadFailure(new Error("x")), "This form could not be opened"],
+      [describeWorkspaceLoadFailure(new TypeError("net")), "This form could not be loaded"],
+    ]
+    for (const [failure, title] of titles) {
+      expect(failureText(en, failure).title).toBe(title)
+    }
+    expect(failureText(en, INCOMPLETE_LINK).description).toContain(
+      "The part after the hash sign is the key that decrypts the form"
+    )
+  })
+
+  test("translates for Arabic", () => {
+    expect(failureText(ar, INCOMPLETE_LINK).title).toBe("هذا الرابط ناقص")
+    expect(failureText(ar, FORMS_LIST_UNREACHABLE).title).toBe("تعذّر تحميل نماذجك")
   })
 })
