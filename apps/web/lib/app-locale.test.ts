@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   LOCALE_COOKIE,
+  isUntranslatedRoute,
   localeCookie,
   parseAcceptLanguage,
   resolveAppLanguage,
@@ -47,5 +48,41 @@ describe("localeCookie", () => {
     expect(localeCookie("en", true)).toBe(
       `${LOCALE_COOKIE}=en; Path=/; Max-Age=31536000; SameSite=Lax; Secure`
     )
+  })
+})
+
+describe("route-aware resolution", () => {
+  const ar = "ar-SA,ar;q=0.9"
+
+  it("applies the browser's language only where the screen is translated", () => {
+    expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/login" })).toBe("ar")
+    expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/recover" })).toBe("ar")
+    // An unknown path is a 404, which is translated.
+    expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/no-such-page" })).toBe("ar")
+    for (const pathname of ["/", "/dashboard", "/dashboard/abc", "/admin/health", "/privacy", "/terms", "/security", "/invitations/accept"]) {
+      expect(resolveAppLanguage({ acceptLanguage: ar, pathname }), pathname).toBe("en")
+    }
+  })
+
+  it("still honours an explicit choice on an untranslated route", () => {
+    expect(resolveAppLanguage({ cookie: "ar", pathname: "/dashboard" })).toBe("ar")
+    expect(resolveAppLanguage({ cookie: "ar", pathname: "/" })).toBe("ar")
+  })
+
+  it("never applies any app language to a public form", () => {
+    expect(resolveAppLanguage({ cookie: "ar", acceptLanguage: ar, pathname: "/f/abc" })).toBe("en")
+    expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/f/abc/r" })).toBe("en")
+    // A path that merely starts with the same letter is not a form.
+    expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/forms-are-great" })).toBe("ar")
+  })
+
+  it("does not mistake a prefix match for a route", () => {
+    expect(isUntranslatedRoute("/dashboard")).toBe(true)
+    expect(isUntranslatedRoute("/dashboards")).toBe(false)
+    expect(isUntranslatedRoute("/login")).toBe(false)
+  })
+
+  it("behaves as before when the path is unknown", () => {
+    expect(resolveAppLanguage({ acceptLanguage: ar })).toBe("ar")
   })
 })

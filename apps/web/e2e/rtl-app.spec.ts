@@ -1,4 +1,4 @@
-import { expect, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, startBlankForm, test, unlock } from "./fixtures"
 
 test("the entry screens switch to Arabic, right to left, and back", async ({
   page,
@@ -13,7 +13,19 @@ test("the entry screens switch to Arabic, right to left, and back", async ({
   await expect(html).toHaveAttribute("dir", "rtl")
   const heading = page.getByRole("heading", { name: "تسجيل الدخول" })
   await expect(heading).toBeVisible()
-  await expect(heading).toHaveCSS("font-family", /Noto Sans Arabic/)
+  await expect(heading).toHaveCSS("font-family", /^"?Noto Sans Arabic/)
+  // Declaring the face is not using it: a font file only loads once some text
+  // actually needs it, so this fails if Arabic stops at the app fonts'
+  // fallback instead of reaching Noto.
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        Array.from(document.fonts).some(
+          (face) => face.family.includes("Noto Sans Arabic") && face.status === "loaded"
+        )
+      )
+    )
+    .toBe(true)
   // Credentials stay left to right on an Arabic page.
   await expect(page.getByLabel("البريد الإلكتروني")).toHaveAttribute("dir", "ltr")
 
@@ -80,14 +92,51 @@ test("an Arabic browser still gets an English form error page, and an Arabic not
   const context = await browser.newContext({ locale: "ar-SA" })
   const page = await context.newPage()
 
-  // A public form route ignores the app language: no key fragment, English text.
+  // A public form route takes no app language at all, down to the document.
   await page.goto("/f/does-not-exist")
-  await expect(page.locator("html")).toHaveAttribute("lang", "ar")
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr")
   await expect(page.getByRole("heading", { name: "This link is incomplete" })).toBeVisible()
+
+  // Pages that are not translated yet ignore the browser's preference too,
+  // rather than mirroring English text right to left.
+  for (const path of ["/", "/security"]) {
+    await page.goto(path)
+    await expect(page.locator("html"), path).toHaveAttribute("lang", "en")
+    await expect(page.locator("html"), path).toHaveAttribute("dir", "ltr")
+  }
 
   // Everything else follows it.
   await page.goto("/definitely-not-a-page")
   await expect(page.getByRole("heading", { name: "لا شيء هنا لفك ختمه." })).toBeVisible()
   await expect(page).toHaveTitle("الصفحة غير موجودة | krypta")
+  await context.close()
+})
+
+test("an Arabic browser opening an English public form gets an English left-to-right form", async ({
+  page,
+  browser,
+  sharedAccount,
+}) => {
+  await page.context().addCookies(sharedAccount.sessionCookies)
+  await page.goto("/unlock")
+  await unlock(page, sharedAccount.password)
+  await page.getByRole("button", { name: /new form/i }).click()
+  await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
+  await page.getByRole("textbox", { name: "Form title" }).fill("English form")
+  await page.getByRole("textbox", { name: "Question label" }).fill("Your name")
+  await page.getByRole("button", { name: /publish form/i }).click()
+  await page.waitForURL(/\/dashboard\/[^/]+\?created=1/)
+  const shareLink = shareLinkFor(page)
+
+  const context = await browser.newContext({ locale: "ar-SA" })
+  const respondent = await context.newPage()
+  await respondent.goto(shareLink)
+  const surface = respondent.getByTestId("form-theme-surface").first()
+  await expect(surface).toHaveAttribute("dir", "ltr")
+  await expect(surface).toHaveAttribute("lang", "en")
+  await expect(respondent.locator("html")).toHaveAttribute("lang", "en")
+  await expect(respondent.getByRole("button", { name: "Submit" })).toBeVisible()
   await context.close()
 })

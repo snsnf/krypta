@@ -17,6 +17,9 @@ export function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-nonce", nonce)
+  // The layout resolves the app language per route (an untranslated page must
+  // not take the browser's preference), and a layout cannot see the path itself.
+  requestHeaders.set("x-pathname", request.nextUrl.pathname)
   requestHeaders.set("content-security-policy", csp)
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })
