@@ -43,13 +43,12 @@ export function AuthLanguageToggle() {
       type="button"
       variant="ghost"
       size="sm"
-      lang={other}
       aria-label={`${t("header.language")}: ${FORM_LANGUAGE_LABELS[other]}`}
       onClick={() => chooseLanguage(other, router)}
       className="absolute end-4 top-4"
     >
       <HugeiconsIcon icon={Globe02Icon} size={14} data-icon="inline-start" />
-      {FORM_LANGUAGE_LABELS[other]}
+      <span lang={other}>{FORM_LANGUAGE_LABELS[other]}</span>
     </Button>
   )
 }

@@ -28,15 +28,16 @@ import { AppLanguageContext } from "../lib/app-i18n"
 describe("AuthLanguageToggle", () => {
   it("offers the other language by its own name", () => {
     const en = renderToStaticMarkup(<AuthLanguageToggle />)
-    expect(en).toContain("العربية")
-    expect(en).toContain('lang="ar"')
+    // The language attribute sits on the name alone, so a screen reader voices
+    // "Language:" in the page's language and the name in its own.
+    expect(en).toContain('<span lang="ar">العربية</span>')
+    expect(en).not.toMatch(/<button[^>]*lang=/)
     const ar = renderToStaticMarkup(
       <AppLanguageContext value="ar">
         <AuthLanguageToggle />
       </AppLanguageContext>
     )
-    expect(ar).toContain("English")
-    expect(ar).toContain('lang="en"')
+    expect(ar).toContain('<span lang="en">English</span>')
     expect(ar).toContain('aria-label="اللغة: English"')
   })
 })

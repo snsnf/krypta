@@ -197,7 +197,7 @@ export default function InvitationAcceptancePage() {
   }
 
   return (
-    <AuthShell>
+    <AuthShell showLanguageToggle={false}>
       <div ref={contentRef} tabIndex={-1} className="outline-none">
         <InvitationCard
           view={view}

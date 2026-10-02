@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 
 vi.mock("@/lib/utils", async () => vi.importActual("../lib/utils"))
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
+vi.mock("@/lib/recovery-file", async () => vi.importActual("../lib/recovery-file"))
 vi.mock("@/components/ui/button", async () =>
   vi.importActual("./ui/button")
 )

@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/components/ui/toast"
-import { useAppT } from "@/lib/app-i18n"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
+import { recoveryFileText } from "@/lib/recovery-file"
 
 interface RecoveryCodeCardProps {
   code: string
@@ -31,6 +32,7 @@ interface RecoveryCodeCardProps {
  */
 export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
   const t = useAppT()
+  const language = useAppLanguage()
   const [acknowledged, setAcknowledged] = useState(false)
 
   async function copyCode() {
@@ -47,15 +49,9 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
   }
 
   function downloadCode() {
-    const blob = new Blob(
-      [
-        `${t("auth.recoveryCard.fileTitle")}\n\n`,
-        `${code}\n\n`,
-        t("auth.recoveryCard.fileBody"),
-      ],
-      // UTF-8 stated outright: the text may be Arabic.
-      { type: "text/plain;charset=utf-8" }
-    )
+    const blob = new Blob([recoveryFileText(code, t, language)], {
+      type: "text/plain;charset=utf-8",
+    })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url

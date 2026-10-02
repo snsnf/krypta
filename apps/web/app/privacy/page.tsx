@@ -99,12 +99,12 @@ export default function PrivacyPage() {
           third-party scripts.
         </ProseText>
         <ProseText>
-          The only cookies are the ones that sign you in: a session cookie, and
-          a short-lived cookie that carries a collaboration invitation while you
-          accept it. If you choose a language, one more remembers that choice;
-          it is not set unless you choose, and it holds only the language. All
-          of them are restricted to this site and none is used to follow you
-          anywhere.
+          Cookies here do two things: they sign you in (a session cookie, and a
+          short-lived one that carries a collaboration invitation while you
+          accept it), and, only if you choose a language, one remembers that
+          choice. The language cookie is not set unless you choose, and it
+          holds only the language. All of them are restricted to this site and
+          none is used to follow you anywhere.
         </ProseText>
       </ProseSection>
 
