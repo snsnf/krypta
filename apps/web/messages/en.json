@@ -66,7 +66,20 @@
     "password": "Password",
     "somethingWrong": "Something went wrong",
     "vaultInitFailed": "Could not initialize your secure vault. Try again.",
-    "tooManyWait": "Too many attempts. Wait a minute and try again."
+    "tooManyWait": "Too many attempts. Wait a minute and try again.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "rename": "Rename",
+    "archive": "Archive",
+    "restore": "Restore",
+    "delete": "Delete",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "back": "Back",
+    "remove": "Remove",
+    "continue": "Continue"
   },
   "errors": {
     "unauthorized": "Unauthorized",
@@ -245,5 +258,50 @@
       "title": "Your forms could not be loaded",
       "description": "Something interrupted the request. Check your connection and try again."
     }
+  },
+  "roles": {
+    "owner": "Owner",
+    "editor": "Editor",
+    "viewer": "Viewer"
+  },
+  "dashboard": {
+    "loadFailed": "Something went wrong loading your forms.",
+    "title": "Forms",
+    "subtitle": "Create forms and open work shared with you.",
+    "newForm": "New form",
+    "provisioningWarning": "Some secure access updates could not be completed. Try refreshing in a moment.",
+    "active": "Active",
+    "archived": "Archived",
+    "empty": "You haven't created a form yet.",
+    "createFirst": "Create your first form",
+    "noArchived": "No archived forms.",
+    "myForms": "My forms",
+    "sharedWithMe": "Shared with me",
+    "actionsFor": "Actions for {title}",
+    "renameTitle": "Rename form",
+    "titleLabel": "Title",
+    "titleEmpty": "Title can't be empty.",
+    "genericError": "Something went wrong. Try again.",
+    "renameConflict": "This form changed elsewhere. Your typed title is still here. Try again."
+  },
+  "templates": {
+    "title": "New form",
+    "subtitle": "Start blank or from a template. Everything stays editable.",
+    "blank": "Blank form",
+    "blankDescription": "Start from an empty page.",
+    "questionCount": "{count, plural, one {# question} other {# questions}}"
+  },
+  "newForm": {
+    "publishFailed": "Could not publish the form",
+    "limitReached": "This account is at its limit of open forms. Close another form, then publish this one.",
+    "publish": "Publish",
+    "publishForm": "Publish form",
+    "tabs": {
+      "questions": "Questions",
+      "responses": "Responses",
+      "settings": "Settings"
+    },
+    "noResponses": "No responses yet",
+    "unpublished": "This form isn't published, so nobody can answer it. Publish it to get a link to share."
   }
 }

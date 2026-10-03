@@ -26,7 +26,12 @@ const MESSAGES: Record<AppLanguage, AppMessages> = {
 }
 
 function createAppTranslator(language: AppLanguage) {
-  return createTranslator({ locale: language, messages: MESSAGES[language] })
+  // The Unicode extension pins Western digits for every number a message
+  // formats (the # in a plural), which is the workspace's rule; see app-format.ts.
+  return createTranslator({
+    locale: `${language}-u-nu-latn`,
+    messages: MESSAGES[language],
+  })
 }
 
 export type AppTranslator = ReturnType<typeof createAppTranslator>

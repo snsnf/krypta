@@ -1,4 +1,5 @@
 import type { Question, QuestionCondition } from "@krypta/crypto"
+import type { AppLanguage } from "./app-locale"
 
 /**
  * Ready-made forms for the "New form" gallery.
@@ -121,7 +122,12 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         type: "dropdown",
         label: "Topic",
         required: true,
-        options: ["General question", "Report a problem", "Suggestion", "Other"],
+        options: [
+          "General question",
+          "Report a problem",
+          "Suggestion",
+          "Other",
+        ],
       },
       { key: "message", type: "long_text", label: "Message", required: true },
       { key: "name", type: "short_text", label: "Name" },
@@ -136,7 +142,12 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     confirmationMessage:
       "Your report has been received. Thank you for speaking up.",
     questions: [
-      { key: "what", type: "long_text", label: "What happened?", required: true },
+      {
+        key: "what",
+        type: "long_text",
+        label: "What happened?",
+        required: true,
+      },
       { key: "when", type: "date", label: "When did it happen?" },
       { key: "where", type: "short_text", label: "Where did it happen?" },
       { key: "evidence", type: "file_upload", label: "Evidence" },
@@ -152,6 +163,119 @@ export const FORM_TEMPLATES: FormTemplate[] = [
   },
 ]
 
+/**
+ * What a template says in a language: the gallery card and the form that
+ * starts from it. Only the words differ. Question types, requirements,
+ * ratings and conditions are shared, so the structure is written once.
+ */
+export type TemplateText = {
+  name: string
+  description: string
+  title: string
+  confirmationMessage: string
+  /** Keys of questions this language's version leaves out (see ARABIC). */
+  omit?: string[]
+  questions: Record<
+    string,
+    {
+      label: string
+      options?: string[]
+      /** A show-if value that is option text ("is"), so it follows the options. */
+      conditionValue?: string
+    }
+  >
+}
+
+/*
+ * Arabic content. A form made from one of these is an Arabic form: the
+ * creator who picks it in the Arabic app is building for Arabic readers, so
+ * the form's own language is set to Arabic too (see instantiateTemplate).
+ * English is the template itself.
+ */
+const ARABIC: Record<string, TemplateText> = {
+  "event-feedback": {
+    name: "ملاحظات على الفعالية",
+    description: "تقييم بالنجوم، مع سؤال إضافي للتقييمات المنخفضة فقط.",
+    title: "ملاحظات الفعالية",
+    confirmationMessage: "شكرًا!",
+    questions: {
+      rating: { label: "قيّمنا" },
+      wrong: { label: "ما السبب؟" },
+      enjoyed: { label: "ما أعجبك؟" },
+      again: { label: "هل ستعود؟", options: ["نعم", "ربما", "لا"] },
+    },
+  },
+  rsvp: {
+    name: "تأكيد الحضور",
+    description: "من سيحضر، وعدد الضيوف، والاحتياجات الغذائية.",
+    title: "تأكيد الحضور",
+    confirmationMessage: "شكرًا لك!",
+    questions: {
+      name: { label: "اسمك" },
+      attending: { label: "هل ستحضر؟", options: ["نعم", "لا"] },
+      guests: { label: "كم عدد الضيوف؟", conditionValue: "نعم" },
+      diet: { label: "هل لديك متطلبات غذائية؟" },
+    },
+  },
+  "job-application": {
+    name: "طلب توظيف",
+    description: "بيانات التواصل والوظيفة ورفع سيرة ذاتية مشفرة.",
+    title: "طلب توظيف",
+    confirmationMessage: "شكرًا لك!",
+    // Arabic runs two bytes a letter, so the full set would spill past the
+    // padding floor; the start date is the one a creator can add back.
+    omit: ["start"],
+    questions: {
+      name: { label: "الاسم" },
+      email: { label: "البريد" },
+      role: { label: "الوظيفة" },
+      cv: { label: "سيرتك" },
+      fit: { label: "لماذا أنت؟" },
+    },
+  },
+  contact: {
+    name: "تواصل وملاحظات",
+    description: "رسالة مع موضوع؛ الاسم والبريد اختياريان.",
+    title: "تواصل معنا",
+    confirmationMessage: "شكرًا، وصلتنا رسالتك.",
+    questions: {
+      topic: {
+        label: "الموضوع",
+        options: ["سؤال عام", "الإبلاغ عن مشكلة", "اقتراح", "أخرى"],
+      },
+      message: { label: "الرسالة" },
+      name: { label: "الاسم" },
+      email: { label: "البريد الإلكتروني، إن أردت ردًا" },
+    },
+  },
+  "anonymous-report": {
+    name: "بلاغ مجهول",
+    description: "أبلغ عن مشكلة دون ذكر اسمك.",
+    title: "بلاغ مجهول",
+    confirmationMessage: "وصلنا بلاغك. شكرًا لأنك تحدثت.",
+    questions: {
+      what: { label: "ماذا حدث؟" },
+      when: { label: "متى حدث ذلك؟" },
+      where: { label: "أين حدث ذلك؟" },
+      evidence: { label: "الأدلة" },
+      reach: { label: "وسيلة للرد عليك (اختياري)" },
+    },
+  },
+}
+
+const TEXT: Partial<Record<AppLanguage, Record<string, TemplateText>>> = {
+  ar: ARABIC,
+}
+
+/** The template's name and description in a language, for the gallery card. */
+export function templateCard(
+  template: FormTemplate,
+  language: AppLanguage
+): { name: string; description: string } {
+  const text = TEXT[language]?.[template.id]
+  return text ?? { name: template.name, description: template.description }
+}
+
 /*
  * Every template published unedited must fit the 1024-byte padding floor,
  * or its fixed size would identify it; form-templates.test.ts enforces this.
@@ -162,28 +286,49 @@ export const FORM_TEMPLATES: FormTemplate[] = [
 /**
  * The template as a new form's starting state: every question gets a fresh
  * id, and each condition is pointed at the new id of the question it names.
+ * In a language with its own text the labels, options and the title come from
+ * it, and `language` says which form language the result is written in.
  */
 export function instantiateTemplate(
   template: FormTemplate,
+  language: AppLanguage = "en",
   newId: () => string = () => crypto.randomUUID()
-): { title: string; confirmationMessage: string; questions: Question[] } {
+): {
+  title: string
+  confirmationMessage: string
+  questions: Question[]
+  language: AppLanguage
+} {
+  const text = TEXT[language]?.[template.id]
   const ids = new Map(template.questions.map((q) => [q.key, newId()]))
-  const questions = template.questions.map(
-    ({ key, condition, ...rest }): Question => {
-      const question: Question = { ...rest, id: ids.get(key) as string }
+  const questions = template.questions
+    .filter((q) => !text?.omit?.includes(q.key))
+    .map(({ key, condition, ...rest }): Question => {
+      const words = text?.questions[key]
+      const question: Question = {
+        ...rest,
+        id: ids.get(key) as string,
+        ...(words
+          ? {
+              label: words.label,
+              ...(words.options ? { options: words.options } : {}),
+            }
+          : {}),
+      }
       if (condition) {
         question.condition = {
           questionId: ids.get(condition.key) as string,
           operator: condition.operator,
-          value: condition.value,
+          value: words?.conditionValue ?? condition.value,
         }
       }
       return question
-    }
-  )
+    })
   return {
-    title: template.title,
-    confirmationMessage: template.confirmationMessage,
+    title: text?.title ?? template.title,
+    confirmationMessage:
+      text?.confirmationMessage ?? template.confirmationMessage,
     questions,
+    language: text ? language : "en",
   }
 }
