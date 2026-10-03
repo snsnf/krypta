@@ -14,6 +14,7 @@ import {
 import type { FontCatalogEntry } from "@/lib/fonts"
 import { loadFontCatalog } from "@/lib/font-catalog-client"
 import { cn } from "@/lib/utils"
+import { useAppLanguage } from "@/lib/app-i18n"
 import { DirectionProvider } from "@base-ui/react/direction-provider"
 import {
   FormLanguageContext,
@@ -36,7 +37,7 @@ interface FormThemeSurfaceProps {
    * False where the surface frames app chrome rather than a respondent's
    * view (the builder workspace, a member's read-only view): the form's fonts
    * and colours still apply, but direction, language and the respondent
-   * strings stay the app's, which is English for now.
+   * strings are the app's.
    */
   applyLanguage?: boolean
 }
@@ -60,7 +61,12 @@ export function FormThemeSurface({
   )
   const [fontFailures, setFontFailures] = useState<Set<string>>(() => new Set())
   const theme = normalizeFormTheme(rawTheme)
-  const language = applyLanguage ? normalizeFormLanguage(theme.language) : "en"
+  // Off for app chrome (the builder, a member reading a form): it follows the
+  // app's language, not the language the form is written for.
+  const appLanguage = useAppLanguage()
+  const language = applyLanguage
+    ? normalizeFormLanguage(theme.language)
+    : appLanguage
   const selectedFamilies = [
     ...new Set(TYPOGRAPHY_ROLES.map((role) => theme.typography[role].font)),
   ]

@@ -10,6 +10,7 @@ import {
   ratingRange,
 } from "@/lib/question-rating"
 import { RatingField } from "@/components/rating-field"
+import { useAppT } from "@/lib/app-i18n"
 
 const SMALL_SELECT_CLASSES =
   "h-7 rounded-md border border-border bg-background px-2 text-sm"
@@ -39,12 +40,17 @@ export function RatingSettingsEditor({
   question: Question
   onChange: (rating: RatingSettings) => void
 }) {
+  const t = useAppT()
   const range = ratingRange(question)
 
   return (
     <div className="mt-3 flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <div role="group" aria-label="Rating style" className="flex gap-1">
+        <div
+          role="group"
+          aria-label={t("builder.ratingStyle")}
+          className="flex gap-1"
+        >
           {(["stars", "scale"] as const).map((style) => (
             <button
               key={style}
@@ -66,15 +72,15 @@ export function RatingSettingsEditor({
                   : "hover:bg-foreground/[0.04]"
               )}
             >
-              {style === "stars" ? "Stars" : "Numbers"}
+              {style === "stars" ? t("builder.stars") : t("builder.numbers")}
             </button>
           ))}
         </div>
         {range.style === "stars" ? (
           <label className="flex items-center gap-2">
-            Stars
+            {t("builder.stars")}
             <select
-              aria-label="Number of stars"
+              aria-label={t("builder.numberOfStars")}
               value={range.max}
               onChange={(event) =>
                 onChange({
@@ -94,9 +100,9 @@ export function RatingSettingsEditor({
           </label>
         ) : (
           <span className="flex items-center gap-2">
-            From
+            {t("builder.from")}
             <select
-              aria-label="Scale start"
+              aria-label={t("builder.scaleStart")}
               value={range.min}
               onChange={(event) =>
                 onChange({ ...range, min: event.target.value === "0" ? 0 : 1 })
@@ -106,9 +112,9 @@ export function RatingSettingsEditor({
               <option value={0}>0</option>
               <option value={1}>1</option>
             </select>
-            to
+            {t("builder.to")}
             <select
-              aria-label="Scale end"
+              aria-label={t("builder.scaleEnd")}
               value={range.max}
               onChange={(event) =>
                 onChange({ ...range, max: Number(event.target.value) })
@@ -128,8 +134,9 @@ export function RatingSettingsEditor({
       {range.style === "scale" && (
         <div className="grid gap-2 sm:grid-cols-2">
           <input
-            aria-label="Low end label"
-            placeholder={`Label for ${range.min} (optional)`}
+            dir="auto"
+            aria-label={t("builder.lowLabel")}
+            placeholder={t("builder.endLabel", { value: range.min })}
             value={range.minLabel ?? ""}
             onChange={(event) =>
               onChange(withLabel(range, "minLabel", event.target.value))
@@ -137,8 +144,9 @@ export function RatingSettingsEditor({
             className={LABEL_INPUT_CLASSES}
           />
           <input
-            aria-label="High end label"
-            placeholder={`Label for ${range.max} (optional)`}
+            dir="auto"
+            aria-label={t("builder.highLabel")}
+            placeholder={t("builder.endLabel", { value: range.max })}
             value={range.maxLabel ?? ""}
             onChange={(event) =>
               onChange(withLabel(range, "maxLabel", event.target.value))

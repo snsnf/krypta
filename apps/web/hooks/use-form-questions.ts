@@ -5,6 +5,7 @@ import type { Question } from "@krypta/crypto"
 import { duplicateQuestion, moveQuestion } from "@/lib/question-order"
 import { useQuestionReorderDrag } from "@/hooks/use-question-reorder-drag"
 import { DEFAULT_RATING } from "@/lib/question-rating"
+import { useAppT } from "@/lib/app-i18n"
 
 /*
  * Everything about changing the list of questions, and nothing about drawing
@@ -97,6 +98,7 @@ export function useFormQuestions(
   questions: Question[],
   onQuestionsChange: (questions: Question[]) => void
 ): FormQuestions {
+  const t = useAppT()
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
   const [removingSectionIds, setRemovingSectionIds] = useState<Set<string>>(
     new Set()
@@ -175,7 +177,7 @@ export function useFormQuestions(
     // without changing a single spoken word.
     announceParity.current = !announceParity.current
     setReorderMessage(
-      `Question moved to position ${toIndex + 1} of ${questions.length}` +
+      t("builder.moved", { position: toIndex + 1, total: questions.length }) +
         (announceParity.current ? "​" : "")
     )
   }
@@ -255,7 +257,9 @@ export function useFormQuestions(
       // rating; the settings travel only with the rating type.
       allowOther: type === "rating" ? undefined : current?.allowOther,
       rating:
-        type === "rating" ? (current?.rating ?? { ...DEFAULT_RATING }) : undefined,
+        type === "rating"
+          ? (current?.rating ?? { ...DEFAULT_RATING })
+          : undefined,
     })
   }
 
