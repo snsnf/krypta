@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useAppT } from "@/lib/app-i18n"
 import {
   localDateTimeToUtcIso,
   utcIsoToLocalDateTime,
@@ -128,6 +129,8 @@ export function FormSettingsPanel({
   isOwner,
   onDelete,
 }: FormSettingsPanelProps) {
+  const t = useAppT()
+
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -216,7 +219,7 @@ export function FormSettingsPanel({
     try {
       await onDelete()
     } catch {
-      setDeleteError("Something went wrong deleting this form.")
+      setDeleteError(t("formSettings.deleteFailed"))
       setDeleting(false)
     }
   }
@@ -224,19 +227,20 @@ export function FormSettingsPanel({
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8">
       {canEdit && (
-        <SettingsGroup title="Availability">
+        <SettingsGroup title={t("formSettings.availability")}>
           <ToggleRow
-            label="Accept responses"
-            description="Turn this off to close the public form to new submissions."
+            label={t("formSettings.acceptTitle")}
+            description={t("formSettings.acceptBody")}
             checked={acceptingResponses}
             onCheckedChange={onAcceptingResponsesChange}
           />
           <FieldRow
-            label="Close date"
-            description="After this date and time, in your local timezone, the form stops accepting responses. Leave blank for no close date."
+            label={t("formSettings.closeDate")}
+            description={t("formSettings.closeDateBody")}
           >
             <Input
-              aria-label="Close date"
+              dir="ltr"
+              aria-label={t("formSettings.closeDate")}
               type="datetime-local"
               className="sm:max-w-64"
               value={closesAtInput}
@@ -245,11 +249,12 @@ export function FormSettingsPanel({
             />
           </FieldRow>
           <FieldRow
-            label="Response limit"
-            description="Once this many responses have been received, the form closes. This counts the responses the form currently holds, not every response it has ever received: deleting responses lowers the count and can reopen the form, and setting a limit lower than the current response count closes the form immediately. Leave blank for no limit."
+            label={t("formSettings.limit")}
+            description={t("formSettings.limitBody")}
           >
             <Input
-              aria-label="Response limit"
+              dir="ltr"
+              aria-label={t("formSettings.limit")}
               type="number"
               min="1"
               className="sm:max-w-40"
@@ -262,10 +267,10 @@ export function FormSettingsPanel({
       )}
 
       {canEdit && (
-        <SettingsGroup title="Responses">
+        <SettingsGroup title={t("formSettings.responses")}>
           <ToggleRow
-            label="Limit to 1 response"
-            description="Hides the form for anyone who has already submitted, in the same browser. Since forms have no sign-in, this can be bypassed by clearing browser storage or using a different browser."
+            label={t("formSettings.single")}
+            description={t("formSettings.singleBody")}
             checked={!settings.allowMultipleResponses}
             onCheckedChange={(checked) =>
               onSettingsChange({
@@ -275,26 +280,19 @@ export function FormSettingsPanel({
             }
           />
           <ToggleRow
-            label="Allow response editing"
-            description={
-              <>
-                After submitting, respondents get a private link to revise their
-                answers. Editing replaces the previous answers; it can&apos;t
-                show them what they wrote before, since only active
-                collaborators with access to this form can decrypt submitted
-                responses.
-              </>
-            }
+            label={t("formSettings.editing")}
+            description={t("formSettings.editingBody")}
             checked={allowResponseEditing}
             onCheckedChange={onAllowResponseEditingChange}
           />
           <FieldRow
-            label="Confirmation message"
-            description="Shown to respondents after they submit, instead of the default message."
+            label={t("formSettings.confirmation")}
+            description={t("formSettings.confirmationBody")}
           >
             <Textarea
-              aria-label="Confirmation message"
-              placeholder="Thanks! Your response was submitted."
+              dir="auto"
+              aria-label={t("formSettings.confirmation")}
+              placeholder={t("formSettings.confirmationPlaceholder")}
               value={confirmationMessageInput}
               onChange={(event) =>
                 setConfirmationMessageInput(event.target.value)
@@ -306,10 +304,10 @@ export function FormSettingsPanel({
       )}
 
       {canEdit && (
-        <SettingsGroup title="Quiz">
+        <SettingsGroup title={t("formSettings.quiz")}>
           <ToggleRow
-            label="Quiz"
-            description="Mark correct answers and points on each question in the Questions tab, and see every response scored. Respondents never see the answers or their score."
+            label={t("formSettings.quiz")}
+            description={t("formSettings.quizBody")}
             checked={quizEnabled}
             onCheckedChange={onQuizEnabledChange}
           />
@@ -320,16 +318,10 @@ export function FormSettingsPanel({
        * Always rendered: this preference is per-person rather than part of the
        * form, so a Viewer's Settings tab is this group and nothing else.
        */}
-      <SettingsGroup title="Notifications">
+      <SettingsGroup title={t("formSettings.notifications")}>
         <ToggleRow
-          label="Email me when responses arrive"
-          description={
-            <>
-              At most one email an hour, however many arrive. It carries a count
-              and a link, never this form&rsquo;s name or any answers, because
-              the server cannot read them.
-            </>
-          }
+          label={t("formSettings.notify")}
+          description={t("formSettings.notifyBody")}
           checked={notifyOnResponse}
           onCheckedChange={onNotifyOnResponseChange}
         />
@@ -341,16 +333,16 @@ export function FormSettingsPanel({
             id="danger-zone-title"
             className="px-1 text-xs font-medium tracking-[0.06em] text-destructive uppercase"
           >
-            Danger zone
+            {t("formSettings.danger")}
           </h2>
           <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/[0.03] p-4">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Deleting a form permanently removes its encrypted responses and
-              attachments. Type DELETE to confirm.
+              {t("formSettings.dangerBody")}
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
-                aria-label="Type DELETE to confirm"
+                dir="ltr"
+                aria-label={t("formSettings.typeDelete")}
                 value={deleteConfirmation}
                 onChange={(event) => setDeleteConfirmation(event.target.value)}
                 autoComplete="off"
@@ -363,7 +355,9 @@ export function FormSettingsPanel({
                 onClick={deleteForm}
                 className="transition-transform duration-150 ease-out active:translate-y-0 active:scale-[0.97] motion-reduce:active:scale-100"
               >
-                {deleting ? "Deleting…" : "Delete form"}
+                {deleting
+                  ? t("formSettings.deleting")
+                  : t("formSettings.deleteForm")}
               </Button>
             </div>
             {deleteError && (
