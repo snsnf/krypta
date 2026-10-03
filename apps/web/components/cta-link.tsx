@@ -32,7 +32,7 @@ export function CtaLink({
     <Link
       href={href}
       className={cn(
-        "group inline-flex items-center gap-3 rounded-full py-2 pr-2 pl-6 text-base font-medium",
+        "group inline-flex items-center gap-3 rounded-full py-2 ps-6 pe-2 text-base font-medium",
         "transition-transform duration-500 ease-out will-change-transform active:scale-[0.97]",
         glass
           ? "border border-black/10 bg-black/[0.04] text-foreground backdrop-blur-md hover:bg-black/[0.07] dark:border-white/15 dark:bg-white/[0.06] dark:hover:bg-white/[0.10]"
@@ -45,13 +45,18 @@ export function CtaLink({
         className={cn(
           "flex size-9 shrink-0 items-center justify-center rounded-full",
           "transition-transform duration-500 ease-out",
-          "group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:scale-105",
+          "group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:scale-105 rtl:group-hover:-translate-x-0.5",
           glass
             ? "bg-black/[0.06] dark:bg-white/10"
             : "bg-primary-foreground/15"
         )}
       >
-        <HugeiconsIcon icon={ArrowUpRight01Icon} size={18} strokeWidth={1.8} />
+        <HugeiconsIcon
+          icon={ArrowUpRight01Icon}
+          size={18}
+          strokeWidth={1.8}
+          className="rtl:-scale-x-100"
+        />
       </span>
     </Link>
   )

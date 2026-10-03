@@ -942,5 +942,151 @@
       "unavailable": "Unavailable",
       "save": "Save settings"
     }
+  },
+  "legal": {
+    "lastUpdated": "Last updated"
+  },
+  "landing": {
+    "nav": {
+      "how": "How it works",
+      "pricing": "Pricing",
+      "login": "Log in"
+    },
+    "hero": {
+      "badge": "End-to-end encrypted forms",
+      "title": "Forms only you can read.",
+      "body": "Every response is encrypted in the visitor's browser. We store ciphertext. Only you hold the key.",
+      "create": "Create a form"
+    },
+    "demo": {
+      "label": "A sample answer being encrypted in the browser, showing the ciphertext the server receives.",
+      "browser": "In the visitor's browser",
+      "stores": "What our server stores",
+      "samples": {
+        "a": "I reported the incident to HR in March.",
+        "b": "Diagnosed with type 1 diabetes in 2019.",
+        "c": "My manager asked me to sign the audit early."
+      }
+    },
+    "boundary": {
+      "badge": "The boundary",
+      "title": "What our servers actually hold.",
+      "stored": "Stored",
+      "never": "Never received",
+      "storedItems": {
+        "cipher": "Sealed ciphertext",
+        "ids": "Form IDs and timestamps",
+        "keys": "Form keys, wrapped with your account key"
+      },
+      "neverItems": {
+        "content": "Your questions and answers",
+        "secrets": "Your password and recovery code",
+        "key": "Your account key",
+        "files": "The contents of uploaded files"
+      }
+    },
+    "features": {
+      "title": "Everything a form builder does.",
+      "accent": "Zero knowledge of what it collects.",
+      "types": {
+        "title": "Ten question types",
+        "body": "Short and long text, multiple choice, checkboxes, dropdown, number, email, date, file upload, and star or scale ratings."
+      },
+      "files": {
+        "title": "Files are sealed too",
+        "body": "Attachments are encrypted in the browser before upload, exactly like answers."
+      },
+      "edit": {
+        "title": "Edit after sharing",
+        "body": "Change questions without reissuing the link."
+      },
+      "noAccount": {
+        "title": "No account to respond",
+        "body": "Anyone with the link can answer. Nothing to install."
+      },
+      "self": {
+        "title": "Run it yourself",
+        "body": "The whole stack starts with one docker compose command."
+      }
+    },
+    "steps": {
+      "title": "Three steps, one key.",
+      "build": {
+        "title": "Build your form",
+        "body": "Add short-answer, long-answer, or multiple-choice questions."
+      },
+      "share": {
+        "title": "Share the link",
+        "body": "Anyone can respond. No account, no app to install."
+      },
+      "decrypt": {
+        "title": "Decrypt the answers",
+        "body": "Responses unseal in your browser, with your key, and nowhere else."
+      }
+    },
+    "pricing": {
+      "title": "Two plans. Neither one reads your data.",
+      "free": "Free",
+      "pro": "Pro",
+      "freePrice": "$0",
+      "proPrice": "$12",
+      "freeCadence": "forever",
+      "proCadence": "a month, or $120 a year",
+      "freeItems": {
+        "forms": "10 open forms",
+        "files": "200 MB of attachments",
+        "responses": "250 responses a month"
+      },
+      "proItems": {
+        "unlimited": "Unlimited forms and responses",
+        "files": "5 GB of attachments",
+        "free": "Everything in Free"
+      },
+      "note": "Every account starts on Free. Run krypta on your own server and neither plan applies: a self-hosted instance has no billing in it at all."
+    },
+    "faq": {
+      "title": "The questions worth asking first.",
+      "forgot": {
+        "q": "What happens if I forget my password?",
+        "a": "You reset it with the recovery code we showed you when you signed up, plus a code we email you, plus your two-factor code if you use one. That restores access to everything you already had, because your data is never re-encrypted. Lose the recovery code as well and your responses become permanently unreadable: we hold nothing that can open them."
+      },
+      "handover": {
+        "q": "Can you hand over my responses?",
+        "a": "We can only hand over ciphertext, because that is all we store. Reading it needs your key, which we have never held."
+      },
+      "quantum": {
+        "q": "What about quantum computers?",
+        "a": "Answers, uploaded files, and the keys we hand collaborators are sealed with a hybrid ML-KEM-768 + X25519 KEM. The first half is designed to resist quantum attack; the second is the classical scheme it is combined with, so the seal is never weaker than the one it replaced. Copying our database today and running it against a quantum computer years later is exactly the attack this is here for. The symmetric encryption underneath, and the key derived from your password, never needed changing: both were already beyond the reach of that attack."
+      },
+      "email": {
+        "q": "Who sees my email address?",
+        "a": "We do, and so does whoever delivers our mail, because verifying an address means sending something to it. They see the address and when you signed up, never your questions, answers, or files. Everything about your forms stays encrypted with a key we have never held."
+      },
+      "edit": {
+        "q": "Can respondents change an answer after submitting?",
+        "a": "Yes, when you enable it. They get a private edit link once they submit, and the edit is re-encrypted the same way."
+      }
+    },
+    "cta": {
+      "title": "Start collecting answers you alone can read."
+    },
+    "footer": {
+      "security": "Security",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "tagline": "Zero-knowledge. Open source. Self-hostable."
+    }
+  },
+  "meta": {
+    "description": "Encrypted forms. Every response is sealed in the visitor's browser, so we store ciphertext and only you hold the key.",
+    "signIn": "Sign in",
+    "signInDescription": "Sign in to your krypta account to build encrypted forms and read the responses only you can decrypt.",
+    "signUp": "Create an account",
+    "signUpDescription": "Create a krypta account. Your key is made in your browser and never leaves it.",
+    "recover": "Recover your vault",
+    "unlock": "Unlock",
+    "invitation": "Invitation",
+    "dashboard": "Dashboard",
+    "administration": "Administration"
   }
 }

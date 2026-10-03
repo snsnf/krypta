@@ -26,7 +26,7 @@ function siteUrl(): string {
  * today, every day, which is a signal that means nothing. A date that goes
  * stale only understates how fresh the pages are, which is the safe direction.
  */
-const LAST_MODIFIED = new Date("2026-09-17")
+const LAST_MODIFIED = new Date("2026-10-03")
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

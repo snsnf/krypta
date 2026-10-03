@@ -418,11 +418,18 @@ is the dashboard, builder and the screens around signing in, for whoever is
 using them; it is English or Arabic, and the sign-in screens, the header, the
 not-found page and the whole signed-in workspace (dashboard, New form and the
 starter templates, account settings, a form's tabs, the builder, sharing and
-invitations) and the admin screens are translated. The landing page, the legal
-pages, `/security`, page titles and the server's emails are still English
-(`UNTRANSLATED_ROUTES` in `lib/app-locale.ts` lists the routes whose text is
-not translated, and the browser's language does not apply to them, so English
-is never mirrored). The **form language** is the text respondents see around
+invitations), the admin screens, the landing page, `/security`, `/privacy`,
+`/terms` and every page title are translated; only the server's emails are
+still English. The long pages are data, not JSX: `lib/legal-content/*.ts`
+holds one document per language and `components/prose-document.tsx` renders
+it, with `**bold**` and `[text](/path)` as the only inline marks. A test
+(`legal-content.test.ts`) fails if the two languages differ in sections, list
+lengths or placeholders, but it cannot prove the Arabic is right: a person
+reads that, and the Arabic text says up front that the English prevails. A
+claim on `/privacy`, `/terms` or `/security` changes in both languages in the
+same commit as the code it describes. The language is chosen per request from
+the cookie then `Accept-Language`, on the same URL: there is no `hreflang`,
+and a crawler without either gets English. The **form language** is the text respondents see around
 the questions (buttons, hints, errors, the default thank-you), chosen by the
 creator per form. The creator's own questions, options and confirmation
 message are never translated.

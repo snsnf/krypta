@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toast"
 import { AppLocaleProvider } from "@/components/app-locale-provider"
 import { getAppLanguage } from "@/lib/app-locale-server"
+import { appTranslator } from "@/lib/app-translator"
 import { formDirection } from "@/lib/form-language"
 import { cn } from "@/lib/utils"
 
@@ -36,30 +37,30 @@ const fontMono = Geist_Mono({
 // one published image serves any domain.
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000"
 
-export const metadata: Metadata = {
-  // Absolute base for OG/Twitter asset URLs; crawlers reject relative ones.
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "krypta",
-    template: "%s | krypta",
-  },
-  description:
-    "Encrypted forms. Every response is sealed in the visitor's browser, so we store ciphertext and only you hold the key.",
-  applicationName: "krypta",
-  openGraph: {
-    type: "website",
-    siteName: "krypta",
-    title: "krypta",
-    description:
-      "Encrypted forms. Every response is sealed in the visitor's browser, so we store ciphertext and only you hold the key.",
-    url: siteUrl,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "krypta",
-    description:
-      "Encrypted forms. Every response is sealed in the visitor's browser, so we store ciphertext and only you hold the key.",
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const description = appTranslator(await getAppLanguage())("meta.description")
+  return {
+    // Absolute base for OG/Twitter asset URLs; crawlers reject relative ones.
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: "krypta",
+      template: "%s | krypta",
+    },
+    description,
+    applicationName: "krypta",
+    openGraph: {
+      type: "website",
+      siteName: "krypta",
+      title: "krypta",
+      description,
+      url: siteUrl,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "krypta",
+      description,
+    },
+  }
 }
 
 export default async function RootLayout({

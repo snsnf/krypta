@@ -2,6 +2,9 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import Link from "next/link"
 import { legalIdentity } from "@/lib/legal"
+import { appTranslator, translateKey } from "@/lib/app-translator"
+import { getAppLanguage } from "@/lib/app-locale-server"
+import { LanguageMenu } from "@/components/language-switcher"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Attachment01Icon,
@@ -25,66 +28,39 @@ import { ScrollReveal } from "@/components/scroll-reveal"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 const STEPS = [
-  {
-    title: "Build your form",
-    body: "Add short-answer, long-answer, or multiple-choice questions.",
-    icon: TaskEdit01Icon,
-  },
-  {
-    title: "Share the link",
-    body: "Anyone can respond. No account, no app to install.",
-    icon: Link01Icon,
-  },
-  {
-    title: "Decrypt the answers",
-    body: "Responses unseal in your browser, with your key, and nowhere else.",
-    icon: Key01Icon,
-  },
-]
+  { key: "build", icon: TaskEdit01Icon },
+  { key: "share", icon: Link01Icon },
+  { key: "decrypt", icon: Key01Icon },
+] as const
 
 /*
  * Every claim below is checked against shipped behaviour. Spans are chosen so
  * the two rows fill exactly (7+5, then 4+4+4) with no empty cell.
  */
 const FEATURES = [
+  { key: "types", icon: ListViewIcon, span: "lg:col-span-7", tinted: true },
   {
-    title: "Ten question types",
-    icon: ListViewIcon,
-    body: "Short and long text, multiple choice, checkboxes, dropdown, number, email, date, file upload, and star or scale ratings.",
-    span: "lg:col-span-7",
-    tinted: true,
-  },
-  {
-    title: "Files are sealed too",
+    key: "files",
     icon: Attachment01Icon,
-    body: "Attachments are encrypted in the browser before upload, exactly like answers.",
     span: "lg:col-span-5",
     tinted: false,
   },
+  { key: "edit", icon: Edit02Icon, span: "lg:col-span-4", tinted: false },
   {
-    title: "Edit after sharing",
-    icon: Edit02Icon,
-    body: "Change questions without reissuing the link.",
-    span: "lg:col-span-4",
-    tinted: false,
-  },
-  {
-    title: "No account to respond",
+    key: "noAccount",
     icon: UserGroupIcon,
-    body: "Anyone with the link can answer. Nothing to install.",
     span: "lg:col-span-4",
     tinted: true,
   },
   {
-    title: "Run it yourself",
+    key: "self",
     icon: ServerStack01Icon,
-    body: "The whole stack starts with one docker compose command.",
     span: "lg:col-span-4",
     tinted: false,
     // Real, and the one feature whose proof fits on a single line.
     command: "docker compose up -d",
   },
-]
+] as const
 
 /*
  * Plan limits mirror migration 0022 exactly: free is 10 open forms, 200 MB,
@@ -96,25 +72,9 @@ const FEATURES = [
  * one label for that intent and the CTA section below carries it.
  */
 const PLANS = [
-  {
-    name: "Free",
-    price: "$0",
-    cadence: "forever",
-    items: ["10 open forms", "200 MB of attachments", "250 responses a month"],
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$12",
-    cadence: "a month, or $120 a year",
-    items: [
-      "Unlimited forms and responses",
-      "5 GB of attachments",
-      "Everything in Free",
-    ],
-    featured: true,
-  },
-]
+  { key: "free", featured: false, items: ["forms", "files", "responses"] },
+  { key: "pro", featured: true, items: ["unlimited", "files", "free"] },
+] as const
 
 /*
  * Answers verified against the code, not written to sound reassuring. Recovery
@@ -130,28 +90,7 @@ const PLANS = [
  * audited. That caveat lives in CLAUDE.md, not here; nothing on this page may
  * contradict it.
  */
-const FAQS = [
-  {
-    q: "What happens if I forget my password?",
-    a: "You reset it with the recovery code we showed you when you signed up, plus a code we email you, plus your two-factor code if you use one. That restores access to everything you already had, because your data is never re-encrypted. Lose the recovery code as well and your responses become permanently unreadable: we hold nothing that can open them.",
-  },
-  {
-    q: "Can you hand over my responses?",
-    a: "We can only hand over ciphertext, because that is all we store. Reading it needs your key, which we have never held.",
-  },
-  {
-    q: "What about quantum computers?",
-    a: "Answers, uploaded files, and the keys we hand collaborators are sealed with a hybrid ML-KEM-768 + X25519 KEM. The first half is designed to resist quantum attack; the second is the classical scheme it is combined with, so the seal is never weaker than the one it replaced. Copying our database today and running it against a quantum computer years later is exactly the attack this is here for. The symmetric encryption underneath, and the key derived from your password, never needed changing: both were already beyond the reach of that attack.",
-  },
-  {
-    q: "Who sees my email address?",
-    a: "We do, and so does whoever delivers our mail, because verifying an address means sending something to it. They see the address and when you signed up, never your questions, answers, or files. Everything about your forms stays encrypted with a key we have never held.",
-  },
-  {
-    q: "Can respondents change an answer after submitting?",
-    a: "Yes, when you enable it. They get a private edit link once they submit, and the edit is re-encrypted the same way.",
-  },
-]
+const FAQS = ["forgot", "handover", "quantum", "email", "edit"] as const
 
 /*
  * These two lists are load-bearing security claims, not marketing copy. The
@@ -164,23 +103,18 @@ const FAQS = [
  * and an operator serving modified JavaScript could take keys from the page.
  * That second one is true of every browser-delivered encryption scheme.
  */
-const STORED = [
-  "Sealed ciphertext",
-  "Form IDs and timestamps",
-  "Form keys, wrapped with your account key",
-]
+const STORED = ["cipher", "ids", "keys"] as const
 
-const NEVER_SEEN = [
-  "Your questions and answers",
-  "Your password and recovery code",
-  "Your account key",
-  "The contents of uploaded files",
-]
+const NEVER_SEEN = ["content", "secrets", "key", "files"] as const
 
-export const metadata: Metadata = {
-  // The one route meant for search results. Canonical so the www, trailing
-  // slash and query-string variants all resolve to it.
-  alternates: { canonical: "/" },
+export async function generateMetadata(): Promise<Metadata> {
+  const t = appTranslator(await getAppLanguage())
+  return {
+    // The one route meant for search results. Canonical so the www, trailing
+    // slash and query-string variants all resolve to it.
+    alternates: { canonical: "/" },
+    description: t("meta.description"),
+  }
 }
 
 /**
@@ -204,6 +138,8 @@ const STRUCTURED_DATA = {
 }
 
 export default async function LandingPage() {
+  const t = appTranslator(await getAppLanguage())
+  const tk = (key: string) => translateKey(t, key)
   // Inline JSON-LD is a script as far as the CSP is concerned, so it carries
   // the same per-request nonce proxy.ts minted for everything else.
   const nonce = (await headers()).get("x-nonce") ?? undefined
@@ -227,10 +163,10 @@ export default async function LandingPage() {
        * two destinations costs a tap and buys nothing.
        */}
       <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-5">
-        <nav className="flex w-max items-center gap-1 rounded-full border border-black/[0.08] bg-white/70 p-1.5 pl-5 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:gap-2 dark:border-white/[0.10] dark:bg-black/50 dark:shadow-[0_8px_32px_-12px_rgba(0,0,0,0.7)]">
+        <nav className="flex w-max items-center gap-1 rounded-full border border-black/[0.08] bg-white/70 p-1.5 ps-5 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:gap-2 dark:border-white/[0.10] dark:bg-black/50 dark:shadow-[0_8px_32px_-12px_rgba(0,0,0,0.7)]">
           <Link
             href="/"
-            className="flex items-center gap-2 pr-2 font-heading text-base font-semibold tracking-tight"
+            className="flex items-center gap-2 pe-2 font-heading text-base font-semibold tracking-tight"
           >
             <KryptaLogo className="h-6 w-auto text-brand" />
             krypta
@@ -242,7 +178,7 @@ export default async function LandingPage() {
             nativeButton={false}
             render={<Link href="#how-it-works" />}
           >
-            How it works
+            {t("landing.nav.how")}
           </Button>
           <Button
             variant="ghost"
@@ -251,8 +187,9 @@ export default async function LandingPage() {
             nativeButton={false}
             render={<Link href="#pricing" />}
           >
-            Pricing
+            {t("landing.nav.pricing")}
           </Button>
+          <LanguageMenu />
           <ThemeToggle />
           <Button
             variant="ghost"
@@ -261,7 +198,7 @@ export default async function LandingPage() {
             nativeButton={false}
             render={<Link href="/login" />}
           >
-            Log in
+            {t("landing.nav.login")}
           </Button>
         </nav>
       </header>
@@ -277,19 +214,18 @@ export default async function LandingPage() {
           <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-6">
               <span className="inline-flex items-center rounded-full border border-black/[0.08] bg-black/[0.03] px-3 py-1 font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase dark:border-white/[0.12] dark:bg-white/[0.04]">
-                End-to-end encrypted forms
+                {t("landing.hero.badge")}
               </span>
               <h1 className="mt-6 font-heading text-[clamp(3rem,8vw,5.5rem)] leading-[0.92] font-semibold tracking-[-0.03em] text-balance">
-                <CipherReveal text="Forms only you can read." />
+                <CipherReveal text={t("landing.hero.title")} />
               </h1>
               <p className="mt-7 max-w-md text-lg leading-relaxed text-muted-foreground">
-                Every response is encrypted in the visitor&apos;s browser. We
-                store ciphertext. Only you hold the key.
+                {t("landing.hero.body")}
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-3">
-                <CtaLink href="/signup">Create a form</CtaLink>
+                <CtaLink href="/signup">{t("landing.hero.create")}</CtaLink>
                 <CtaLink href="#how-it-works" variant="glass">
-                  How it works
+                  {t("landing.nav.how")}
                 </CtaLink>
               </div>
             </div>
@@ -309,16 +245,16 @@ export default async function LandingPage() {
         <section className="px-6 py-28 lg:py-36">
           <div className="mx-auto max-w-6xl">
             <span className="reveal-on-scroll inline-flex items-center rounded-full border border-black/[0.08] bg-black/[0.03] px-3 py-1 font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase dark:border-white/[0.12] dark:bg-white/[0.04]">
-              The boundary
+              {t("landing.boundary.badge")}
             </span>
             <h2 className="reveal-on-scroll mt-6 max-w-2xl font-heading text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.02em]">
-              What our servers actually hold.
+              {t("landing.boundary.title")}
             </h2>
             <div className="mt-14 grid gap-5 sm:grid-cols-2">
               <Bezel tinted className="reveal-stagger">
                 <div className="p-8 sm:p-10">
                   <h3 className="font-mono text-[10px] tracking-[0.2em] text-brand uppercase">
-                    Stored
+                    {t("landing.boundary.stored")}
                   </h3>
                   <ul className="mt-7 flex flex-col divide-y divide-black/[0.06] dark:divide-white/[0.07]">
                     {STORED.map((item) => (
@@ -326,7 +262,7 @@ export default async function LandingPage() {
                         key={item}
                         className="py-4 text-lg leading-snug tracking-[-0.01em] first:pt-0 last:pb-0"
                       >
-                        {item}
+                        {tk(`landing.boundary.storedItems.${item}`)}
                       </li>
                     ))}
                   </ul>
@@ -335,7 +271,7 @@ export default async function LandingPage() {
               <Bezel className="reveal-stagger">
                 <div className="p-8 sm:p-10">
                   <h3 className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-                    Never received
+                    {t("landing.boundary.never")}
                   </h3>
                   <ul className="mt-7 flex flex-col divide-y divide-black/[0.06] dark:divide-white/[0.07]">
                     {NEVER_SEEN.map((item) => (
@@ -343,7 +279,7 @@ export default async function LandingPage() {
                         key={item}
                         className="py-4 text-lg leading-snug tracking-[-0.01em] text-muted-foreground first:pt-0 last:pb-0"
                       >
-                        {item}
+                        {tk(`landing.boundary.neverItems.${item}`)}
                       </li>
                     ))}
                   </ul>
@@ -356,16 +292,14 @@ export default async function LandingPage() {
         <section className="px-6 pb-28 lg:pb-36">
           <div className="mx-auto max-w-6xl">
             <h2 className="reveal-on-scroll max-w-2xl font-heading text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.02em]">
-              Everything a form builder does.{" "}
-              <span className="text-brand">
-                Zero knowledge of what it collects.
-              </span>
+              {t("landing.features.title")}{" "}
+              <span className="text-brand">{t("landing.features.accent")}</span>
             </h2>
             {/* Asymmetric on purpose: 7+5 then 4+4+4 fills both rows exactly. */}
             <div className="mt-14 grid gap-5 lg:grid-cols-12">
               {FEATURES.map((feature) => (
                 <Bezel
-                  key={feature.title}
+                  key={feature.key}
                   tinted={feature.tinted}
                   className={`reveal-stagger ${feature.span}`}
                 >
@@ -377,13 +311,16 @@ export default async function LandingPage() {
                       className="mb-2 text-brand"
                     />
                     <h3 className="font-heading text-xl font-semibold tracking-[-0.02em]">
-                      {feature.title}
+                      {tk(`landing.features.${feature.key}.title`)}
                     </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {feature.body}
+                      {tk(`landing.features.${feature.key}.body`)}
                     </p>
-                    {feature.command && (
-                      <code className="mt-auto rounded-xl border border-black/[0.07] bg-black/[0.03] px-3.5 py-2.5 font-mono text-xs break-all text-brand dark:border-white/[0.08] dark:bg-white/[0.03]">
+                    {"command" in feature && (
+                      <code
+                        dir="ltr"
+                        className="mt-auto rounded-xl border border-black/[0.07] bg-black/[0.03] px-3.5 py-2.5 font-mono text-xs break-all text-brand dark:border-white/[0.08] dark:bg-white/[0.03]"
+                      >
                         {feature.command}
                       </code>
                     )}
@@ -398,10 +335,10 @@ export default async function LandingPage() {
           <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-5">
               <span className="reveal-on-scroll inline-flex items-center rounded-full border border-black/[0.08] bg-black/[0.03] px-3 py-1 font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase dark:border-white/[0.12] dark:bg-white/[0.04]">
-                How it works
+                {t("landing.nav.how")}
               </span>
               <h2 className="reveal-on-scroll mt-6 font-heading text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.02em] text-balance">
-                Three steps, one key.
+                {t("landing.steps.title")}
               </h2>
             </div>
             {/*
@@ -411,13 +348,13 @@ export default async function LandingPage() {
             <ol className="lg:col-span-7">
               {STEPS.map((step, index) => (
                 <li
-                  key={step.title}
+                  key={step.key}
                   className="reveal-stagger relative flex gap-6 pb-10 last:pb-0"
                 >
                   {index < STEPS.length - 1 && (
                     <span
                       aria-hidden="true"
-                      className="absolute top-14 bottom-0 left-[1.625rem] w-px bg-gradient-to-b from-black/[0.12] to-transparent dark:from-white/[0.14]"
+                      className="absolute start-[1.625rem] top-14 bottom-0 w-px bg-gradient-to-b from-black/[0.12] to-transparent dark:from-white/[0.14]"
                     />
                   )}
                   <span className="flex size-13 shrink-0 items-center justify-center rounded-full border border-black/[0.07] bg-brand/[0.12] text-brand shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:border-white/[0.08] dark:bg-brand/[0.10] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
@@ -429,10 +366,10 @@ export default async function LandingPage() {
                   </span>
                   <div className="flex flex-col gap-2 pt-2.5">
                     <span className="font-heading text-xl font-semibold tracking-[-0.02em]">
-                      {step.title}
+                      {tk(`landing.steps.${step.key}.title`)}
                     </span>
                     <span className="text-sm leading-relaxed text-muted-foreground">
-                      {step.body}
+                      {tk(`landing.steps.${step.key}.body`)}
                     </span>
                   </div>
                 </li>
@@ -444,12 +381,12 @@ export default async function LandingPage() {
         <section id="pricing" className="scroll-mt-28 px-6 pb-28 lg:pb-36">
           <div className="mx-auto max-w-6xl">
             <h2 className="reveal-on-scroll max-w-2xl font-heading text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.02em]">
-              Two plans. Neither one reads your data.
+              {t("landing.pricing.title")}
             </h2>
             <div className="mt-14 grid gap-5 sm:grid-cols-2">
               {PLANS.map((plan) => (
                 <Bezel
-                  key={plan.name}
+                  key={plan.key}
                   tinted={plan.featured}
                   className="reveal-stagger"
                 >
@@ -459,14 +396,14 @@ export default async function LandingPage() {
                         plan.featured ? "text-brand" : "text-muted-foreground"
                       }`}
                     >
-                      {plan.name}
+                      {tk(`landing.pricing.${plan.key}`)}
                     </h3>
                     <p className="mt-5 flex items-baseline gap-2.5">
                       <span className="font-heading text-5xl font-semibold tracking-[-0.025em]">
-                        {plan.price}
+                        {tk(`landing.pricing.${plan.key}Price`)}
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {plan.cadence}
+                        {tk(`landing.pricing.${plan.key}Cadence`)}
                       </span>
                     </p>
                     <ul className="mt-8 flex flex-col divide-y divide-black/[0.06] dark:divide-white/[0.07]">
@@ -475,7 +412,7 @@ export default async function LandingPage() {
                           key={item}
                           className="py-3.5 text-[0.9375rem] leading-snug first:pt-0 last:pb-0"
                         >
-                          {item}
+                          {tk(`landing.pricing.${plan.key}Items.${item}`)}
                         </li>
                       ))}
                     </ul>
@@ -484,9 +421,7 @@ export default async function LandingPage() {
               ))}
             </div>
             <p className="reveal-on-scroll mt-8 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Every account starts on Free. Run krypta on your own server and
-              neither plan applies: a self-hosted instance has no billing in it
-              at all.
+              {t("landing.pricing.note")}
             </p>
           </div>
         </section>
@@ -494,19 +429,19 @@ export default async function LandingPage() {
         <section className="px-6 pb-28 lg:pb-36">
           <div className="mx-auto max-w-6xl">
             <h2 className="reveal-on-scroll max-w-2xl font-heading text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.02em]">
-              The questions worth asking first.
+              {t("landing.faq.title")}
             </h2>
             {/* Native disclosure: keyboard accessible and needs no JavaScript. */}
             <Bezel className="reveal-on-scroll mt-14 max-w-3xl">
               <FaqAccordion className="px-8 py-2 sm:px-10">
                 {FAQS.map((faq) => (
                   <details
-                    key={faq.q}
+                    key={faq}
                     name="krypta-faq"
                     className="faq-item group border-b border-black/[0.06] py-6 last:border-b-0 dark:border-white/[0.07]"
                   >
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium [&::-webkit-details-marker]:hidden">
-                      {faq.q}
+                      {tk(`landing.faq.${faq}.q`)}
                       <span
                         aria-hidden="true"
                         className="flex size-7 shrink-0 items-center justify-center rounded-full border border-black/[0.07] bg-black/[0.03] text-base leading-none text-brand transition-transform duration-500 ease-out group-open:rotate-45 dark:border-white/[0.09] dark:bg-white/[0.04]"
@@ -515,7 +450,7 @@ export default async function LandingPage() {
                       </span>
                     </summary>
                     <p className="faq-answer max-w-[62ch] pt-4 text-sm leading-relaxed text-muted-foreground">
-                      {faq.a}
+                      {tk(`landing.faq.${faq}.a`)}
                     </p>
                   </details>
                 ))}
@@ -528,7 +463,7 @@ export default async function LandingPage() {
           <Bezel tinted className="reveal-on-scroll mx-auto max-w-6xl">
             <div className="flex flex-col gap-8 px-8 py-14 sm:px-12 lg:flex-row lg:items-center lg:justify-between lg:py-16">
               <h2 className="max-w-lg font-heading text-[clamp(1.75rem,3.5vw,2.5rem)] leading-[1.05] font-semibold tracking-[-0.02em]">
-                Start collecting answers you alone can read.
+                {t("landing.cta.title")}
               </h2>
               {/*
                * self-start: in the stacked phone layout this column stretches
@@ -539,7 +474,7 @@ export default async function LandingPage() {
                 href="/signup"
                 className="shrink-0 self-start lg:self-center"
               >
-                Create a form
+                {t("landing.hero.create")}
               </CtaLink>
             </div>
           </Bezel>
@@ -560,7 +495,7 @@ export default async function LandingPage() {
               href="/security"
               className="text-sm text-muted-foreground transition-opacity duration-150 ease-out hover:opacity-70"
             >
-              Security
+              {t("landing.footer.security")}
             </Link>
             {/*
               Only linked when this instance has named an operator, because
@@ -572,18 +507,18 @@ export default async function LandingPage() {
                   href="/privacy"
                   className="text-sm text-muted-foreground transition-opacity duration-150 ease-out hover:opacity-70"
                 >
-                  Privacy
+                  {t("landing.footer.privacy")}
                 </Link>
                 <Link
                   href="/terms"
                   className="text-sm text-muted-foreground transition-opacity duration-150 ease-out hover:opacity-70"
                 >
-                  Terms
+                  {t("landing.footer.terms")}
                 </Link>
               </>
             )}
             <span className="font-mono text-xs tracking-wide text-muted-foreground">
-              Zero-knowledge. Open source. Self-hostable.
+              {t("landing.footer.tagline")}
             </span>
           </nav>
         </div>

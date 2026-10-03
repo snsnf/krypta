@@ -1,4 +1,3 @@
-import type { Page } from "@playwright/test"
 import {
   expect,
   installIsolatedCorsRoute,
@@ -6,51 +5,13 @@ import {
   test,
   waitForInteractive,
 } from "./fixtures"
+import { expectNoEnglish } from "./leftover-english"
 
 /*
  * Every screen of the signed-in workspace in an Arabic browser, scanned for
  * English that was missed. A translated string is checked by the unit tests'
  * catalogue; this is the guard against the one nobody wrapped in t().
  */
-
-// Words that are the same in both languages: the brand, formats, the literal
-// the delete box asks for, and a language written in its own language.
-const ALLOWED = /\b(krypta|CSV|DELETE|QR|hex|URL|English)\b/g
-
-async function leftoverEnglish(page: Page): Promise<string[]> {
-  const texts = await page.evaluate(() => {
-    const out: string[] = []
-    const skip = (node: Element) =>
-      node.closest("nextjs-portal, [role='combobox'], script, style") !== null
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT
-    )
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      const parent = n.parentElement
-      if (parent && !skip(parent)) out.push(n.textContent ?? "")
-    }
-    for (const el of Array.from(document.body.querySelectorAll("*"))) {
-      if (skip(el)) continue
-      for (const attr of ["aria-label", "placeholder", "title", "alt"]) {
-        const value = el.getAttribute(attr)
-        if (value) out.push(value)
-      }
-    }
-    return out
-  })
-  return texts
-    .map((text) => text.replace(/\S+@\S+/g, "").replace(ALLOWED, ""))
-    .flatMap((text) => text.match(/[A-Za-z]{3,}[A-Za-z' ]*/g) ?? [])
-    .map((run) => run.trim())
-    .filter((run) => run.length > 0)
-}
-
-async function expectNoEnglish(page: Page, where: string) {
-  // Let streamed content and animations settle before reading the page.
-  await page.waitForTimeout(400)
-  expect(await leftoverEnglish(page), `English left on ${where}`).toEqual([])
-}
 
 test("the whole workspace reads in Arabic, right to left", async ({
   browser,
