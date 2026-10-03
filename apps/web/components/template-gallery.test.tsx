@@ -55,7 +55,8 @@ describe("TemplateGallery in Arabic", () => {
   it("translates the cards and the counts, with Western digits", () => {
     expect(markup).toContain("نموذج فارغ")
     expect(markup).toContain("بلاغ مجهول")
-    expect(markup).toContain("6 أسئلة")
+    // The Arabic job application leaves out its start date, so it counts 5.
+    expect(markup).toContain("5 أسئلة")
     expect(markup).toContain("4 أسئلة")
     expect(markup).not.toMatch(/[\u0660-\u0669]/)
   })

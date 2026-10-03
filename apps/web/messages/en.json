@@ -285,7 +285,8 @@
     "renameTitle": "Rename form",
     "titleLabel": "Title",
     "titleEmpty": "Title can't be empty.",
-    "renameConflict": "This form changed elsewhere. Your typed title is still here. Try again."
+    "renameConflict": "This form changed elsewhere. Your typed title is still here. Try again.",
+    "unavailable": "Form unavailable"
   },
   "templates": {
     "title": "New form",
@@ -549,7 +550,7 @@
     "danger": "Danger zone",
     "dangerBody": "Deleting a form permanently removes its encrypted responses and attachments. Type DELETE to confirm.",
     "typeDelete": "Type DELETE to confirm",
-    "deleting": "Deleting...",
+    "deleting": "Deleting…",
     "deleteForm": "Delete form"
   },
   "sharing": {
@@ -566,8 +567,8 @@
     "emailLabel": "Email address",
     "role": "Role",
     "invite": "Invite",
-    "sending": "Sending...",
-    "loading": "Loading sharing details...",
+    "sending": "Sending…",
+    "loading": "Loading sharing details…",
     "activeHeading": "Active collaborators",
     "noActive": "No active collaborators.",
     "awaitingHeading": "Awaiting secure access",
@@ -588,7 +589,7 @@
     "removeBody": "Remove {email} from this form? They will lose future access.",
     "revokeTitle": "Revoke invitation?",
     "revokeBody": "Revoke the invitation for {email}? Its current link will stop working.",
-    "working": "Working...",
+    "working": "Working…",
     "conflictTitle": "This form changed elsewhere",
     "conflictBody": "Your draft is still here. Keep editing, copy it for safekeeping, or reload the latest saved version.",
     "reloadLatest": "Reload latest",
@@ -613,10 +614,10 @@
     "acceptedTitle": "Invitation accepted",
     "awaiting": "No further approval is needed. Secure access is being prepared and will appear on your dashboard when it is ready.",
     "toDashboard": "Go to dashboard",
-    "opening": "Opening the shared form...",
+    "opening": "Opening the shared form…",
     "wrongTitle": "Use the invited account",
     "wrongBody": "This invitation belongs to a different account. Switch accounts to continue without changing the invitation.",
-    "signingOut": "Signing out...",
+    "signingOut": "Signing out…",
     "switch": "Sign out and switch account",
     "backToDashboard": "Back to dashboard",
     "unavailableTitle": "Invitation unavailable",

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { useAppLanguage, useAppT } from "@/lib/app-i18n"
 import {
   FORM_TEMPLATES,
+  instantiateTemplate,
   templateCard,
   type FormTemplate,
 } from "@/lib/form-templates"
@@ -80,7 +81,8 @@ export function TemplateGallery({
                 </span>
                 <span className="mt-auto pt-1 text-xs text-muted-foreground">
                   {t("templates.questionCount", {
-                    count: template.questions.length,
+                    count: instantiateTemplate(template, language).questions
+                      .length,
                   })}
                 </span>
               </button>
