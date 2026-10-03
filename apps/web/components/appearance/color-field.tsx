@@ -4,6 +4,7 @@ import { useId, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { isHexColor } from "@/lib/form-theme"
+import { useAppT } from "@/lib/app-i18n"
 
 interface ColorFieldProps {
   id: string
@@ -27,6 +28,8 @@ function HexColorInput({
   value,
   onValidChange,
 }: HexColorInputProps) {
+  const t = useAppT()
+
   const [textValue, setTextValue] = useState(value)
   const invalid = !isHexColor(textValue)
 
@@ -41,7 +44,8 @@ function HexColorInput({
         id={`${id}-hex`}
         value={textValue}
         onChange={(event) => update(event.target.value)}
-        aria-label={`${label} hex`}
+        dir="ltr"
+        aria-label={t("appearance.hexAria", { label })}
         aria-invalid={invalid}
         aria-describedby={invalid ? errorId : undefined}
         spellCheck={false}
@@ -49,7 +53,7 @@ function HexColorInput({
       />
       {invalid && (
         <p id={errorId} className="col-span-2 text-xs text-destructive">
-          Use a six-digit hex color.
+          {t("appearance.hexInvalid")}
         </p>
       )}
     </>

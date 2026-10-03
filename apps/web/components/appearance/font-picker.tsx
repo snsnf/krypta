@@ -22,6 +22,7 @@ import { getFontCssUrl } from "@/lib/form-theme"
 import type { FontCatalogEntry } from "@/lib/fonts"
 import { loadFontCatalog } from "@/lib/font-catalog-client"
 import { cn } from "@/lib/utils"
+import { useAppT } from "@/lib/app-i18n"
 
 interface FontPickerProps {
   value: string
@@ -32,6 +33,8 @@ interface FontPickerProps {
 type FontStatus = "idle" | "loading" | "ready" | "error"
 
 export function FontPicker({ value, onChange, ariaLabel }: FontPickerProps) {
+  const t = useAppT()
+
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<FontStatus>("idle")
   const [fonts, setFonts] = useState<FontCatalogEntry[]>([])
@@ -114,13 +117,16 @@ export function FontPicker({ value, onChange, ariaLabel }: FontPickerProps) {
       >
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search fonts"
+            placeholder={t("appearance.searchFonts")}
             value={search}
             onValueChange={setSearch}
           />
           <CommandList className="max-h-72">
             {status === "loading" && (
-              <div className="space-y-2 p-2" aria-label="Loading fonts">
+              <div
+                className="space-y-2 p-2"
+                aria-label={t("appearance.loadingFonts")}
+              >
                 {Array.from({ length: 5 }, (_, index) => (
                   <Skeleton key={index} className="h-7 w-full" />
                 ))}
@@ -128,20 +134,20 @@ export function FontPicker({ value, onChange, ariaLabel }: FontPickerProps) {
             )}
             {status === "error" && (
               <div className="space-y-3 p-3 text-center text-sm">
-                <p>The font list could not be loaded.</p>
+                <p>{t("appearance.fontsFailed")}</p>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={retry}
                 >
-                  Retry
+                  {t("appearance.retry")}
                 </Button>
               </div>
             )}
             {status === "ready" && (
               <>
-                <CommandEmpty>No fonts match your search.</CommandEmpty>
+                <CommandEmpty>{t("appearance.noFonts")}</CommandEmpty>
                 <CommandGroup>
                   {matches.map((font) => (
                     <CommandItem

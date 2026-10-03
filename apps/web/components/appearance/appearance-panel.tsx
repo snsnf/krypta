@@ -16,6 +16,7 @@ import {
   getContrastRatio,
 } from "@/lib/form-theme"
 import { cn } from "@/lib/utils"
+import { translateKey, useAppT } from "@/lib/app-i18n"
 import {
   FORM_LANGUAGES,
   FORM_LANGUAGE_LABELS,
@@ -42,22 +43,9 @@ interface AppearancePanelProps {
   headerImage?: HeaderImageControls | null
 }
 
-const PRESET_NAMES: Record<Exclude<FormThemePreset, "custom">, string> = {
-  forest: "Forest",
-  ocean: "Ocean",
-  plum: "Plum",
-  terracotta: "Terracotta",
-  sunflower: "Sunflower",
-  graphite: "Graphite",
-}
-
 type TypographyRole = keyof FormTheme["typography"]
 
-const TYPOGRAPHY_ROLES: { role: TypographyRole; label: string }[] = [
-  { role: "header", label: "Header" },
-  { role: "question", label: "Question" },
-  { role: "text", label: "Text" },
-]
+const TYPOGRAPHY_ROLES: TypographyRole[] = ["header", "question", "text"]
 
 export function AppearancePanel({
   value,
@@ -65,6 +53,11 @@ export function AppearancePanel({
   idPrefix = "",
   headerImage = null,
 }: AppearancePanelProps) {
+  const t = useAppT()
+  const presetName = (preset: Exclude<FormThemePreset, "custom">) =>
+    translateKey(t, `appearance.presetNames.${preset}`)
+  const roleName = (role: TypographyRole) =>
+    translateKey(t, `appearance.roles.${role}`)
   const [announcement, setAnnouncement] = useState("")
   const imageInputRef = useRef<HTMLInputElement>(null)
   const previousColors = useRef({
@@ -85,7 +78,7 @@ export function AppearancePanel({
       backgroundColor: value.backgroundColor,
     }
     const timeout = window.setTimeout(() => {
-      setAnnouncement("Form colors updated.")
+      setAnnouncement(t("appearance.colorsUpdated"))
     }, 250)
     return () => window.clearTimeout(timeout)
   }, [value.accentColor, value.backgroundColor])
@@ -96,15 +89,15 @@ export function AppearancePanel({
       preset,
       ...FORM_THEME_PRESETS[preset],
     })
-    setAnnouncement(`${PRESET_NAMES[preset]} theme selected.`)
+    setAnnouncement(t("appearance.themeSelected", { name: presetName(preset) }))
   }
 
   function selectLayout(layout: NonNullable<FormTheme["layout"]>) {
     onChange({ ...value, layout })
     setAnnouncement(
       layout === "focus"
-        ? "Focus layout selected: one question at a time."
-        : "Classic layout selected: all questions on one page."
+        ? t("appearance.focusSelected")
+        : t("appearance.classicSelected")
     )
   }
 
@@ -124,15 +117,13 @@ export function AppearancePanel({
       [role]: { ...value.typography[role], ...patch },
     }
     onChange({ ...value, typography })
-    setAnnouncement(`${role} text style updated.`)
+    setAnnouncement(t("appearance.textStyleUpdated", { role: roleName(role) }))
   }
 
   function updateDarkMode(allowDarkMode: boolean) {
     onChange({ ...value, allowDarkMode })
     setAnnouncement(
-      allowDarkMode
-        ? "Dark mode enabled for respondents."
-        : "Dark mode disabled for respondents."
+      allowDarkMode ? t("appearance.darkOn") : t("appearance.darkOff")
     )
   }
 
@@ -141,50 +132,52 @@ export function AppearancePanel({
 
   return (
     <div className="space-y-5">
-      <h2 className="text-base font-medium">Appearance</h2>
+      <h2 className="text-base font-medium">{t("appearance.title")}</h2>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">Layout</p>
+        <p className="text-sm font-medium">{t("appearance.layout")}</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             type="button"
-            aria-label="Classic layout"
+            aria-label={t("appearance.classicAria")}
             aria-pressed={(value.layout ?? "classic") === "classic"}
             onClick={() => selectLayout("classic")}
             className={cn(
-              "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
+              "rounded-lg border px-3 py-2 text-start text-xs transition-colors",
               (value.layout ?? "classic") === "classic"
                 ? "border-foreground bg-muted"
                 : "border-border hover:bg-muted"
             )}
           >
-            <p className="font-medium">Classic</p>
+            <p className="font-medium">{t("appearance.classic")}</p>
             <p className="mt-0.5 text-muted-foreground">
-              All questions on one page, familiar and fast to scan.
+              {t("appearance.classicBody")}
             </p>
           </button>
           <button
             type="button"
-            aria-label="Focus layout"
+            aria-label={t("appearance.focusAria")}
             aria-pressed={value.layout === "focus"}
             onClick={() => selectLayout("focus")}
             className={cn(
-              "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
+              "rounded-lg border px-3 py-2 text-start text-xs transition-colors",
               value.layout === "focus"
                 ? "border-foreground bg-muted"
                 : "border-border hover:bg-muted"
             )}
           >
-            <p className="font-medium">Focus</p>
+            <p className="font-medium">{t("appearance.focus")}</p>
             <p className="mt-0.5 text-muted-foreground">
-              One question at a time, a more personal, conversational feel.
+              {t("appearance.focusBody")}
             </p>
           </button>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}form-language`}>Form language</Label>
+        <Label htmlFor={`${idPrefix}form-language`}>
+          {t("appearance.language")}
+        </Label>
         <select
           id={`${idPrefix}form-language`}
           value={normalizeFormLanguage(value.language)}
@@ -206,15 +199,14 @@ export function AppearancePanel({
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          The language of the buttons and messages respondents see. Your
-          questions stay exactly as you write them.
+          {t("appearance.languageBody")}
         </p>
       </div>
 
       <Separator />
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">Theme presets</p>
+        <p className="text-sm font-medium">{t("appearance.presets")}</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(
             Object.entries(FORM_THEME_PRESETS) as [
@@ -225,11 +217,13 @@ export function AppearancePanel({
             <button
               key={preset}
               type="button"
-              aria-label={`${PRESET_NAMES[preset]} theme`}
+              aria-label={t("appearance.themeAria", {
+                name: presetName(preset),
+              })}
               aria-pressed={value.preset === preset}
               onClick={() => selectPreset(preset)}
               className={cn(
-                "flex items-center gap-2 rounded-lg border px-2 py-2 text-left text-xs transition-colors",
+                "flex items-center gap-2 rounded-lg border px-2 py-2 text-start text-xs transition-colors",
                 value.preset === preset
                   ? "border-foreground bg-muted"
                   : "border-border hover:bg-muted"
@@ -240,7 +234,7 @@ export function AppearancePanel({
                 className="size-4 shrink-0 rounded-full border border-black/10"
                 style={{ backgroundColor: colors.accentColor }}
               />
-              {PRESET_NAMES[preset]}
+              {presetName(preset)}
             </button>
           ))}
         </div>
@@ -251,7 +245,7 @@ export function AppearancePanel({
       <div className="space-y-4">
         <ColorField
           id={`${idPrefix}accent-color`}
-          label="Accent color"
+          label={t("appearance.accent")}
           value={value.accentColor}
           onValidChange={(color) => updateColor("accentColor", color)}
         />
@@ -263,17 +257,17 @@ export function AppearancePanel({
               color: accentForeground,
             }}
           >
-            Button preview
+            {t("appearance.buttonPreview")}
           </div>
           {accentContrast < 4.5 && (
             <p className="mt-1 text-xs text-destructive">
-              This accent color has low text contrast.
+              {t("appearance.lowContrast")}
             </p>
           )}
         </div>
         <ColorField
           id={`${idPrefix}background-color`}
-          label="Page background"
+          label={t("appearance.background")}
           value={value.backgroundColor}
           onValidChange={(color) => updateColor("backgroundColor", color)}
         />
@@ -282,12 +276,12 @@ export function AppearancePanel({
       <Separator />
 
       <div className="space-y-3">
-        <h3 className="text-sm font-medium">Text style</h3>
+        <h3 className="text-sm font-medium">{t("appearance.textStyle")}</h3>
         <div className="space-y-3">
-          {TYPOGRAPHY_ROLES.map(({ role, label }) => (
+          {TYPOGRAPHY_ROLES.map((role) => (
             <div key={role} className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">
-                {label}
+                {roleName(role)}
               </p>
               <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-2">
                 <div className="col-span-2">
@@ -298,18 +292,24 @@ export function AppearancePanel({
                     onChange={(font) =>
                       updateTypography(role, { font, variant: undefined })
                     }
-                    ariaLabel={`${label} font`}
+                    ariaLabel={t("appearance.fontAria", {
+                      role: roleName(role),
+                    })}
                   />
                 </div>
                 <FontVariantSelect
                   family={value.typography[role].font}
                   value={value.typography[role].variant}
                   onChange={(variant) => updateTypography(role, { variant })}
-                  ariaLabel={`${label} weight and style`}
+                  ariaLabel={t("appearance.weightAria", {
+                    role: roleName(role),
+                  })}
                   className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 />
                 <select
-                  aria-label={`${label} size`}
+                  aria-label={t("appearance.sizeAria", {
+                    role: roleName(role),
+                  })}
                   value={value.typography[role].size}
                   onChange={(event) =>
                     updateTypography(role, {
@@ -334,15 +334,16 @@ export function AppearancePanel({
 
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
-          <Label htmlFor={`${idPrefix}allow-dark-mode`}>Allow dark mode</Label>
+          <Label htmlFor={`${idPrefix}allow-dark-mode`}>
+            {t("appearance.allowDark")}
+          </Label>
           <p className="text-xs leading-relaxed text-muted-foreground">
-            The form follows each respondent&apos;s device, and they can switch
-            to Light or Dark.
+            {t("appearance.allowDarkBody")}
           </p>
         </div>
         <Switch
           id={`${idPrefix}allow-dark-mode`}
-          aria-label="Allow dark mode"
+          aria-label={t("appearance.allowDark")}
           checked={value.allowDarkMode ?? false}
           onCheckedChange={updateDarkMode}
         />
@@ -358,7 +359,9 @@ export function AppearancePanel({
        * encrypted under this form's schema key like everything else.
        */}
       <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}header-image`}>Header image</Label>
+        <Label htmlFor={`${idPrefix}header-image`}>
+          {t("appearance.headerImage")}
+        </Label>
         {headerImage ? (
           <>
             <input
@@ -381,7 +384,7 @@ export function AppearancePanel({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={headerImage.previewUrl}
-                  alt="Header preview"
+                  alt={t("appearance.headerPreview")}
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -395,10 +398,10 @@ export function AppearancePanel({
                 onClick={() => imageInputRef.current?.click()}
               >
                 {headerImage.busy
-                  ? "Uploading..."
+                  ? t("appearance.uploading")
                   : headerImage.previewUrl
-                    ? "Replace"
-                    : "Upload image"}
+                    ? t("appearance.replace")
+                    : t("appearance.upload")}
               </Button>
               {headerImage.previewUrl && (
                 <Button
@@ -408,7 +411,7 @@ export function AppearancePanel({
                   disabled={headerImage.busy}
                   onClick={headerImage.onRemove}
                 >
-                  Remove
+                  {t("common.remove")}
                 </Button>
               )}
             </div>
@@ -420,14 +423,13 @@ export function AppearancePanel({
           </>
         ) : (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Save the form first, then you can add a header image.
+            {t("appearance.saveFirst")}
           </p>
         )}
       </div>
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Fonts are served from this site, so respondents never contact a third
-        party. The header image is stored encrypted with the form.
+        {t("appearance.footnote")}
       </p>
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
