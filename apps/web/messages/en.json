@@ -520,5 +520,33 @@
     "correctValue": "Correct value",
     "byHand": "Graded by hand on the Responses tab.",
     "points": "Points"
+  },
+  "formSettings": {
+    "deleteFailed": "Something went wrong deleting this form.",
+    "availability": "Availability",
+    "acceptTitle": "Accept responses",
+    "acceptBody": "Turn this off to close the public form to new submissions.",
+    "closeDate": "Close date",
+    "closeDateBody": "After this date and time, in your local timezone, the form stops accepting responses. Leave blank for no close date.",
+    "limit": "Response limit",
+    "limitBody": "Once this many responses have been received, the form closes. This counts the responses the form currently holds, not every response it has ever received: deleting responses lowers the count and can reopen the form, and setting a limit lower than the current response count closes the form immediately. Leave blank for no limit.",
+    "responses": "Responses",
+    "single": "Limit to 1 response",
+    "singleBody": "Hides the form for anyone who has already submitted, in the same browser. Since forms have no sign-in, this can be bypassed by clearing browser storage or using a different browser.",
+    "editing": "Allow response editing",
+    "editingBody": "After submitting, respondents get a private link to revise their answers. Editing replaces the previous answers; it can't show them what they wrote before, since only active collaborators with access to this form can decrypt submitted responses.",
+    "confirmation": "Confirmation message",
+    "confirmationBody": "Shown to respondents after they submit, instead of the default message.",
+    "confirmationPlaceholder": "Thanks! Your response was submitted.",
+    "quiz": "Quiz",
+    "quizBody": "Mark correct answers and points on each question in the Questions tab, and see every response scored. Respondents never see the answers or their score.",
+    "notifications": "Notifications",
+    "notify": "Email me when responses arrive",
+    "notifyBody": "At most one email an hour, however many arrive. It carries a count and a link, never this form's name or any answers, because the server cannot read them.",
+    "danger": "Danger zone",
+    "dangerBody": "Deleting a form permanently removes its encrypted responses and attachments. Type DELETE to confirm.",
+    "typeDelete": "Type DELETE to confirm",
+    "deleting": "Deleting...",
+    "deleteForm": "Delete form"
   }
 }

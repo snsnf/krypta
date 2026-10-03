@@ -101,6 +101,7 @@ export function AnswerKeyEditor({
           {/* Raw lines are kept, empty ones included, so pressing Enter does
               not eat the new line; scoring ignores empty lines. */}
           <textarea
+            dir="auto"
             aria-label={t("quiz.acceptedLabel")}
             rows={3}
             value={(current.accepted ?? []).join("\n")}
