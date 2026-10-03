@@ -81,7 +81,7 @@ export function AppearancePanel({
       setAnnouncement(t("appearance.colorsUpdated"))
     }, 250)
     return () => window.clearTimeout(timeout)
-  }, [value.accentColor, value.backgroundColor])
+  }, [value.accentColor, value.backgroundColor, t])
 
   function selectPreset(preset: Exclude<FormThemePreset, "custom">) {
     onChange({

@@ -1,8 +1,15 @@
 "use client"
 
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react"
 import { ApiClientError, apiFetch } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
+import { useAppT } from "@/lib/app-i18n"
 import {
   EMPTY_GRADES,
   removeResponseMarks,
@@ -101,6 +108,7 @@ export function useQuizGrades(
   formPrivateKey: string | null,
   active: boolean
 ) {
+  const t = useAppT()
   const key =
     active && formPrivateKey !== null ? `${formId}:${formPrivateKey}` : null
 
@@ -241,8 +249,8 @@ export function useQuizGrades(
         state.grades = previous
         setGrades(previous)
         toast.add({
-          title: "Could not save the grade",
-          description: "Something went wrong. Try again.",
+          title: t("quiz.gradeFailed"),
+          description: t("common.genericError"),
           type: "error",
         })
       }

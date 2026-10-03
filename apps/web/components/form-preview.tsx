@@ -12,6 +12,7 @@ import {
 import { FormThemeSurface } from "@/components/form-theme-surface"
 import { Button } from "@/components/ui/button"
 import { revealColorChange } from "@/components/theme-toggle"
+import { useAppT } from "@/lib/app-i18n"
 import { ClassicFormFields } from "@/components/classic-form-fields"
 import { FocusFormRenderer } from "@/components/focus-form-renderer"
 import type { AnswerValue } from "@/hooks/use-public-form-answers"
@@ -38,6 +39,7 @@ export function FormPreview({
   theme,
   headerImageUrl = null,
 }: FormPreviewProps) {
+  const t = useAppT()
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({})
   const [mode, setMode] = useState<FormRenderMode>("light")
   // Bumped on restart to force a fresh mount of the renderer below, so
@@ -100,11 +102,8 @@ export function FormPreview({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Preview</DialogTitle>
-          <DialogDescription>
-            This is what respondents will see. Nothing here is saved or
-            submitted.
-          </DialogDescription>
+          <DialogTitle>{t("preview.button")}</DialogTitle>
+          <DialogDescription>{t("preview.description")}</DialogDescription>
         </DialogHeader>
         <FormThemeSurface
           theme={theme}
@@ -115,7 +114,7 @@ export function FormPreview({
             <div
               className="flex items-center gap-1"
               role="group"
-              aria-label="Preview color mode"
+              aria-label={t("preview.colorMode")}
             >
               <Button
                 type="button"
@@ -132,7 +131,7 @@ export function FormPreview({
                 }}
                 className="form-theme-outline-button transition-transform duration-150 ease-out active:scale-[0.97]"
               >
-                Light preview
+                {t("preview.light")}
               </Button>
               <Button
                 type="button"
@@ -149,7 +148,7 @@ export function FormPreview({
                 }}
                 className="form-theme-outline-button transition-transform duration-150 ease-out active:scale-[0.97]"
               >
-                Dark preview
+                {t("preview.dark")}
               </Button>
             </div>
           )}

@@ -519,7 +519,8 @@
     "acceptedLabel": "Accepted answers",
     "correctValue": "Correct value",
     "byHand": "Graded by hand on the Responses tab.",
-    "points": "Points"
+    "points": "Points",
+    "gradeFailed": "Could not save the grade"
   },
   "formSettings": {
     "deleteFailed": "Something went wrong deleting this form.",
@@ -768,5 +769,12 @@
       "800": "Extra Bold",
       "900": "Black"
     }
+  },
+  "preview": {
+    "button": "Preview",
+    "description": "This is what respondents will see. Nothing here is saved or submitted.",
+    "colorMode": "Preview color mode",
+    "light": "Light preview",
+    "dark": "Dark preview"
   }
 }
