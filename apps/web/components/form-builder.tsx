@@ -48,27 +48,29 @@ import { entryFor, renameOptionInKey, type AnswerKey } from "@/lib/quiz"
 import { distinctOptions, hasDuplicateOptions } from "@/lib/question-options"
 import { conditionValues, isRangeOperator } from "@/lib/form-visibility"
 import { RatingSettingsEditor } from "@/components/rating-settings"
+import { useAppT } from "@/lib/app-i18n"
 
-const QUESTION_TYPE_LABELS: Record<Question["type"], string> = {
-  short_text: "Short answer",
-  long_text: "Long answer",
-  multiple_choice: "Multiple choice",
-  checkboxes: "Checkboxes",
-  dropdown: "Dropdown",
-  number: "Number",
-  email: "Email",
-  date: "Date",
-  file_upload: "File upload",
-  rating: "Rating",
-}
+const QUESTION_TYPES: Question["type"][] = [
+  "short_text",
+  "long_text",
+  "multiple_choice",
+  "checkboxes",
+  "dropdown",
+  "number",
+  "email",
+  "date",
+  "file_upload",
+  "rating",
+]
 
-const ANSWER_PREVIEW_PLACEHOLDERS: Partial<Record<Question["type"], string>> = {
-  short_text: "Short answer text",
-  long_text: "Long answer text",
-  number: "Number",
-  email: "Email address",
-  date: "Date",
-}
+// The types whose empty answer field is drawn as a dashed placeholder.
+const ANSWER_PREVIEW_TYPES: Question["type"][] = [
+  "short_text",
+  "long_text",
+  "number",
+  "email",
+  "date",
+]
 
 const OPTION_BASED_TYPES: Question["type"][] = [
   "multiple_choice",
@@ -126,6 +128,8 @@ export function FormBuilder({
   answerKey = null,
   onAnswerKeyChange,
 }: FormBuilderProps) {
+  const t = useAppT()
+
   const [appearanceOpen, setAppearanceOpen] = useState(false)
   // null follows the device, as the public form does until someone picks.
   const [editorMode, setEditorMode] = useState<FormRenderMode | null>(null)
@@ -178,7 +182,7 @@ export function FormBuilder({
           <div
             className="flex items-center gap-1"
             role="group"
-            aria-label="Editor color mode"
+            aria-label={t("builder.colorMode")}
           >
             {(["light", "dark"] as const).map((mode) => (
               <Button
@@ -202,7 +206,7 @@ export function FormBuilder({
                   size={14}
                   data-icon="inline-start"
                 />
-                {mode === "light" ? "Light" : "Dark"}
+                {mode === "light" ? t("builder.light") : t("builder.dark")}
               </Button>
             ))}
           </div>
@@ -232,10 +236,12 @@ export function FormBuilder({
                     <div className="flex flex-1 items-start gap-3 p-4">
                       <div className="min-w-0 flex-1">
                         <p className="form-theme-accent-text text-[11px] font-medium tracking-wide uppercase">
-                          Section{" "}
-                          {questions
-                            .slice(0, i + 1)
-                            .filter((qq) => qq.pageBreakBefore).length + 1}
+                          {t("builder.section", {
+                            number:
+                              questions
+                                .slice(0, i + 1)
+                                .filter((qq) => qq.pageBreakBefore).length + 1,
+                          })}
                         </p>
                         <input
                           dir="auto"
@@ -246,7 +252,7 @@ export function FormBuilder({
                               sectionTitle: e.target.value,
                             })
                           }
-                          placeholder="Section title (optional)"
+                          placeholder={t("builder.sectionPlaceholder")}
                           className={cn(
                             UNDERLINE_INPUT_CLASSES,
                             "form-theme-question"
@@ -256,7 +262,7 @@ export function FormBuilder({
                       <button
                         type="button"
                         onClick={() => toggleSectionBreak(q.id)}
-                        aria-label="Remove section break"
+                        aria-label={t("builder.removeSection")}
                         className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground"
                       >
                         <HugeiconsIcon icon={Cancel01Icon} size={14} />
@@ -270,7 +276,7 @@ export function FormBuilder({
                       onClick={() => toggleSectionBreak(q.id)}
                       className="text-xs text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
                     >
-                      + Add section break
+                      {t("builder.addSection")}
                     </button>
                   </div>
                 )}
@@ -289,7 +295,7 @@ export function FormBuilder({
               <div className="w-1 shrink-0 bg-transparent transition-colors duration-150 ease-out group-focus-within:bg-[var(--form-accent)]" />
               <button
                 type="button"
-                aria-label={`Reorder question ${i + 1}`}
+                aria-label={t("builder.reorder", { number: i + 1 })}
                 onKeyDown={(event) => {
                   if (event.key === "ArrowUp") {
                     event.preventDefault()
@@ -310,8 +316,8 @@ export function FormBuilder({
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
                   <input
                     dir="auto"
-                    placeholder="Question"
-                    aria-label="Question label"
+                    placeholder={t("builder.questionPlaceholder")}
+                    aria-label={t("builder.questionLabel")}
                     value={q.label}
                     onChange={(e) =>
                       updateQuestion(q.id, { label: e.target.value })
@@ -322,7 +328,7 @@ export function FormBuilder({
                     )}
                   />
                   <select
-                    aria-label="Question type"
+                    aria-label={t("builder.questionType")}
                     value={q.type}
                     onChange={(e) =>
                       changeQuestionType(
@@ -335,25 +341,22 @@ export function FormBuilder({
                       "form-theme-text w-full sm:w-40"
                     )}
                   >
-                    {(
-                      Object.entries(QUESTION_TYPE_LABELS) as [
-                        Question["type"],
-                        string,
-                      ][]
-                    ).map(([value, label]) => (
+                    {QUESTION_TYPES.map((value) => (
                       <option key={value} value={value}>
-                        {label}
+                        {t(`builder.types.${value}`)}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {ANSWER_PREVIEW_PLACEHOLDERS[q.type] && (
+                {ANSWER_PREVIEW_TYPES.includes(q.type) && (
                   <input
                     disabled
                     aria-hidden="true"
                     tabIndex={-1}
-                    placeholder={ANSWER_PREVIEW_PLACEHOLDERS[q.type]}
+                    placeholder={t(
+                      `builder.previews.${q.type as "short_text" | "long_text" | "number" | "email" | "date"}`
+                    )}
                     className={cn(
                       UNDERLINE_INPUT_CLASSES,
                       "form-theme-text mt-2 cursor-default disabled:opacity-100",
@@ -369,7 +372,7 @@ export function FormBuilder({
 
                 {q.type === "file_upload" && (
                   <p className="form-theme-text mt-2 text-muted-foreground/60">
-                    Attachment upload
+                    {t("builder.attachment")}
                   </p>
                 )}
 
@@ -398,8 +401,8 @@ export function FormBuilder({
                         />
                         <input
                           dir="auto"
-                          placeholder={`Option ${i + 1}`}
-                          aria-label={`Option ${i + 1}`}
+                          placeholder={t("builder.option", { number: i + 1 })}
+                          aria-label={t("builder.option", { number: i + 1 })}
                           value={opt}
                           onChange={(e) => {
                             const options = [...(q.options ?? [])]
@@ -426,7 +429,9 @@ export function FormBuilder({
                         <button
                           type="button"
                           onClick={() => removeOption(q.id, i)}
-                          aria-label={`Remove option ${i + 1}`}
+                          aria-label={t("builder.removeOption", {
+                            number: i + 1,
+                          })}
                           className="shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/option:opacity-100 hover:text-destructive focus-visible:opacity-100"
                         >
                           <HugeiconsIcon icon={Cancel01Icon} size={14} />
@@ -440,8 +445,7 @@ export function FormBuilder({
                      */}
                     {hasDuplicateOptions(q.options) && (
                       <p className="text-xs text-destructive">
-                        Two options have the same text, so respondents see
-                        them as one choice. Give each option a different name.
+                        {t("builder.duplicateOptions")}
                       </p>
                     )}
                     <button
@@ -453,7 +457,7 @@ export function FormBuilder({
                       }
                       className="form-theme-accent-text mt-1 self-start text-sm transition-transform duration-150 ease-out active:scale-[0.97]"
                     >
-                      + Add option
+                      {t("builder.addOption")}
                     </button>
                     {/*
                      * Other is not an option in the list, it is a property of
@@ -473,7 +477,7 @@ export function FormBuilder({
                             })
                           }
                         />
-                        Add an &ldquo;Other&rdquo; choice with a text box
+                        {t("builder.other")}
                       </label>
                     )}
                   </div>
@@ -533,13 +537,15 @@ export function FormBuilder({
                           }
                           className="form-theme-accent-text text-sm transition-transform duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
                         >
-                          + Only show this if…
+                          {t("builder.onlyShowIf")}
                         </button>
                       ) : sources.length === 0 ? null : (
                         <div className="flex flex-wrap items-center gap-2 text-sm">
-                          <span className="text-muted-foreground">Show if</span>
+                          <span className="text-muted-foreground">
+                            {t("builder.showIf")}
+                          </span>
                           <select
-                            aria-label="Condition question"
+                            aria-label={t("builder.conditionQuestion")}
                             value={condition.questionId}
                             onChange={(event) => {
                               const next = questions.find(
@@ -563,17 +569,17 @@ export function FormBuilder({
                           >
                             {dangling && (
                               <option value={condition.questionId}>
-                                (unavailable question)
+                                {t("builder.unavailable")}
                               </option>
                             )}
                             {sources.map((s) => (
                               <option key={s.id} value={s.id}>
-                                {s.label || "Untitled question"}
+                                {s.label || t("quiz.untitled")}
                               </option>
                             ))}
                           </select>
                           <select
-                            aria-label="Condition operator"
+                            aria-label={t("builder.conditionOperator")}
                             value={condition.operator}
                             onChange={(event) =>
                               updateQuestion(q.id, {
@@ -586,27 +592,31 @@ export function FormBuilder({
                             }
                             className="rounded-md border border-border bg-background px-2 py-1"
                           >
-                            <option value="is">is</option>
-                            <option value="is_not">is not</option>
+                            <option value="is">{t("builder.is")}</option>
+                            <option value="is_not">{t("builder.isNot")}</option>
                             {/* Shown as it is, so the row matches the alert
                                 below and picking "is" is a real change rather
                                 than a click on what already looks selected. */}
                             {ignoredRange && (
                               <option value={condition.operator}>
                                 {condition.operator === "at_most"
-                                  ? "is at most (ignored)"
-                                  : "is at least (ignored)"}
+                                  ? t("builder.atMostIgnored")
+                                  : t("builder.atLeastIgnored")}
                               </option>
                             )}
                             {source?.type === "rating" && (
                               <>
-                                <option value="at_most">is at most</option>
-                                <option value="at_least">is at least</option>
+                                <option value="at_most">
+                                  {t("builder.atMost")}
+                                </option>
+                                <option value="at_least">
+                                  {t("builder.atLeast")}
+                                </option>
                               </>
                             )}
                           </select>
                           <select
-                            aria-label="Condition value"
+                            aria-label={t("builder.conditionValue")}
                             value={condition.value}
                             onChange={(event) =>
                               updateQuestion(q.id, {
@@ -620,21 +630,25 @@ export function FormBuilder({
                           >
                             {missingValue && (
                               <option value={condition.value}>
-                                {condition.value} (removed)
+                                {t("builder.removedValue", {
+                                  value: condition.value,
+                                })}
                               </option>
                             )}
-                            {distinctOptions(conditionValues(source) ?? []).map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
+                            {distinctOptions(conditionValues(source) ?? []).map(
+                              (option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              )
+                            )}
                           </select>
                           <button
                             type="button"
                             onClick={() =>
                               updateQuestion(q.id, { condition: undefined })
                             }
-                            aria-label="Remove condition"
+                            aria-label={t("builder.removeCondition")}
                             className="text-muted-foreground transition-all duration-150 ease-out hover:text-destructive active:scale-[0.97] motion-reduce:active:scale-100"
                           >
                             <HugeiconsIcon icon={Cancel01Icon} size={14} />
@@ -646,20 +660,20 @@ export function FormBuilder({
                           <HugeiconsIcon icon={AlertCircleIcon} />
                           <AlertTitle>
                             {ignored
-                              ? "This condition is ignored"
-                              : "This condition never matches"}
+                              ? t("builder.ignoredTitle")
+                              : t("builder.neverTitle")}
                           </AlertTitle>
                           {/* The descriptions are asserted verbatim by
                               form-builder.test.tsx and full-flow.spec.ts.
                               Changing the wording means changing those too. */}
                           <AlertDescription>
                             {dangling
-                              ? "This condition points at a question that is no longer a usable source, either because it was deleted or because it is no longer a choice question, so it is ignored and this question always shows."
+                              ? t("builder.danglingBody")
                               : ignoredRange
-                                ? "This condition compares numbers, but the question it points at is no longer a rating, so it is ignored and this question always shows."
-                                : "This condition points at an option that no longer exists, so the question stays hidden."}
+                                ? t("builder.rangeBody")
+                                : t("builder.staleBody")}
                             {dangling && sources.length === 0
-                              ? " There is no earlier choice question to point it at instead."
+                              ? ` ${t("builder.noEarlier")}`
                               : null}
                           </AlertDescription>
                           {/* With no source to point at, the editor row above
@@ -674,11 +688,11 @@ export function FormBuilder({
                                 onClick={() =>
                                   updateQuestion(q.id, { condition: undefined })
                                 }
-                                aria-label="Remove condition"
+                                aria-label={t("builder.removeCondition")}
                                 className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-destructive/70 transition-all duration-150 ease-out hover:bg-destructive/10 hover:text-destructive active:scale-[0.97] motion-reduce:active:scale-100"
                               >
                                 <HugeiconsIcon icon={Cancel01Icon} size={13} />
-                                Remove
+                                {t("common.remove")}
                               </button>
                             </AlertAction>
                           )}
@@ -705,26 +719,21 @@ export function FormBuilder({
                   {quizOn && answerKey && (
                     <button
                       type="button"
-                      aria-label={`Answer key for question ${i + 1} (${
-                        entryFor(answerKey, q.id)?.points ?? 0
-                      } ${
-                        (entryFor(answerKey, q.id)?.points ?? 0) === 1
-                          ? "pt"
-                          : "pts"
-                      })`}
+                      aria-label={t("builder.answerKeyAria", {
+                        number: i + 1,
+                        points: entryFor(answerKey, q.id)?.points ?? 0,
+                      })}
                       aria-expanded={openKeyIds.has(q.id)}
                       onClick={() => toggleKeyEditor(q.id)}
-                      className="form-theme-accent-text mr-auto text-sm transition-transform duration-150 ease-out active:scale-[0.97]"
+                      className="form-theme-accent-text me-auto text-sm transition-transform duration-150 ease-out active:scale-[0.97]"
                     >
-                      Answer key ({entryFor(answerKey, q.id)?.points ?? 0}{" "}
-                      {(entryFor(answerKey, q.id)?.points ?? 0) === 1
-                        ? "pt"
-                        : "pts"}
-                      )
+                      {t("builder.answerKey", {
+                        points: entryFor(answerKey, q.id)?.points ?? 0,
+                      })}
                     </button>
                   )}
                   <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                    Required
+                    {t("builder.required")}
                     <Switch
                       checked={q.required ?? false}
                       onCheckedChange={(checked) =>
@@ -736,7 +745,7 @@ export function FormBuilder({
                   <button
                     type="button"
                     onClick={() => duplicateQuestionById(q.id)}
-                    aria-label="Duplicate question"
+                    aria-label={t("builder.duplicate")}
                     className="text-muted-foreground transition-all duration-150 ease-out hover:text-foreground active:scale-[0.97] motion-reduce:active:scale-100"
                   >
                     <HugeiconsIcon icon={Copy01Icon} size={16} />
@@ -744,7 +753,7 @@ export function FormBuilder({
                   <button
                     type="button"
                     onClick={() => removeQuestion(q.id)}
-                    aria-label="Delete question"
+                    aria-label={t("builder.delete")}
                     className="text-muted-foreground transition-all duration-150 ease-out hover:text-destructive active:scale-[0.97] motion-reduce:active:scale-100"
                   >
                     <HugeiconsIcon icon={Delete02Icon} size={16} />
@@ -761,7 +770,7 @@ export function FormBuilder({
           className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-card/70 py-2.5 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:bg-card hover:text-foreground active:scale-[0.99]"
         >
           <HugeiconsIcon icon={PlusSignIcon} size={16} />
-          Add question
+          {t("builder.addQuestion")}
         </button>
       </div>
     </>
@@ -773,8 +782,8 @@ export function FormBuilder({
         {reorderMessage}
       </p>
       <FormThemeSurface
-        // The builder is app chrome: English and left to right whatever the
-        // form's language. Respondents see that language in the preview.
+        // The builder is app chrome: it follows the app's language, whatever
+        // the form's own. Respondents see the form's language in the preview.
         applyLanguage={false}
         theme={theme}
         mode={editorRenderMode}
@@ -796,7 +805,7 @@ export function FormBuilder({
                     aria-expanded={appearanceOpen}
                     className="flex w-full items-center justify-between text-sm font-medium"
                   >
-                    Appearance
+                    {t("builder.appearance")}
                     <HugeiconsIcon
                       icon={appearanceOpen ? ArrowUp01Icon : ArrowDown01Icon}
                       size={16}
