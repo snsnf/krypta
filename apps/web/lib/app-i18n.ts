@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react"
 import { appTranslator, type AppTranslator } from "./app-translator"
+import { appFormatters, type AppFormatters } from "./app-format"
 import type { AppLanguage } from "./app-locale"
 
 export { appTranslator, translateKey, type AppTranslator } from "./app-translator"
@@ -18,4 +19,8 @@ export function useAppLanguage(): AppLanguage {
 
 export function useAppT(): AppTranslator {
   return appTranslator(useAppLanguage())
+}
+
+export function useAppFormat(): AppFormatters {
+  return appFormatters(useAppLanguage())
 }
