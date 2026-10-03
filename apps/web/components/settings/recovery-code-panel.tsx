@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CredentialInput } from "@/components/credential-input"
 import { RecoveryCodeCard } from "@/components/recovery-code-card"
 import { toast } from "@/components/ui/toast"
 import { ApiClientError } from "@/lib/api"
 import { useAuthStore } from "@/lib/auth-store"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
+import { describeApiError } from "@/lib/api-error-text"
 import { regenerateRecoveryCode } from "@/lib/recovery"
 
 /**
@@ -20,6 +22,8 @@ import { regenerateRecoveryCode } from "@/lib/recovery"
  * a session alone must not be enough to mint standing vault access.
  */
 export function RecoveryCodePanel() {
+  const t = useAppT()
+  const language = useAppLanguage()
   const email = useAuthStore((s) => s.email)
   const accountKey = useAuthStore((s) => s.accountKey)
   const [confirming, setConfirming] = useState(false)
@@ -43,9 +47,9 @@ export function RecoveryCodePanel() {
       toast.add({
         title:
           err instanceof ApiClientError
-            ? err.message
-            : "Could not generate a new code",
-        description: "Check your password and try again.",
+            ? describeApiError(err, t, language)
+            : t("account.recovery.generateFailed"),
+        description: t("account.recovery.generateFailedBody"),
         type: "error",
       })
     } finally {
@@ -54,7 +58,9 @@ export function RecoveryCodePanel() {
   }
 
   if (newCode) {
-    return <RecoveryCodeCard code={newCode} onConfirm={() => setNewCode(null)} />
+    return (
+      <RecoveryCodeCard code={newCode} onConfirm={() => setNewCode(null)} />
+    )
   }
 
   if (confirming) {
@@ -67,15 +73,14 @@ export function RecoveryCodePanel() {
         className="flex flex-col items-start gap-3"
       >
         <p className="max-w-prose text-sm text-muted-foreground">
-          Enter your password to confirm. The code you saved at signup will
-          stop working the moment the new one is issued.
+          {t("account.recovery.confirm")}
         </p>
-        <Input
+        <CredentialInput
           required
           autoFocus
           type="password"
           autoComplete="current-password"
-          aria-label="Password"
+          aria-label={t("account.recovery.passwordLabel")}
           className="max-w-72"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -83,7 +88,9 @@ export function RecoveryCodePanel() {
         />
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={busy || !password}>
-            {busy ? "Verifying..." : "Generate new code"}
+            {busy
+              ? t("account.twoFactor.verifying")
+              : t("account.recovery.generate")}
           </Button>
           <Button
             type="button"
@@ -95,7 +102,7 @@ export function RecoveryCodePanel() {
               setPassword("")
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
@@ -105,12 +112,10 @@ export function RecoveryCodePanel() {
   return (
     <div className="flex flex-col items-start gap-3">
       <p className="max-w-prose text-sm text-muted-foreground">
-        Your vault recovery code was shown once, at signup. If you lost it,
-        generate a new one; it will replace the old one immediately, and the
-        old one will no longer work.
+        {t("account.recovery.intro")}
       </p>
       <Button size="sm" onClick={() => setConfirming(true)}>
-        Generate new recovery code
+        {t("account.recovery.generateButton")}
       </Button>
     </div>
   )

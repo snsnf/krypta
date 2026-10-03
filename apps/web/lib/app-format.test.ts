@@ -26,6 +26,15 @@ describe("appFormatters", () => {
     expect(appFormatters("ar").megabytes(5 * 1024 * 1024)).toBe("5.0 ميغابايت")
   })
 
+  it("picks the unit a size reads best in", () => {
+    expect(appFormatters("en").bytes(512)).toBe("512 B")
+    expect(appFormatters("en").bytes(1536)).toBe("1.5 KB")
+    expect(appFormatters("en").bytes(50 * 1024 * 1024)).toBe("50 MB")
+    expect(appFormatters("ar").bytes(3 * 1024 * 1024 * 1024)).toBe(
+      "3.0 غيغابايت"
+    )
+  })
+
   it("formats decimals at a fixed number of places", () => {
     expect(appFormatters("en").decimal(3.456, 1)).toBe("3.5")
     expect(appFormatters("ar").decimal(3.456, 2)).toBe("3.46")
