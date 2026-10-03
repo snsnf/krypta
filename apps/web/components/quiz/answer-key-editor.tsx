@@ -4,12 +4,9 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { CheckmarkCircle02Icon, CircleIcon } from "@hugeicons/core-free-icons"
 import type { Question } from "@krypta/crypto"
 import { Input } from "@/components/ui/input"
+import { useAppT } from "@/lib/app-i18n"
 import { cn } from "@/lib/utils"
-import {
-  MAX_QUIZ_POINTS,
-  isChoiceType,
-  type AnswerKeyEntry,
-} from "@/lib/quiz"
+import { MAX_QUIZ_POINTS, isChoiceType, type AnswerKeyEntry } from "@/lib/quiz"
 import { distinctOptions } from "@/lib/question-options"
 
 interface AnswerKeyEditorProps {
@@ -23,6 +20,7 @@ export function AnswerKeyEditor({
   entry,
   onChange,
 }: AnswerKeyEditorProps) {
+  const t = useAppT()
   const current: AnswerKeyEntry = entry ?? { points: 0 }
 
   // Marking an answer is what makes a question count, so one still at 0
@@ -61,7 +59,7 @@ export function AnswerKeyEditor({
         <div
           className="flex flex-col gap-1"
           role="group"
-          aria-label="Correct answer"
+          aria-label={t("quiz.correctAnswer")}
         >
           {distinctOptions(question.options)
             .filter((option) => option.trim() !== "")
@@ -74,7 +72,7 @@ export function AnswerKeyEditor({
                   aria-pressed={on}
                   onClick={() => toggleOption(option)}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors duration-150 ease-out hover:bg-muted",
+                    "flex items-center gap-2 rounded-md px-2 py-1 text-start text-sm transition-colors duration-150 ease-out hover:bg-muted",
                     on && "font-medium"
                   )}
                 >
@@ -93,19 +91,17 @@ export function AnswerKeyEditor({
             })}
           {(question.options ?? []).every((option) => option.trim() === "") && (
             <p className="text-sm text-muted-foreground">
-              Add options above, then pick the correct one here.
+              {t("quiz.addOptions")}
             </p>
           )}
         </div>
       ) : question.type === "short_text" ? (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">
-            Accepted answers, one per line. Case and extra spaces are ignored.
-          </span>
+          <span className="text-muted-foreground">{t("quiz.accepted")}</span>
           {/* Raw lines are kept, empty ones included, so pressing Enter does
               not eat the new line; scoring ignores empty lines. */}
           <textarea
-            aria-label="Accepted answers"
+            aria-label={t("quiz.acceptedLabel")}
             rows={3}
             value={(current.accepted ?? []).join("\n")}
             onChange={(event) =>
@@ -116,10 +112,12 @@ export function AnswerKeyEditor({
         </label>
       ) : question.type === "number" ? (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Correct value</span>
+          <span className="text-muted-foreground">
+            {t("quiz.correctValue")}
+          </span>
           {/* Uncontrolled so typing "1." is not rewritten to "1" mid-entry. */}
           <Input
-            aria-label="Correct value"
+            aria-label={t("quiz.correctValue")}
             type="number"
             inputMode="decimal"
             defaultValue={current.value ?? ""}
@@ -136,14 +134,12 @@ export function AnswerKeyEditor({
           />
         </label>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Graded by hand on the Responses tab.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("quiz.byHand")}</p>
       )}
       <label className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Points</span>
+        <span className="text-muted-foreground">{t("quiz.points")}</span>
         <Input
-          aria-label="Points"
+          aria-label={t("quiz.points")}
           type="number"
           min={0}
           max={MAX_QUIZ_POINTS}

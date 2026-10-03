@@ -7,17 +7,17 @@ import type { Question } from "@krypta/crypto"
 
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart"
 import type { AnswerValue } from "@/lib/form-answers"
-import { summarizeResponses, type QuestionSummary } from "@/lib/response-summary"
+import { useAppFormat, useAppT } from "@/lib/app-i18n"
+import {
+  summarizeResponses,
+  type QuestionSummary,
+} from "@/lib/response-summary"
 
 const CARD_CLASSNAME = "rounded-lg border border-border bg-card p-4"
 
-const CHOICE_CHART_CONFIG = {
-  count: { label: "Responses", color: "var(--chart-1)" },
-} satisfies ChartConfig
-
-const RATING_CHART_CONFIG = {
-  count: { label: "Responses", color: "var(--chart-1)" },
-} satisfies ChartConfig
+function chartConfig(label: string) {
+  return { count: { label, color: "var(--chart-1)" } } satisfies ChartConfig
+}
 
 // Eight categorical hues in a fixed order (see globals.css). A bar's colour is
 // keyed to its option's position in the QUESTION'S SCHEMA, never to its
@@ -64,9 +64,10 @@ function AnsweredSkippedLine({
   answered: number
   skipped: number
 }) {
+  const t = useAppT()
   return (
     <p className="text-sm text-muted-foreground">
-      {answered} answered · {skipped} skipped
+      {t("summary.answeredSkipped", { answered, skipped })}
     </p>
   )
 }
@@ -78,6 +79,7 @@ function ChoiceSummaryBody({
   summary: Extract<QuestionSummary, { kind: "choice" }>
   question: Question
 }) {
+  const t = useAppT()
   const schemaOptions = new Set(question.options ?? [])
   const sorted = [...summary.options].sort((a, b) => b.count - a.count)
 
@@ -97,7 +99,7 @@ function ChoiceSummaryBody({
     const shown = new Set(visible.map((o) => o.value))
     const rest = sorted.filter((o) => !shown.has(o.value))
     otherCount = rest.reduce((sum, o) => sum + o.count, 0)
-    otherLabel = `${rest.length} other answers`
+    otherLabel = t("summary.otherAnswers", { count: rest.length })
   }
 
   const percentageOf = (count: number) =>
@@ -123,7 +125,7 @@ function ChoiceSummaryBody({
   return (
     <>
       <ChartContainer
-        config={CHOICE_CHART_CONFIG}
+        config={chartConfig(t("summary.responses"))}
         className="aspect-auto w-full"
         style={{ height: chartHeight }}
       >
@@ -172,8 +174,7 @@ function ChoiceSummaryBody({
       </ChartContainer>
       {question.type === "checkboxes" && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Respondents could choose more than one option, so percentages can
-          add up to more than 100%.
+          {t("summary.multiNote")}
         </p>
       )}
     </>
@@ -185,16 +186,20 @@ function NumberSummaryBody({
 }: {
   summary: Extract<QuestionSummary, { kind: "number" }>
 }) {
+  const t = useAppT()
+  const format = useAppFormat()
   if (summary.answered === 0) {
-    return <p className="text-sm text-muted-foreground">No numeric answers yet.</p>
+    return (
+      <p className="text-sm text-muted-foreground">{t("summary.noNumeric")}</p>
+    )
   }
 
   const stats = [
-    { label: "Count", value: summary.answered },
-    { label: "Min", value: summary.min },
-    { label: "Max", value: summary.max },
-    { label: "Mean", value: summary.mean.toFixed(2) },
-    { label: "Median", value: summary.median },
+    { label: t("summary.count"), value: summary.answered },
+    { label: t("summary.min"), value: summary.min },
+    { label: t("summary.max"), value: summary.max },
+    { label: t("summary.mean"), value: format.decimal(summary.mean, 2) },
+    { label: t("summary.median"), value: summary.median },
   ]
 
   return (
@@ -222,8 +227,12 @@ function RatingSummaryBody({
 }: {
   summary: Extract<QuestionSummary, { kind: "rating" }>
 }) {
+  const t = useAppT()
+  const format = useAppFormat()
   if (summary.answered === 0) {
-    return <p className="text-sm text-muted-foreground">No ratings yet.</p>
+    return (
+      <p className="text-sm text-muted-foreground">{t("summary.noRatings")}</p>
+    )
   }
 
   const data = summary.counts.map((entry) => ({
@@ -235,17 +244,20 @@ function RatingSummaryBody({
     <div data-testid="rating-summary">
       <p className="mb-2 flex items-baseline gap-1.5">
         <span className="text-2xl font-semibold tabular-nums">
-          {summary.mean.toFixed(1)}
+          {format.decimal(summary.mean, 1)}
         </span>
         <span className="text-sm text-muted-foreground">
-          out of {summary.max}
+          {t("summary.outOf", { max: summary.max })}
         </span>
       </p>
       <ChartContainer
-        config={RATING_CHART_CONFIG}
+        config={chartConfig(t("summary.responses"))}
         className="aspect-auto h-40 w-full"
       >
-        <BarChart data={data} margin={{ top: 20, right: 4, bottom: 0, left: 4 }}>
+        <BarChart
+          data={data}
+          margin={{ top: 20, right: 4, bottom: 0, left: 4 }}
+        >
           <XAxis
             dataKey="value"
             tickLine={false}
@@ -271,21 +283,24 @@ function DateSummaryBody({
 }: {
   summary: Extract<QuestionSummary, { kind: "date" }>
 }) {
+  const t = useAppT()
   if (summary.answered === 0) {
-    return <p className="text-sm text-muted-foreground">No dated answers yet.</p>
+    return (
+      <p className="text-sm text-muted-foreground">{t("summary.noDates")}</p>
+    )
   }
 
   return (
     <div className="flex flex-wrap gap-4">
       <div className="flex flex-col">
         <span className="text-xs text-muted-foreground uppercase">
-          Earliest
+          {t("summary.earliest")}
         </span>
         <span className="text-sm font-medium">{summary.earliest}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-xs text-muted-foreground uppercase">
-          Latest
+          {t("summary.latest")}
         </span>
         <span className="text-sm font-medium">{summary.latest}</span>
       </div>
@@ -298,8 +313,11 @@ function TextSummaryBody({
 }: {
   summary: Extract<QuestionSummary, { kind: "text" }>
 }) {
+  const t = useAppT()
   if (summary.answered === 0) {
-    return <p className="text-sm text-muted-foreground">No answers yet.</p>
+    return (
+      <p className="text-sm text-muted-foreground">{t("summary.noAnswers")}</p>
+    )
   }
 
   const preview = summary.answers.slice(0, TEXT_ANSWERS_PREVIEW_LIMIT)
@@ -320,7 +338,7 @@ function TextSummaryBody({
       </ul>
       {remaining > 0 && (
         <p className="mt-2 text-xs text-muted-foreground">
-          {remaining} more: see the Individual view for the rest.
+          {t("summary.more", { count: remaining })}
         </p>
       )}
     </div>
@@ -332,11 +350,12 @@ function FileSummaryBody({
 }: {
   summary: Extract<QuestionSummary, { kind: "file" }>
 }) {
+  const t = useAppT()
   const total = summary.answered + summary.skipped
   return (
     <p className="flex items-center gap-2 text-sm text-muted-foreground">
       <HugeiconsIcon icon={File01Icon} size={16} aria-hidden="true" />
-      {summary.attached} of {total} responses attached a file
+      {t("summary.filesAttached", { attached: summary.attached, total })}
     </p>
   )
 }
@@ -353,7 +372,10 @@ function QuestionSummaryCard({
       <h3 dir="auto" className="font-medium">
         {summary.label}
       </h3>
-      <AnsweredSkippedLine answered={summary.answered} skipped={summary.skipped} />
+      <AnsweredSkippedLine
+        answered={summary.answered}
+        skipped={summary.skipped}
+      />
       <div className="mt-3">
         {summary.kind === "choice" && (
           <ChoiceSummaryBody summary={summary} question={question} />

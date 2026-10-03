@@ -41,6 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useAuthStore } from "@/lib/auth-store"
+import { useAppT } from "@/lib/app-i18n"
 import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { Button } from "@/components/ui/button"
@@ -110,6 +111,7 @@ const MAX_HEADER_IMAGE_BYTES = 5 * 1024 * 1024
 
 export default function FormDetailPage() {
   useEnsureUnlocked()
+  const t = useAppT()
   const { formId } = useParams<{ formId: string }>()
   const router = useRouter()
   const userId = useAuthStore((s) => s.userId)
@@ -256,18 +258,16 @@ export default function FormDetailPage() {
   function handleMutationError(error: unknown) {
     if (error instanceof ApiClientError && error.code === "conflict") {
       setConflictOpen(true)
-      setError("This form changed elsewhere. Your local draft is still here.")
+      setError(t("formPage.conflict"))
       return
     }
     // The only limit a form edit can hit: reopening a form while the owner
     // already has as many open forms as their plan allows.
     if (error instanceof ApiClientError && error.code === "rate_limited") {
-      setError(
-        "This account is at its limit of open forms. Close another form, then reopen this one."
-      )
+      setError(t("formPage.openFormsLimit"))
       return
     }
-    setError("Something went wrong saving your changes.")
+    setError(t("formPage.saveFailed"))
   }
 
   async function saveFormPatch(patch: Record<string, unknown>) {
@@ -285,7 +285,7 @@ export default function FormDetailPage() {
   async function uploadHeaderImage(file: File) {
     if (!formDataKey) return
     if (file.size > MAX_HEADER_IMAGE_BYTES) {
-      setHeaderImageError("Image is too large (max 5MB).")
+      setHeaderImageError(t("formPage.imageTooLarge"))
       return
     }
     setHeaderImageBusy(true)
@@ -303,7 +303,7 @@ export default function FormDetailPage() {
       await saveFormPatch({ header_attachment_id: attachment_id })
       setHasHeaderImage(true)
     } catch {
-      setHeaderImageError("Upload failed. Please try again.")
+      setHeaderImageError(t("formPage.uploadFailed"))
     } finally {
       setHeaderImageBusy(false)
     }
@@ -316,7 +316,7 @@ export default function FormDetailPage() {
       await saveFormPatch({ header_attachment_id: null })
       setHasHeaderImage(false)
     } catch {
-      setHeaderImageError("Could not remove the image. Please try again.")
+      setHeaderImageError(t("formPage.removeImageFailed"))
     } finally {
       setHeaderImageBusy(false)
     }
@@ -364,13 +364,13 @@ export default function FormDetailPage() {
     setError(null)
     try {
       await saveEncryptedDraft()
-      toast.add({ title: "Changes saved", type: "success" })
+      toast.add({ title: t("formPage.changesSaved"), type: "success" })
     } catch (error) {
       handleMutationError(error)
       if (!(error instanceof ApiClientError && error.code === "conflict")) {
         toast.add({
-          title: "Could not save changes",
-          description: "Something went wrong. Try again.",
+          title: t("formPage.saveChangesFailed"),
+          description: t("common.genericError"),
           type: "error",
         })
       }
@@ -444,8 +444,8 @@ export default function FormDetailPage() {
     } catch {
       setNotifyOnResponse(previous)
       toast.add({
-        title: "Could not change your notification setting",
-        description: "Something went wrong. Try again.",
+        title: t("formPage.notifyFailed"),
+        description: t("common.genericError"),
         type: "error",
       })
     }
@@ -487,11 +487,11 @@ export default function FormDetailPage() {
       await navigator.clipboard.writeText(
         serializeDraftForClipboard({ title, questions, theme, settings })
       )
-      toast.add({ title: "Draft copied", type: "success" })
+      toast.add({ title: t("formPage.draftCopied"), type: "success" })
     } catch {
       toast.add({
-        title: "Could not copy the draft",
-        description: "Clipboard access was unavailable.",
+        title: t("formPage.draftCopyFailed"),
+        description: t("formPage.draftCopyFailedBody"),
         type: "error",
       })
     }
@@ -528,7 +528,7 @@ export default function FormDetailPage() {
     } catch {
       setDownloadErrors((prev) => ({
         ...prev,
-        [file.attachmentId]: "Couldn't decrypt this file.",
+        [file.attachmentId]: t("formPage.decryptFileFailed"),
       }))
     }
   }
@@ -563,8 +563,8 @@ export default function FormDetailPage() {
       }
       setResponses(previous)
       toast.add({
-        title: "Could not delete the response",
-        description: "Something went wrong. Try again.",
+        title: t("formPage.deleteResponseFailed"),
+        description: t("common.genericError"),
         type: "error",
       })
     }
@@ -577,7 +577,11 @@ export default function FormDetailPage() {
   function exportCsv() {
     const scoreHeaders =
       quizOn && answerKey
-        ? [csvCell("Score"), csvCell("Points possible"), csvCell("To grade")]
+        ? [
+            csvCell(t("formPage.score")),
+            csvCell(t("formPage.csvPoints")),
+            csvCell(t("formPage.csvToGrade")),
+          ]
         : []
     const headers = [...questions.map((q) => csvCell(q.label)), ...scoreHeaders]
     const rows = responseMatches.map(({ response: r }) => {
@@ -602,7 +606,7 @@ export default function FormDetailPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${title || "form"}-responses.csv`
+    a.download = `${title || t("formPage.csvFallbackName")}-responses.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -654,12 +658,12 @@ export default function FormDetailPage() {
     if (shareLink === null) return
     try {
       await navigator.clipboard.writeText(shareLink)
-      toast.add({ title: "Link copied", type: "success" })
+      toast.add({ title: t("formPage.linkCopied"), type: "success" })
     } catch {
       // The clipboard API needs a secure context and can be denied by policy.
       toast.add({
-        title: "Could not copy the link",
-        description: "Select the link and copy it manually.",
+        title: t("formPage.linkCopyFailed"),
+        description: t("formPage.linkCopyFailedBody"),
         type: "error",
       })
     }
@@ -713,11 +717,13 @@ export default function FormDetailPage() {
                       variant="outline"
                       size="sm"
                       onClick={copyShareLink}
-                      aria-label="Copy link"
+                      aria-label={t("formPage.copyLink")}
                       className="transition-transform duration-150 ease-out active:scale-[0.97] max-sm:w-7 max-sm:px-0!"
                     >
                       <HugeiconsIcon icon={Link01Icon} size={15} />
-                      <span className="hidden sm:inline">Copy link</span>
+                      <span className="hidden sm:inline">
+                        {t("formPage.copyLink")}
+                      </span>
                     </Button>
                   )}
                   {tab === "questions" && canEdit ? (
@@ -744,17 +750,23 @@ export default function FormDetailPage() {
                          */
                         <span className="grid *:col-start-1 *:row-start-1">
                           <span className="invisible">
-                            <span className="sm:hidden">Save</span>
+                            <span className="sm:hidden">
+                              {t("formPage.saveShort")}
+                            </span>
                             <span className="hidden sm:inline">
-                              Save changes
+                              {t("formPage.saveChanges")}
                             </span>
                           </span>
-                          <span>Saving...</span>
+                          <span>{t("common.saving")}</span>
                         </span>
                       ) : (
                         <>
-                          <span className="sm:hidden">Save</span>
-                          <span className="hidden sm:inline">Save changes</span>
+                          <span className="sm:hidden">
+                            {t("formPage.saveShort")}
+                          </span>
+                          <span className="hidden sm:inline">
+                            {t("formPage.saveChanges")}
+                          </span>
                         </>
                       )}
                     </Button>
@@ -766,8 +778,10 @@ export default function FormDetailPage() {
                       disabled={responseMatches.length === 0}
                       aria-label={
                         responseSearchActive
-                          ? `Export ${responseMatches.length} matching responses as CSV`
-                          : "Export CSV"
+                          ? t("formPage.exportMatching", {
+                              count: responseMatches.length,
+                            })
+                          : t("formPage.exportCsv")
                       }
                       className="transition-transform duration-150 ease-out active:scale-[0.97] max-sm:w-7 max-sm:px-0!"
                     >
@@ -776,7 +790,9 @@ export default function FormDetailPage() {
                         size={15}
                         data-icon="inline-start"
                       />
-                      <span className="hidden sm:inline">Export CSV</span>
+                      <span className="hidden sm:inline">
+                        {t("formPage.exportCsv")}
+                      </span>
                     </Button>
                   ) : null}
                 </>
@@ -785,9 +801,15 @@ export default function FormDetailPage() {
             <div className="bg-background/85 backdrop-blur-sm">
               <div className="mx-auto w-full max-w-7xl px-4">
                 <TabsList className="justify-center">
-                  <TabsTrigger value="questions">Questions</TabsTrigger>
-                  <TabsTrigger value="responses">Responses</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                  <TabsTrigger value="questions">
+                    {t("tabs.questions")}
+                  </TabsTrigger>
+                  <TabsTrigger value="responses">
+                    {t("tabs.responses")}
+                  </TabsTrigger>
+                  <TabsTrigger value="settings">
+                    {t("tabs.settings")}
+                  </TabsTrigger>
                   <TabsIndicator />
                 </TabsList>
               </div>
@@ -807,7 +829,7 @@ export default function FormDetailPage() {
           >
             {canEdit ? (
               <FormBuilder
-                eyebrowLabel="Editing form"
+                eyebrowLabel={t("formPage.editingForm")}
                 title={title}
                 onTitleChange={setTitle}
                 questions={questions}
@@ -835,11 +857,11 @@ export default function FormDetailPage() {
                 className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8"
               >
                 <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                  Viewing form
+                  {t("formPage.viewingForm")}
                 </p>
                 <fieldset
                   disabled
-                  aria-label="Read-only form questions"
+                  aria-label={t("formPage.readOnlyLabel")}
                   className="space-y-4"
                 >
                   <FormHeaderCard
@@ -872,42 +894,39 @@ export default function FormDetailPage() {
                 aria-live="polite"
               >
                 {responseSearchActive
-                  ? `${responseMatches.length} of ${responses.length} responses`
-                  : `${responses.length} response${responses.length === 1 ? "" : "s"}`}
+                  ? t("formPage.responseMatches", {
+                      matches: responseMatches.length,
+                      total: responses.length,
+                    })
+                  : t("formPage.responseCount", { count: responses.length })}
               </h2>
               {unreadableResponses > 0 && (
                 <p className="mb-4 text-sm text-destructive">
-                  {unreadableResponses} response
-                  {unreadableResponses === 1 ? "" : "s"} could not be decrypted
-                  and {unreadableResponses === 1 ? "is" : "are"} not shown.
+                  {t("formPage.unreadable", { count: unreadableResponses })}
                 </p>
               )}
               {quizOn && quiz.unreadable && (
                 <p className="mb-4 text-xs text-destructive">
-                  Saved grades could not be loaded, so grading is paused to
-                  avoid overwriting them. Reload the page to try again.
+                  {t("formPage.gradesUnreadable")}
                 </p>
               )}
               {quizOn && quiz.conflict && (
                 <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
-                  <p>
-                    Someone else graded at the same time. Their grades are
-                    loaded; check your last grade and set it again.
-                  </p>
+                  <p>{t("formPage.gradeConflict")}</p>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={quiz.dismissConflict}
                   >
-                    Dismiss
+                    {t("formPage.dismiss")}
                   </Button>
                 </div>
               )}
               {responses.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in">
                   <p className="text-sm text-muted-foreground">
-                    No responses yet.
+                    {t("formPage.noResponses")}
                   </p>
                 </div>
               ) : (
@@ -922,7 +941,7 @@ export default function FormDetailPage() {
                         size="sm"
                         onClick={() => setResponseView("summary")}
                       >
-                        Summary
+                        {t("formPage.summary")}
                       </Button>
                       <Button
                         type="button"
@@ -932,14 +951,14 @@ export default function FormDetailPage() {
                         size="sm"
                         onClick={() => setResponseView("individual")}
                       >
-                        Individual
+                        {t("formPage.individual")}
                       </Button>
                     </div>
-                    <div className="relative sm:ml-auto sm:w-64">
+                    <div className="relative sm:ms-auto sm:w-64">
                       <HugeiconsIcon
                         icon={Search01Icon}
                         size={14}
-                        className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground"
+                        className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                       />
                       <Input
                         type="search"
@@ -947,23 +966,23 @@ export default function FormDetailPage() {
                         onChange={(event) =>
                           setResponseQuery(event.target.value)
                         }
-                        placeholder="Search answers"
-                        aria-label="Search responses"
-                        className="pl-8"
+                        placeholder={t("formPage.searchPlaceholder")}
+                        aria-label={t("formPage.searchLabel")}
+                        className="ps-8"
                       />
                     </div>
                   </div>
                   {responseSearchActive && responseMatches.length > 0 && (
                     <p className="mb-4 text-xs text-muted-foreground">
-                      Searching happens on this device. Export CSV covers these{" "}
-                      {responseMatches.length} response
-                      {responseMatches.length === 1 ? "" : "s"}.
+                      {t("formPage.searchNote", {
+                        count: responseMatches.length,
+                      })}
                     </p>
                   )}
                   {responseMatches.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in">
                       <p className="text-sm text-muted-foreground">
-                        No responses match that search.
+                        {t("formPage.noMatches")}
                       </p>
                       <Button
                         type="button"
@@ -972,7 +991,7 @@ export default function FormDetailPage() {
                         className="mt-4"
                         onClick={() => setResponseQuery("")}
                       >
-                        Clear search
+                        {t("formPage.clearSearch")}
                       </Button>
                     </div>
                   ) : responseView === "summary" ? (
@@ -987,7 +1006,9 @@ export default function FormDetailPage() {
                       )}
                       <ResponseSummaryLazy
                         questions={questions}
-                        responses={responseMatches.map((m) => m.response.answers)}
+                        responses={responseMatches.map(
+                          (m) => m.response.answers
+                        )}
                       />
                     </>
                   ) : (
@@ -996,12 +1017,12 @@ export default function FormDetailPage() {
                         <table className="w-full border-collapse text-sm">
                           <thead className="sticky top-0 z-10 bg-background/85 backdrop-blur-sm">
                             <tr>
-                              <th className="w-10 border-b border-border px-3 py-2.5 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                              <th className="w-10 border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                 #
                               </th>
                               {quizOn && (
-                                <th className="border-b border-border px-3 py-2.5 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                  Score
+                                <th className="border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                                  {t("formPage.score")}
                                 </th>
                               )}
                               {questions.map((q) => (
@@ -1015,7 +1036,9 @@ export default function FormDetailPage() {
                               ))}
                               {canEdit && (
                                 <th className="w-10 border-b border-border px-3 py-2.5">
-                                  <span className="sr-only">Actions</span>
+                                  <span className="sr-only">
+                                    {t("formPage.actions")}
+                                  </span>
                                 </th>
                               )}
                             </tr>
@@ -1092,12 +1115,15 @@ export default function FormDetailPage() {
                                     </td>
                                   ))}
                                   {canEdit && (
-                                    <td className="border-b border-border px-3 py-2.5 text-right">
+                                    <td className="border-b border-border px-3 py-2.5 text-end">
                                       <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon-sm"
-                                        aria-label={`Delete response ${position}`}
+                                        aria-label={t(
+                                          "formPage.deleteResponseAria",
+                                          { position }
+                                        )}
                                         onClick={() => setDeleteTarget(r)}
                                       >
                                         <HugeiconsIcon
@@ -1143,19 +1169,24 @@ export default function FormDetailPage() {
             >
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Delete this response?</DialogTitle>
+                  <DialogTitle>{t("formPage.deleteTitle")}</DialogTitle>
                   <DialogDescription>
-                    This response will be permanently deleted.
-                    {deleteTarget !== null &&
-                      Object.values(deleteTarget.answers).some(isFileAnswer) &&
-                      " Its uploaded files will be deleted too."}
-                    {maxResponses !== null &&
-                      " This form has a response limit, so deleting it may reopen the form to new responses."}
+                    {[
+                      t("formPage.deleteBody"),
+                      deleteTarget !== null &&
+                        Object.values(deleteTarget.answers).some(
+                          isFileAnswer
+                        ) &&
+                        t("formPage.deleteFiles"),
+                      maxResponses !== null && t("formPage.deleteLimit"),
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                   <DialogClose render={<Button variant="outline" size="sm" />}>
-                    Cancel
+                    {t("common.cancel")}
                   </DialogClose>
                   <Button
                     variant="destructive"
@@ -1167,7 +1198,7 @@ export default function FormDetailPage() {
                       setDeleteTarget(null)
                     }}
                   >
-                    Delete response
+                    {t("formPage.deleteConfirm")}
                   </Button>
                 </DialogFooter>
               </DialogContent>

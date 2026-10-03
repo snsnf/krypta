@@ -174,7 +174,7 @@ export default function NewFormPage() {
         description:
           error instanceof ApiClientError && error.code === "rate_limited"
             ? t("newForm.limitReached")
-            : t("dashboard.genericError"),
+            : t("common.genericError"),
         type: "error",
       })
     }
@@ -244,13 +244,13 @@ export default function NewFormPage() {
             <div className="mx-auto w-full max-w-7xl px-4">
               <TabsList className="justify-center">
                 <TabsTrigger value="questions">
-                  {t("newForm.tabs.questions")}
+                  {t("tabs.questions")}
                 </TabsTrigger>
                 <TabsTrigger value="responses">
-                  {t("newForm.tabs.responses")}
+                  {t("tabs.responses")}
                 </TabsTrigger>
                 <TabsTrigger value="settings">
-                  {t("newForm.tabs.settings")}
+                  {t("tabs.settings")}
                 </TabsTrigger>
                 <TabsIndicator />
               </TabsList>

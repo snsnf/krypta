@@ -18,14 +18,17 @@ import {
   scoreResponse,
   type QuestionScoreStatus,
 } from "@/lib/quiz-score"
+import { useAppT, translateKey } from "@/lib/app-i18n"
 import { cn } from "@/lib/utils"
 
-const STATUS_LABELS: Record<Exclude<QuestionScoreStatus, "not_scored">, string> =
-  {
-    correct: "Correct",
-    incorrect: "Incorrect",
-    needs_grading: "Needs grading",
-  }
+const STATUS_KEYS: Record<
+  Exclude<QuestionScoreStatus, "not_scored">,
+  string
+> = {
+  correct: "quiz.correct",
+  incorrect: "quiz.incorrect",
+  needs_grading: "quiz.needsGrading",
+}
 
 interface GradeResponseDialogProps {
   onClose: () => void
@@ -60,6 +63,7 @@ export function GradeResponseDialog({
   conflict,
   onDismissConflict,
 }: GradeResponseDialogProps) {
+  const t = useAppT()
   const score = scoreResponse(questions, answerKey, answers, marks)
   const scored = questions.filter(
     (question) => score.questions[question.id]?.status !== "not_scored"
@@ -74,25 +78,23 @@ export function GradeResponseDialog({
     >
       <DialogContent className="max-h-[85svh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Response {position}</DialogTitle>
+          <DialogTitle>{t("quiz.response", { position })}</DialogTitle>
           <DialogDescription className="tabular-nums">
             {score.earned} / {score.possible}
-            {score.pending > 0 && `, ${score.pending} left to grade`}
+            {score.pending > 0 &&
+              t("quiz.leftToGrade", { count: score.pending })}
           </DialogDescription>
         </DialogHeader>
         {conflict && (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
-            <p>
-              Someone else graded at the same time. Their grades are loaded;
-              check your last grade and set it again.
-            </p>
+            <p>{t("formPage.gradeConflict")}</p>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={onDismissConflict}
             >
-              Dismiss
+              {t("formPage.dismiss")}
             </Button>
           </div>
         )}
@@ -119,7 +121,7 @@ export function GradeResponseDialog({
               >
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-medium">
-                    {question.label || "Untitled question"}
+                    {question.label || t("quiz.untitled")}
                   </p>
                   <span
                     className={cn(
@@ -129,15 +131,18 @@ export function GradeResponseDialog({
                       status === "needs_grading" && "text-muted-foreground"
                     )}
                   >
-                    {STATUS_LABELS[status]} ({result.earned}/{result.points})
+                    {translateKey(t, STATUS_KEYS[status])} ({result.earned}/
+                    {result.points})
                   </span>
                 </div>
                 <p className="mt-1 text-sm break-words text-muted-foreground">
-                  {formatAnswer(answers[question.id]) || "No answer"}
+                  {formatAnswer(answers[question.id]) || t("quiz.noAnswer")}
                 </p>
                 {status === "incorrect" && entry?.correct && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Correct: {entry.correct.join(", ")}
+                    {t("quiz.correctIs", {
+                      answers: entry.correct.join(t("common.listSeparator")),
+                    })}
                   </p>
                 )}
                 {canGrade && (
@@ -149,7 +154,7 @@ export function GradeResponseDialog({
                       aria-pressed={marked === true}
                       onClick={() => onMark(question.id, true)}
                     >
-                      Correct
+                      {t("quiz.correct")}
                     </Button>
                     <Button
                       type="button"
@@ -158,7 +163,7 @@ export function GradeResponseDialog({
                       aria-pressed={marked === false}
                       onClick={() => onMark(question.id, false)}
                     >
-                      Incorrect
+                      {t("quiz.incorrect")}
                     </Button>
                     {marked !== undefined && (
                       <Button
@@ -168,8 +173,8 @@ export function GradeResponseDialog({
                         onClick={() => onMark(question.id, null)}
                       >
                         {automatic === null
-                          ? "Clear grade"
-                          : "Use automatic grade"}
+                          ? t("quiz.clearGrade")
+                          : t("quiz.useAutomatic")}
                       </Button>
                     )}
                   </div>
@@ -181,10 +186,12 @@ export function GradeResponseDialog({
         <DialogFooter>
           {onNext && (
             <Button type="button" variant="outline" size="sm" onClick={onNext}>
-              Next to grade
+              {t("quiz.next")}
             </Button>
           )}
-          <DialogClose render={<Button size="sm" />}>Done</DialogClose>
+          <DialogClose render={<Button size="sm" />}>
+            {t("quiz.done")}
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
