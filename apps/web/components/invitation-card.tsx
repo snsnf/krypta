@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { InvitationViewState } from "../lib/invitation-flow"
 import { Button } from "./ui/button"
+import { useAppT } from "../lib/app-i18n"
 
 const invitationReturnQuery = "next=%2Finvitations%2Faccept"
 
@@ -19,16 +20,17 @@ export function InvitationCard({
   onDecline: () => void
   onSwitchAccount: () => void
 }) {
+  const t = useAppT()
   if (view.kind === "exchanging" || view.kind === "accepting") {
     return (
       <div role="status">
         <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
           {view.kind === "exchanging"
-            ? "Checking invitation"
-            : "Updating invitation"}
+            ? t("invitation.checking")
+            : t("invitation.updating")}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          This should only take a moment.
+          {t("invitation.moment")}
         </p>
       </div>
     )
@@ -39,54 +41,56 @@ export function InvitationCard({
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Sign in to continue
+            {t("invitation.signInTitle")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Your invitation is held securely while you sign in or create an
-            account.
+            {t("invitation.signInBody")}
           </p>
         </div>
         <Button
           render={<Link href={`/login?${invitationReturnQuery}`} />}
           nativeButton={false}
         >
-          Log in
+          {t("invitation.logIn")}
         </Button>
         <Button
           variant="outline"
           render={<Link href={`/signup?${invitationReturnQuery}`} />}
           nativeButton={false}
         >
-          Create an account
+          {t("invitation.createAccount")}
         </Button>
       </div>
     )
   }
 
   if (view.kind === "ready") {
-    const role = view.role === "editor" ? "an editor" : "a viewer"
     return (
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Form invitation
+            {t("invitation.readyTitle")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            You&apos;ve been invited to collaborate as {role}.
+            {view.role === "editor"
+              ? t("invitation.asEditor")
+              : t("invitation.asViewer")}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
           <p className="text-xs font-medium tracking-[0.06em] text-muted-foreground uppercase">
-            Invited account
+            {t("invitation.invitedAccount")}
           </p>
-          <p className="mt-1 text-sm font-medium">{view.maskedEmail}</p>
+          <p dir="ltr" className="mt-1 text-start text-sm font-medium">
+            {view.maskedEmail}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button className="flex-1" onClick={onAccept}>
-            Accept
+            {t("invitation.accept")}
           </Button>
           <Button className="flex-1" variant="outline" onClick={onDecline}>
-            Decline
+            {t("invitation.decline")}
           </Button>
         </div>
       </div>
@@ -98,15 +102,14 @@ export function InvitationCard({
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Invitation accepted
+            {t("invitation.acceptedTitle")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            No further approval is needed. Secure access is being prepared and
-            will appear on your dashboard when it is ready.
+            {t("invitation.awaiting")}
           </p>
         </div>
         <Button render={<Link href="/dashboard" />} nativeButton={false}>
-          Go to dashboard
+          {t("invitation.toDashboard")}
         </Button>
       </div>
     )
@@ -116,10 +119,10 @@ export function InvitationCard({
     return (
       <div role="status">
         <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-          Invitation accepted
+          {t("invitation.acceptedTitle")}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Opening the shared form…
+          {t("invitation.opening")}
         </p>
       </div>
     )
@@ -130,15 +133,16 @@ export function InvitationCard({
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Use the invited account
+            {t("invitation.wrongTitle")}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            This invitation belongs to a different account. Switch accounts to
-            continue without changing the invitation.
+            {t("invitation.wrongBody")}
           </p>
         </div>
         <Button onClick={onSwitchAccount} disabled={switchingAccount}>
-          {switchingAccount ? "Signing out…" : "Sign out and switch account"}
+          {switchingAccount
+            ? t("invitation.signingOut")
+            : t("invitation.switch")}
         </Button>
         <p aria-live="polite" className="text-sm text-destructive">
           {switchAccountError}
@@ -148,7 +152,7 @@ export function InvitationCard({
           render={<Link href="/dashboard" />}
           nativeButton={false}
         >
-          Back to dashboard
+          {t("invitation.backToDashboard")}
         </Button>
       </div>
     )
@@ -158,11 +162,10 @@ export function InvitationCard({
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-          Invitation unavailable
+          {t("invitation.unavailableTitle")}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          This invitation is invalid, expired, revoked, or has already been
-          used.
+          {t("invitation.unavailableBody")}
         </p>
       </div>
       <Button
@@ -170,7 +173,7 @@ export function InvitationCard({
         render={<Link href="/dashboard" />}
         nativeButton={false}
       >
-        Go to dashboard
+        {t("invitation.toDashboard")}
       </Button>
     </div>
   )

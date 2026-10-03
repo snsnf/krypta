@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
+import { useAppT } from "@/lib/app-i18n"
 import { ensureAccountSharingKey } from "@/lib/account-sharing-key"
 import { useAuthStore, type UserBoundAccountKey } from "@/lib/auth-store"
 import {
@@ -52,6 +53,8 @@ function vaultStillCurrent(material: UserBoundAccountKey): boolean {
 
 export default function InvitationAcceptancePage() {
   const router = useRouter()
+  const t = useAppT()
+
   const [view, setView] = useState<InvitationViewState>({ kind: "exchanging" })
   const [switchingAccount, setSwitchingAccount] = useState(false)
   const [switchAccountError, setSwitchAccountError] = useState<string | null>(
@@ -191,13 +194,13 @@ export default function InvitationAcceptancePage() {
       (destination) => router.replace(destination)
     )
     if (result === "failed") {
-      setSwitchAccountError("Could not switch accounts. Try again.")
+      setSwitchAccountError(t("invitation.switchFailed"))
     }
     setSwitchingAccount(false)
   }
 
   return (
-    <AuthShell showLanguageToggle={false}>
+    <AuthShell>
       <div ref={contentRef} tabIndex={-1} className="outline-none">
         <InvitationCard
           view={view}

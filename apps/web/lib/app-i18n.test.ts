@@ -46,10 +46,12 @@ describe("app message catalogue", () => {
       const t = appTranslator(language)
       for (const key of appKeys(en)) {
         const values = placeholdersOf(key)
-        const message = key.endsWith("notTwoFactor")
+        const rich = /<\w+>/.test(messageAt(en, key))
+        const message = rich
           ? (t as unknown as RichT).rich(key, {
               ...values,
               strong: (chunks: unknown) => chunks,
+              time: (chunks: unknown) => chunks,
             })
           : translateKey(t as AppTranslator, key, values)
         const text = Array.isArray(message) ? message.join("") : String(message)
