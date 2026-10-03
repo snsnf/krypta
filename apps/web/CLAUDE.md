@@ -415,10 +415,14 @@ chowned to UID 10001 in `apps/web/Dockerfile` rather than left root-owned.
 
 krypta has two languages and they must not be merged. The **app language**
 is the dashboard, builder and the screens around signing in, for whoever is
-using them; it is English or Arabic, and today only the sign-up, login, unlock
-and recovery screens, the header, the not-found page and the shared
-"unavailable" messages are translated (the dashboard, builder, settings,
-sharing, admin, landing and emails are still English). The **form language** is the text respondents see around
+using them; it is English or Arabic, and the sign-in screens, the header, the
+not-found page and the whole signed-in workspace (dashboard, New form and the
+starter templates, account settings, a form's tabs, the builder, sharing and
+invitations) are translated. The admin screens, the landing page, the legal
+pages, `/security`, page titles and the server's emails are still English
+(`UNTRANSLATED_ROUTES` in `lib/app-locale.ts` lists the routes whose text is
+not translated, and the browser's language does not apply to them, so English
+is never mirrored). The **form language** is the text respondents see around
 the questions (buttons, hints, errors, the default thank-you), chosen by the
 creator per form. The creator's own questions, options and confirmation
 message are never translated.
@@ -457,6 +461,25 @@ verbatim in English but never in Arabic. Email, password and code inputs use
 right-to-left page). Load failures are `{ key, retryable }` and are worded at
 render by `failureText`, since they are created in async handlers where no
 language is known.
+
+Workspace conventions (the app's side). **Numbers, dates and sizes** go
+through `appFormatters` (`lib/app-format.ts`, `useAppFormat()`), never
+`toLocaleString`, `toFixed` or a bare `Intl`: Western digits and the Gregorian
+calendar in both languages, with Arabic month names and units, so a count on
+screen matches the same count in a CSV or a form. The translator is built with
+the `-u-nu-latn` locale for the same reason. **Counts are ICU plurals**, and
+the catalogue test (`lib/app-i18n.test.ts`) fails an Arabic plural that lacks
+any of the six categories. User content (titles, questions, answers, emails)
+is never translated and carries `dir="auto"` (or `dir="ltr"` for an email).
+`FormThemeSurface` with `applyLanguage={false}` is app chrome and follows the
+app language; with the default it follows the form's. **Starter templates**
+carry Arabic text beside the English (`TEXT` in `lib/form-templates.ts`) and
+make an Arabic-language form when picked in the Arabic app; Arabic runs two
+bytes a letter, so every template in both languages must still fit the
+1024-byte padding floor (a test enforces it), which is why the Arabic job
+application leaves out its optional start date. `e2e/rtl-workspace.spec.ts`
+walks the workspace in an Arabic browser and fails on any English left, so a
+new workspace string that skipped `t()` is caught there.
 
 Strings live in `messages/<language>.json` under `form`. Components read them
 with `useFormT()`; the two public pages, which compute text themselves, use
