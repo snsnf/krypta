@@ -20,6 +20,7 @@ import {
 } from "@krypta/crypto"
 import { ApiClientError, apiFetch } from "@/lib/api"
 import { useAuthStore } from "@/lib/auth-store"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
 import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,8 @@ import { sealAnswerKey } from "@/lib/quiz-sealing"
 export default function NewFormPage() {
   useEnsureUnlocked()
   const router = useRouter()
+  const t = useAppT()
+  const language = useAppLanguage()
   const accountKey = useAuthStore((s) => s.accountKey)
   const [tab, setTab] = useState("questions")
   const [title, setTitle] = useState("")
@@ -78,9 +81,14 @@ export default function NewFormPage() {
     // Blank keeps today's initial state untouched. A template overrides the
     // title, the questions and the confirmation message, once, here.
     if (template) {
-      const start = instantiateTemplate(template)
+      const start = instantiateTemplate(template, language)
       setTitle(start.title)
       setQuestions(start.questions)
+      // A template written in Arabic is for Arabic readers, so the form is
+      // an Arabic one; English leaves the theme untouched.
+      if (start.language !== "en") {
+        setTheme((current) => ({ ...current, language: start.language }))
+      }
       setSettings((current) => ({
         ...current,
         confirmationMessage: start.confirmationMessage,
@@ -162,11 +170,11 @@ export default function NewFormPage() {
     } catch (error) {
       setSaving(false)
       toast.add({
-        title: "Could not publish the form",
+        title: t("newForm.publishFailed"),
         description:
           error instanceof ApiClientError && error.code === "rate_limited"
-            ? "This account is at its limit of open forms. Close another form, then publish this one."
-            : "Something went wrong. Try again.",
+            ? t("newForm.limitReached")
+            : t("dashboard.genericError"),
         type: "error",
       })
     }
@@ -211,15 +219,21 @@ export default function NewFormPage() {
                        See the same overlay on the builder's save button. */
                     <span className="grid *:col-start-1 *:row-start-1">
                       <span className="invisible">
-                        <span className="sm:hidden">Publish</span>
-                        <span className="hidden sm:inline">Publish form</span>
+                        <span className="sm:hidden">
+                          {t("newForm.publish")}
+                        </span>
+                        <span className="hidden sm:inline">
+                          {t("newForm.publishForm")}
+                        </span>
                       </span>
-                      <span>Saving...</span>
+                      <span>{t("common.saving")}</span>
                     </span>
                   ) : (
                     <>
-                      <span className="sm:hidden">Publish</span>
-                      <span className="hidden sm:inline">Publish form</span>
+                      <span className="sm:hidden">{t("newForm.publish")}</span>
+                      <span className="hidden sm:inline">
+                        {t("newForm.publishForm")}
+                      </span>
                     </>
                   )}
                 </Button>
@@ -229,9 +243,15 @@ export default function NewFormPage() {
           <div className="bg-background/85 backdrop-blur-sm">
             <div className="mx-auto w-full max-w-7xl px-4">
               <TabsList className="justify-center">
-                <TabsTrigger value="questions">Questions</TabsTrigger>
-                <TabsTrigger value="responses">Responses</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
+                <TabsTrigger value="questions">
+                  {t("newForm.tabs.questions")}
+                </TabsTrigger>
+                <TabsTrigger value="responses">
+                  {t("newForm.tabs.responses")}
+                </TabsTrigger>
+                <TabsTrigger value="settings">
+                  {t("newForm.tabs.settings")}
+                </TabsTrigger>
                 <TabsIndicator />
               </TabsList>
             </div>
@@ -242,7 +262,7 @@ export default function NewFormPage() {
           className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         >
           <FormBuilder
-            eyebrowLabel="New form"
+            eyebrowLabel={t("templates.title")}
             title={title}
             onTitleChange={setTitle}
             questions={questions}
@@ -261,10 +281,9 @@ export default function NewFormPage() {
         >
           <div className="mx-auto w-full max-w-3xl flex-1 p-4">
             <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in">
-              <p className="text-sm font-medium">No responses yet</p>
+              <p className="text-sm font-medium">{t("newForm.noResponses")}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                This form isn&apos;t published, so nobody can answer it.
-                Publish it to get a link to share.
+                {t("newForm.unpublished")}
               </p>
             </div>
           </div>

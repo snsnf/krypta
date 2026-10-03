@@ -15,11 +15,20 @@ import { DEFAULT_FORM_SETTINGS } from "./form-settings"
  */
 const SCHEMA_BUDGET_BYTES = 1024 - 5
 
-function unEditedSchemaBytes(template: (typeof FORM_TEMPLATES)[number]): number {
-  const start = instantiateTemplate(template)
+const LANGUAGES = ["en", "ar"] as const
+
+function unEditedSchemaBytes(
+  template: (typeof FORM_TEMPLATES)[number],
+  language: (typeof LANGUAGES)[number]
+): number {
+  const start = instantiateTemplate(template, language)
   const schema = {
     questions: start.questions,
-    theme: DEFAULT_FORM_THEME,
+    // Published as the form's language, which is one more key in the theme.
+    theme:
+      start.language === "en"
+        ? DEFAULT_FORM_THEME
+        : { ...DEFAULT_FORM_THEME, language: start.language },
     settings: {
       ...DEFAULT_FORM_SETTINGS,
       confirmationMessage: start.confirmationMessage,
@@ -42,44 +51,88 @@ describe("FORM_TEMPLATES", () => {
   })
 
   for (const template of FORM_TEMPLATES) {
-    describe(template.name, () => {
-      const { questions } = instantiateTemplate(template)
+    for (const language of LANGUAGES) {
+      describe(`${template.name} (${language})`, () => {
+        const { questions } = instantiateTemplate(template, language)
 
-      it("gives every question a unique id", () => {
-        expect(new Set(questions.map((q) => q.id)).size).toBe(questions.length)
-      })
+        it("gives every question a unique id", () => {
+          expect(new Set(questions.map((q) => q.id)).size).toBe(
+            questions.length
+          )
+        })
 
-      it("only points conditions at an earlier question and a value it offers", () => {
-        questions.forEach((question, index) => {
-          const condition = question.condition
-          if (!condition) return
-          const sourceIndex = questions.findIndex((q) => q.id === condition.questionId)
-          expect(sourceIndex).toBeGreaterThanOrEqual(0)
-          expect(sourceIndex).toBeLessThan(index)
-          const source = questions[sourceIndex]
-          expect(conditionValues(source)).toContain(condition.value)
-          if (isRangeOperator(condition.operator)) expect(source.type).toBe("rating")
+        it("only points conditions at an earlier question and a value it offers", () => {
+          questions.forEach((question, index) => {
+            const condition = question.condition
+            if (!condition) return
+            const sourceIndex = questions.findIndex(
+              (q) => q.id === condition.questionId
+            )
+            expect(sourceIndex).toBeGreaterThanOrEqual(0)
+            expect(sourceIndex).toBeLessThan(index)
+            const source = questions[sourceIndex]
+            expect(conditionValues(source)).toContain(condition.value)
+            if (isRangeOperator(condition.operator))
+              expect(source.type).toBe("rating")
+          })
+        })
+
+        it("has no question with two options of the same text", () => {
+          for (const question of questions) {
+            expect(hasDuplicateOptions(question.options)).toBe(false)
+          }
+        })
+
+        it("fits the padding floor when published unedited", () => {
+          expect(unEditedSchemaBytes(template, language)).toBeLessThanOrEqual(
+            SCHEMA_BUDGET_BYTES
+          )
+        })
+
+        it("carries a title and a confirmation message", () => {
+          expect(template.title.trim()).not.toBe("")
+          expect(template.confirmationMessage.trim()).not.toBe("")
         })
       })
-
-      it("has no question with two options of the same text", () => {
-        for (const question of questions) {
-          expect(hasDuplicateOptions(question.options)).toBe(false)
-        }
-      })
-
-      it("fits the padding floor when published unedited", () => {
-        expect(unEditedSchemaBytes(template)).toBeLessThanOrEqual(
-          SCHEMA_BUDGET_BYTES
-        )
-      })
-
-      it("carries a title and a confirmation message", () => {
-        expect(template.title.trim()).not.toBe("")
-        expect(template.confirmationMessage.trim()).not.toBe("")
-      })
-    })
+    }
   }
+})
+
+describe("Arabic templates", () => {
+  it("is an Arabic form, with Arabic words, and the same structure as English", () => {
+    for (const template of FORM_TEMPLATES) {
+      const english = instantiateTemplate(template, "en")
+      const arabic = instantiateTemplate(template, "ar")
+      expect(english.language).toBe("en")
+      expect(arabic.language).toBe("ar")
+      expect(arabic.title).toMatch(/[\u0600-\u06ff]/)
+      // Only the job application leaves a question out, to stay inside the
+      // padding floor; everything else keeps the same questions in order.
+      const left = template.id === "job-application" ? 1 : 0
+      expect(arabic.questions.length).toBe(english.questions.length - left)
+      arabic.questions.forEach((question, index) => {
+        expect(question.type).toBe(english.questions[index].type)
+        expect(question.required).toBe(english.questions[index].required)
+      })
+      for (const question of arabic.questions) {
+        expect(question.label).toMatch(/[\u0600-\u06ff]/)
+      }
+    }
+  })
+
+  it("points a text condition at an option the Arabic question really offers", () => {
+    const rsvp = FORM_TEMPLATES.find((t) => t.id === "rsvp")!
+    const { questions } = instantiateTemplate(rsvp, "ar")
+    const guests = questions.find((q) => q.condition)!
+    const source = questions.find((q) => q.id === guests.condition!.questionId)!
+    expect(source.options).toContain(guests.condition!.value)
+  })
+
+  it("falls back to English for a language with no text of its own", () => {
+    const { language, title } = instantiateTemplate(FORM_TEMPLATES[0], "en")
+    expect(language).toBe("en")
+    expect(title).toBe("Event feedback")
+  })
 })
 
 describe("instantiateTemplate", () => {
@@ -87,7 +140,11 @@ describe("instantiateTemplate", () => {
 
   it("rewrites a condition to the new id of the keyed question", () => {
     let n = 0
-    const { questions } = instantiateTemplate(eventFeedback, () => `id-${++n}`)
+    const { questions } = instantiateTemplate(
+      eventFeedback,
+      "en",
+      () => `id-${++n}`
+    )
     expect(questions.map((q) => q.id)).toEqual(["id-1", "id-2", "id-3", "id-4"])
     expect(questions[1].condition).toEqual({
       questionId: "id-1",

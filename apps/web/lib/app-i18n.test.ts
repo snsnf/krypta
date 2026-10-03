@@ -13,7 +13,28 @@ function leaves(node: unknown, prefix = ""): string[] {
   )
 }
 const appKeys = (messages: Record<string, unknown>) =>
-  leaves(Object.fromEntries(Object.entries(messages).filter(([k]) => k !== "form")))
+  leaves(
+    Object.fromEntries(Object.entries(messages).filter(([k]) => k !== "form"))
+  )
+
+function messageAt(messages: unknown, key: string): string {
+  return key
+    .split(".")
+    .reduce(
+      (node, part) => (node as Record<string, unknown>)[part],
+      messages
+    ) as string
+}
+
+// The values a message needs, read off its English text, so a new placeholder
+// never needs an edit here. Every value is the number 3, which a plural
+// selects on and a plain placeholder just prints.
+function placeholdersOf(key: string): Record<string, number> {
+  const names = [...messageAt(en, key).matchAll(/\{(\w+)[,}]/g)].map(
+    (m) => m[1]
+  )
+  return Object.fromEntries(names.map((name) => [name, 3]))
+}
 
 describe("app message catalogue", () => {
   it("has the same keys in every language", () => {
@@ -21,10 +42,10 @@ describe("app message catalogue", () => {
   })
 
   it("formats every message in every language", () => {
-    const values = { email: "a@b.c", seconds: 7 }
     for (const language of ["en", "ar"] as const) {
       const t = appTranslator(language)
       for (const key of appKeys(en)) {
+        const values = placeholdersOf(key)
         const message = key.endsWith("notTwoFactor")
           ? (t as unknown as RichT).rich(key, {
               ...values,
@@ -39,12 +60,33 @@ describe("app message catalogue", () => {
     }
   })
 
+  it("gives every Arabic plural all six categories, in Western digits", () => {
+    const plurals = appKeys(en).filter((key) =>
+      /plural,/.test(messageAt(en, key))
+    )
+    expect(plurals.length).toBeGreaterThan(0)
+    for (const key of plurals) {
+      const source = messageAt(ar, key)
+      for (const category of ["zero", "one", "two", "few", "many", "other"]) {
+        expect(source, `ar ${key} ${category}`).toContain(`${category} {`)
+      }
+      const name = Object.keys(placeholdersOf(key))[0]
+      for (const count of [0, 1, 2, 3, 11, 100]) {
+        const text = translateKey(appTranslator("ar") as AppTranslator, key, {
+          [name]: count,
+        })
+        expect(text, `ar ${key} ${count}`).not.toMatch(/[\u0660-\u0669]/)
+        expect(text.length).toBeGreaterThan(0)
+      }
+    }
+  })
+
   it("speaks Arabic and keeps English as it was", () => {
     expect(appTranslator("ar")("auth.login.title")).toBe("تسجيل الدخول")
     expect(appTranslator("en")("auth.login.title")).toBe("Log in")
-    expect(appTranslator("en")("auth.resend.sendAnotherIn", { seconds: 42 })).toBe(
-      "Send another code in 42s"
-    )
+    expect(
+      appTranslator("en")("auth.resend.sendAnotherIn", { seconds: 42 })
+    ).toBe("Send another code in 42s")
   })
 
   it("keeps the respondent form messages out of the app catalogue", () => {
@@ -56,7 +98,10 @@ describe("the server-safe translator module", () => {
   it("never imports React, so a Server Component can use it", () => {
     // not-found.tsx and the root layout run on the server, where a module that
     // calls createContext is a build error. The context lives in app-i18n.ts.
-    const source = readFileSync(new URL("./app-translator.ts", import.meta.url), "utf8")
+    const source = readFileSync(
+      new URL("./app-translator.ts", import.meta.url),
+      "utf8"
+    )
     expect(source).not.toMatch(/from\s+["']react["']/)
     expect(source).toContain("export function appTranslator")
   })

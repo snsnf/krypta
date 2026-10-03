@@ -17,6 +17,7 @@ import {
   type AccountSharingMaterial,
 } from "@/lib/account-sharing-key"
 import { useAuthStore } from "@/lib/auth-store"
+import { useAppT } from "@/lib/app-i18n"
 import {
   decryptFormList,
   groupDashboardForms,
@@ -63,15 +64,9 @@ interface DashboardViewState {
   accountKey: string
   activeForms: DashboardFormListItem[]
   archivedForms: DashboardFormListItem[]
-  error: string | null
+  failed: boolean
   provisioningWarning: boolean
 }
-
-const roleLabels = {
-  owner: "Owner",
-  editor: "Editor",
-  viewer: "Viewer",
-} as const
 
 async function loadDashboard(
   userId: string,
@@ -103,6 +98,7 @@ async function loadDashboard(
 
 export default function DashboardPage() {
   useEnsureUnlocked()
+  const t = useAppT()
   const userId = useAuthStore((state) => state.userId)
   const accountKey = useAuthStore((state) => state.accountKey)
   const loadAttempt = useRef<DashboardLoadAttempt | null>(null)
@@ -150,7 +146,7 @@ export default function DashboardPage() {
           accountKey: attempt.accountKey,
           activeForms: result.activeForms,
           archivedForms: result.archivedForms,
-          error: null,
+          failed: false,
           provisioningWarning: result.provisioningHadFailures,
         })
       },
@@ -168,7 +164,7 @@ export default function DashboardPage() {
           accountKey: attempt.accountKey,
           activeForms: [],
           archivedForms: [],
-          error: "Something went wrong loading your forms.",
+          failed: true,
           provisioningWarning: false,
         })
       }
@@ -239,7 +235,7 @@ export default function DashboardPage() {
     if (renameTarget === null || renameTarget.formDataKey === null) return
     const trimmedTitle = renameTitle.trim()
     if (trimmedTitle.length === 0) {
-      setRenameError("Title can't be empty.")
+      setRenameError(t("dashboard.titleEmpty"))
       return
     }
     /*
@@ -255,7 +251,7 @@ export default function DashboardPage() {
      * recommendation rather than something this page depends on.
      */
     if (renameTarget.version == null) {
-      setRenameError("Something went wrong. Try again.")
+      setRenameError(t("dashboard.genericError"))
       return
     }
 
@@ -307,8 +303,8 @@ export default function DashboardPage() {
     } catch (error) {
       setRenameError(
         error instanceof ApiClientError && error.code === "conflict"
-          ? "This form changed elsewhere. Your typed title is still here. Try again."
-          : "Something went wrong. Try again."
+          ? t("dashboard.renameConflict")
+          : t("dashboard.genericError")
       )
     } finally {
       setRenamePending(false)
@@ -322,7 +318,7 @@ export default function DashboardPage() {
     view.accountKey === accountKey
 
   if (!loadedForCurrentVault) return <FullPageSpinner />
-  if (view.error)
+  if (view.failed)
     return (
       <WorkspaceUnavailable
         failure={FORMS_LIST_UNREACHABLE}
@@ -334,9 +330,13 @@ export default function DashboardPage() {
   const forms = viewMode === "active" ? activeForms : archivedForms
   const { owned, shared } = groupDashboardForms(forms)
   const groups = [
-    { heading: "My forms", headingId: "my-forms-heading", forms: owned },
     {
-      heading: "Shared with me",
+      heading: t("dashboard.myForms"),
+      headingId: "my-forms-heading",
+      forms: owned,
+    },
+    {
+      heading: t("dashboard.sharedWithMe"),
       headingId: "shared-forms-heading",
       forms: shared,
     },
@@ -349,10 +349,10 @@ export default function DashboardPage() {
         <div className="mb-8 flex items-center justify-between gap-4">
           <div>
             <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-              Forms
+              {t("dashboard.title")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create forms and open work shared with you.
+              {t("dashboard.subtitle")}
             </p>
           </div>
           <Button
@@ -365,7 +365,7 @@ export default function DashboardPage() {
               size={16}
               data-icon="inline-start"
             />
-            New form
+            {t("dashboard.newForm")}
           </Button>
         </div>
 
@@ -374,8 +374,7 @@ export default function DashboardPage() {
             role="status"
             className="mb-6 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
           >
-            Some secure access updates could not be completed. Try refreshing in
-            a moment.
+            {t("dashboard.provisioningWarning")}
           </p>
         ) : null}
 
@@ -386,7 +385,7 @@ export default function DashboardPage() {
             size="sm"
             onClick={() => setViewMode("active")}
           >
-            Active
+            {t("dashboard.active")}
           </Button>
           <Button
             type="button"
@@ -394,7 +393,7 @@ export default function DashboardPage() {
             size="sm"
             onClick={() => setViewMode("archived")}
           >
-            Archived
+            {t("dashboard.archived")}
           </Button>
         </div>
 
@@ -402,19 +401,19 @@ export default function DashboardPage() {
           viewMode === "active" ? (
             <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center">
               <p className="text-sm text-muted-foreground">
-                You haven&apos;t created a form yet.
+                {t("dashboard.empty")}
               </p>
               <Link
                 href="/dashboard/new"
                 className="mt-1.5 inline-block text-sm text-foreground underline underline-offset-4"
               >
-                Create your first form
+                {t("dashboard.createFirst")}
               </Link>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center">
               <p className="text-sm text-muted-foreground">
-                No archived forms.
+                {t("dashboard.noArchived")}
               </p>
             </div>
           )
@@ -451,7 +450,7 @@ export default function DashboardPage() {
                                   {form.title}
                                 </span>
                                 <span className="shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 text-[0.6875rem] leading-none font-medium text-muted-foreground">
-                                  {roleLabels[form.role]}
+                                  {t(`roles.${form.role}`)}
                                 </span>
                               </Link>
                             ) : (
@@ -463,7 +462,7 @@ export default function DashboardPage() {
                                   {form.title}
                                 </span>
                                 <span className="shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 text-[0.6875rem] leading-none font-medium text-muted-foreground">
-                                  {roleLabels[form.role]}
+                                  {t(`roles.${form.role}`)}
                                 </span>
                               </div>
                             )}
@@ -477,7 +476,9 @@ export default function DashboardPage() {
                                     className="text-muted-foreground"
                                   />
                                 }
-                                aria-label={`Actions for ${form.title}`}
+                                aria-label={t("dashboard.actionsFor", {
+                                  title: form.title,
+                                })}
                               >
                                 <HugeiconsIcon
                                   icon={MoreVerticalIcon}
@@ -495,7 +496,7 @@ export default function DashboardPage() {
                                       icon={PencilEdit02Icon}
                                       size={16}
                                     />
-                                    Rename
+                                    {t("common.rename")}
                                   </DropdownMenuItem>
                                 ) : null}
                                 <DropdownMenuItem
@@ -515,8 +516,8 @@ export default function DashboardPage() {
                                     size={16}
                                   />
                                   {viewMode === "archived"
-                                    ? "Restore"
-                                    : "Archive"}
+                                    ? t("common.restore")
+                                    : t("common.archive")}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -535,7 +536,7 @@ export default function DashboardPage() {
       <Dialog open={renameOpen} onOpenChange={handleRenameOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename form</DialogTitle>
+            <DialogTitle>{t("dashboard.renameTitle")}</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(event) => {
@@ -545,7 +546,7 @@ export default function DashboardPage() {
             className="grid gap-3"
           >
             <label className="grid gap-1.5 text-sm font-medium">
-              Title
+              {t("dashboard.titleLabel")}
               <Input
                 autoFocus
                 dir="auto"
@@ -559,14 +560,14 @@ export default function DashboardPage() {
             ) : null}
             <DialogFooter>
               <DialogClose render={<Button variant="outline" size="sm" />}>
-                Cancel
+                {t("common.cancel")}
               </DialogClose>
               <Button
                 type="submit"
                 size="sm"
                 disabled={renamePending || renameTitle.trim().length === 0}
               >
-                {renamePending ? "Saving..." : "Save"}
+                {renamePending ? t("common.saving") : t("common.save")}
               </Button>
             </DialogFooter>
           </form>
