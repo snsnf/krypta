@@ -70,11 +70,13 @@ describe("app message catalogue", () => {
       for (const category of ["zero", "one", "two", "few", "many", "other"]) {
         expect(source, `ar ${key} ${category}`).toContain(`${category} {`)
       }
-      const name = Object.keys(placeholdersOf(key))[0]
+      const names = Object.keys(placeholdersOf(key))
       for (const count of [0, 1, 2, 3, 11, 100]) {
-        const text = translateKey(appTranslator("ar") as AppTranslator, key, {
-          [name]: count,
-        })
+        const text = translateKey(
+          appTranslator("ar") as AppTranslator,
+          key,
+          Object.fromEntries(names.map((name) => [name, count]))
+        )
         expect(text, `ar ${key} ${count}`).not.toMatch(/[\u0660-\u0669]/)
         expect(text.length).toBeGreaterThan(0)
       }

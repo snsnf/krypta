@@ -251,7 +251,7 @@ export default function DashboardPage() {
      * recommendation rather than something this page depends on.
      */
     if (renameTarget.version == null) {
-      setRenameError(t("dashboard.genericError"))
+      setRenameError(t("common.genericError"))
       return
     }
 
@@ -304,7 +304,7 @@ export default function DashboardPage() {
       setRenameError(
         error instanceof ApiClientError && error.code === "conflict"
           ? t("dashboard.renameConflict")
-          : t("dashboard.genericError")
+          : t("common.genericError")
       )
     } finally {
       setRenamePending(false)
