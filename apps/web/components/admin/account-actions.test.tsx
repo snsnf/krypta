@@ -1,6 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/app-i18n", async () => vi.importActual("../../lib/app-i18n"))
+vi.mock("@/lib/app-format", async () => vi.importActual("../../lib/app-format"))
+vi.mock("@/lib/form-language", async () => vi.importActual("../../lib/form-language"))
+vi.mock("@/lib/utils", () => ({ cn: (...v: unknown[]) => v.filter(Boolean).join(" ") }))
+vi.mock("@/components/credential-input", async () => vi.importActual("../credential-input"))
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, ...props }: React.ComponentProps<"button">) => (
     <button {...props}>{children}</button>

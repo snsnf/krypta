@@ -418,7 +418,7 @@ is the dashboard, builder and the screens around signing in, for whoever is
 using them; it is English or Arabic, and the sign-in screens, the header, the
 not-found page and the whole signed-in workspace (dashboard, New form and the
 starter templates, account settings, a form's tabs, the builder, sharing and
-invitations) are translated. The admin screens, the landing page, the legal
+invitations) and the admin screens are translated. The landing page, the legal
 pages, `/security`, page titles and the server's emails are still English
 (`UNTRANSLATED_ROUTES` in `lib/app-locale.ts` lists the routes whose text is
 not translated, and the browser's language does not apply to them, so English

@@ -7,6 +7,7 @@ import {
   RotateClockwiseIcon,
   Search01Icon,
 } from "@hugeicons/core-free-icons"
+import { useAppFormat, useAppT } from "@/lib/app-i18n"
 import { AccountActions } from "@/components/admin/account-actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,12 +28,6 @@ interface AccountListProps {
   onRefresh: () => void
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 export function AccountList({
   accounts,
   nextCursor,
@@ -43,6 +38,9 @@ export function AccountList({
   onLoadMore,
   onRefresh,
 }: AccountListProps) {
+  const t = useAppT()
+  const format = useAppFormat()
+
   const [search, setSearch] = useState("")
 
   return (
@@ -50,11 +48,10 @@ export function AccountList({
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-            Accounts
+            {t("admin.accounts.title")}
           </h1>
           <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-            Account metadata, usage quotas, and access state. Encrypted form
-            content is never available here.
+            {t("admin.accounts.body")}
           </p>
         </div>
         <form
@@ -65,13 +62,14 @@ export function AccountList({
           }}
         >
           <label className="sr-only" htmlFor="account-search">
-            Search by account ID
+            {t("admin.accounts.searchLabel")}
           </label>
           <Input
             id="account-search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Account ID"
+            dir="ltr"
+            placeholder={t("admin.accounts.searchPlaceholder")}
             className="w-48"
           />
           <Button type="submit" disabled={loading}>
@@ -80,15 +78,19 @@ export function AccountList({
               size={15}
               data-icon="inline-start"
             />
-            Search
+            {t("admin.accounts.search")}
           </Button>
         </form>
       </div>
 
       {error ? (
         <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-          <p className="text-sm font-medium">Could not load accounts</p>
-          <p className="mt-1 text-sm text-muted-foreground">Try again.</p>
+          <p className="text-sm font-medium">
+            {t("admin.accounts.loadFailed")}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("admin.accounts.tryAgain")}
+          </p>
           <Button
             className="mt-3"
             size="sm"
@@ -100,15 +102,17 @@ export function AccountList({
               size={14}
               data-icon="inline-start"
             />
-            Retry
+            {t("admin.common.retry")}
           </Button>
         </div>
       ) : loading && accounts.length === 0 ? (
         <p className="mt-8 text-sm text-muted-foreground">
-          Loading accounts...
+          {t("admin.accounts.loadingAccounts")}
         </p>
       ) : accounts.length === 0 ? (
-        <p className="mt-8 text-sm text-muted-foreground">No accounts found.</p>
+        <p className="mt-8 text-sm text-muted-foreground">
+          {t("admin.accounts.none")}
+        </p>
       ) : (
         <div className="mt-8 overflow-hidden rounded-xl border border-border">
           <div className="divide-y divide-border">
@@ -118,25 +122,42 @@ export function AccountList({
                 className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"
               >
                 <div className="min-w-0">
-                  <code className="block truncate text-sm text-foreground">
+                  <code
+                    dir="ltr"
+                    className="block truncate text-start text-sm text-foreground"
+                  >
                     {account.id}
                   </code>
                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>{account.suspended ? "Suspended" : "Active"}</span>
                     <span>
-                      {account.totpEnabled ? "TOTP enabled" : "TOTP disabled"}
+                      {account.suspended
+                        ? t("admin.accounts.suspended")
+                        : t("admin.accounts.active")}
                     </span>
-                    {account.instanceAdmin && <span>Instance admin</span>}
                     <span>
-                      Created {new Date(account.createdAt).toLocaleDateString()}
+                      {account.totpEnabled
+                        ? t("admin.accounts.totpOn")
+                        : t("admin.accounts.totpOff")}
+                    </span>
+                    {account.instanceAdmin && (
+                      <span>{t("admin.accounts.instanceAdmin")}</span>
+                    )}
+                    <span>
+                      {t("admin.accounts.created", {
+                        date: format.date(account.createdAt),
+                      })}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Forms {account.formsUsed} / {account.maxForms ?? "default"}{" "}
-                    · Attachments {formatBytes(account.attachmentBytesUsed)} /{" "}
-                    {account.maxAttachmentBytes === null
-                      ? "default"
-                      : formatBytes(account.maxAttachmentBytes)}
+                    {t("admin.accounts.usage", {
+                      used: account.formsUsed,
+                      max: account.maxForms ?? t("admin.accounts.default"),
+                      bytes: format.bytes(account.attachmentBytesUsed),
+                      maxBytes:
+                        account.maxAttachmentBytes === null
+                          ? t("admin.accounts.default")
+                          : format.bytes(account.maxAttachmentBytes),
+                    })}
                   </p>
                 </div>
                 <AccountActions
@@ -165,7 +186,7 @@ export function AccountList({
               data-icon="inline-start"
             />
           )}
-          {loading ? "Loading..." : "Load more"}
+          {loading ? t("admin.common.loading") : t("admin.common.loadMore")}
         </Button>
       )}
     </section>

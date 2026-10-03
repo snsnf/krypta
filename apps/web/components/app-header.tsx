@@ -143,14 +143,12 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
               {t("header.account")}
             </Link>
             {showAdmin && (
-              <a
-                // A full page load: /admin is English only, so it must not inherit this
-                // page's language or direction.
+              <Link
                 href="/admin"
                 className="text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
               >
                 {t("header.admin")}
-              </a>
+              </Link>
             )}
             <button
               type="button"
@@ -180,7 +178,7 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
                   {t("header.account")}
                 </DropdownMenuItem>
                 {showAdmin && (
-                  <DropdownMenuItem render={<a href="/admin" />}>
+                  <DropdownMenuItem render={<Link href="/admin" />}>
                     {t("header.admin")}
                   </DropdownMenuItem>
                 )}

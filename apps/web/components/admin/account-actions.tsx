@@ -32,6 +32,8 @@ import { ApiClientError, apiFetch } from "@/lib/api"
 import { useAuthStore } from "@/lib/auth-store"
 import { deriveAuthVerifier } from "@krypta/crypto"
 import { deriveVaultUnlockKey } from "@/lib/vault-access"
+import { useAppT, type AppTranslator } from "@/lib/app-i18n"
+import { CredentialInput } from "@/components/credential-input"
 
 interface EligibleTransfer {
   formId: string
@@ -69,10 +71,10 @@ interface AccountActionsProps {
   onChanged: () => void
 }
 
-function genericError(): void {
+function genericError(t: AppTranslator): void {
   toast.add({
-    title: "Could not update account",
-    description: "Try again.",
+    title: t("admin.actions.updateFailed"),
+    description: t("admin.accounts.tryAgain"),
     type: "error",
   })
 }
@@ -89,6 +91,8 @@ export function AccountActions({
   eligibleTransfers = [],
   onChanged,
 }: AccountActionsProps) {
+  const t = useAppT()
+
   const [suspendOpen, setSuspendOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [pending, setPending] = useState<
@@ -122,12 +126,14 @@ export function AccountActions({
       else await suspendAccount(account.id)
       setSuspendOpen(false)
       toast.add({
-        title: account.suspended ? "Account reactivated" : "Account suspended",
+        title: account.suspended
+          ? t("admin.actions.reactivated")
+          : t("admin.actions.suspendedToast"),
         type: "success",
       })
       onChanged()
     } catch {
-      genericError()
+      genericError(t)
     } finally {
       setPending(null)
     }
@@ -151,8 +157,8 @@ export function AccountActions({
       setReceipt(proof.reauthentication_receipt)
     } catch {
       toast.add({
-        title: "Could not verify password",
-        description: "Try again.",
+        title: t("admin.actions.verifyFailed"),
+        description: t("admin.accounts.tryAgain"),
         type: "error",
       })
     } finally {
@@ -168,7 +174,7 @@ export function AccountActions({
       setDeleteOpen(false)
       setReceipt(null)
       setConfirmation("")
-      toast.add({ title: "Account deleted", type: "success" })
+      toast.add({ title: t("admin.actions.deleted"), type: "success" })
       onChanged()
     } catch (error) {
       const reset = resetDeleteProofAfterFailure()
@@ -182,16 +188,15 @@ export function AccountActions({
         error.code === "active_subscription"
       ) {
         toast.add({
-          title: "This account has an active subscription",
-          description:
-            "The account holder has to cancel it from their billing settings before the account can be deleted.",
+          title: t("admin.actions.subscriptionTitle"),
+          description: t("admin.actions.subscriptionBody"),
           type: "error",
         })
         return
       }
       toast.add({
-        title: "Verify password again",
-        description: "The deletion could not be completed. Try again.",
+        title: t("admin.actions.reverify"),
+        description: t("admin.actions.deleteFailed"),
         type: "error",
       })
     } finally {
@@ -204,12 +209,12 @@ export function AccountActions({
     setPending("transfer")
     try {
       await transferAdminForm(selectedFormId, selectedEditorMemberId)
-      toast.add({ title: "Form ownership transferred", type: "success" })
+      toast.add({ title: t("admin.actions.transferred"), type: "success" })
       onChanged()
     } catch {
       toast.add({
-        title: "Could not transfer ownership",
-        description: "Try again.",
+        title: t("admin.actions.transferFailed"),
+        description: t("admin.accounts.tryAgain"),
         type: "error",
       })
     } finally {
@@ -240,22 +245,26 @@ export function AccountActions({
             size={14}
             data-icon="inline-start"
           />
-          {account.suspended ? "Reactivate" : "Suspend"}
+          {account.suspended
+            ? t("admin.actions.reactivate")
+            : t("admin.actions.suspend")}
         </Button>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {account.suspended ? "Reactivate account?" : "Suspend account?"}
+              {account.suspended
+                ? t("admin.actions.reactivateQuestion")
+                : t("admin.actions.suspendQuestion")}
             </DialogTitle>
             <DialogDescription>
               {account.suspended
-                ? "The account can sign in again, but its prior sessions remain revoked."
-                : "This ends the account’s sessions and blocks new sign-ins and owned-form submissions."}
+                ? t("admin.actions.reactivateBody")
+                : t("admin.actions.suspendBody")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" size="sm" />}>
-              Cancel
+              {t("common.cancel")}
             </DialogClose>
             <Button
               variant={account.suspended ? "default" : "destructive"}
@@ -271,10 +280,10 @@ export function AccountActions({
                 />
               )}
               {pending === "suspend"
-                ? "Saving..."
+                ? t("admin.actions.saving")
                 : account.suspended
-                  ? "Reactivate account"
-                  : "Suspend account"}
+                  ? t("admin.actions.reactivateConfirm")
+                  : t("admin.actions.suspendConfirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -283,7 +292,7 @@ export function AccountActions({
       {eligibleTransfers.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <label className="sr-only" htmlFor={`transfer-form-${account.id}`}>
-            Shared form
+            {t("admin.actions.sharedForm")}
           </label>
           <select
             id={`transfer-form-${account.id}`}
@@ -308,7 +317,7 @@ export function AccountActions({
             ))}
           </select>
           <label className="sr-only" htmlFor={`transfer-editor-${account.id}`}>
-            Eligible editor
+            {t("admin.actions.eligibleEditor")}
           </label>
           <select
             id={`transfer-editor-${account.id}`}
@@ -343,7 +352,9 @@ export function AccountActions({
                 data-icon="inline-start"
               />
             )}
-            {pending === "transfer" ? "Transferring..." : "Transfer"}
+            {pending === "transfer"
+              ? t("admin.actions.transferring")
+              : t("admin.actions.transfer")}
           </Button>
         </div>
       )}
@@ -360,21 +371,20 @@ export function AccountActions({
             size={14}
             data-icon="inline-start"
           />
-          Delete
+          {t("admin.actions.delete")}
         </Button>
         <DialogContent>
           {receipt === null ? (
             <>
               <DialogHeader>
-                <DialogTitle>Verify before deleting</DialogTitle>
+                <DialogTitle>{t("admin.actions.verifyTitle")}</DialogTitle>
                 <DialogDescription>
-                  Deleting this account is irreversible. First verify your
-                  password; the confirmation step follows immediately.
+                  {t("admin.actions.verifyBody")}
                 </DialogDescription>
               </DialogHeader>
               <label className="grid gap-1.5 text-sm font-medium">
-                Password
-                <Input
+                {t("admin.actions.password")}
+                <CredentialInput
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -384,7 +394,7 @@ export function AccountActions({
               </label>
               <DialogFooter>
                 <DialogClose render={<Button variant="outline" size="sm" />}>
-                  Cancel
+                  {t("common.cancel")}
                 </DialogClose>
                 <Button
                   variant="destructive"
@@ -399,23 +409,27 @@ export function AccountActions({
                       data-icon="inline-start"
                     />
                   )}
-                  {pending === "delete" ? "Verifying..." : "Continue"}
+                  {pending === "delete"
+                    ? t("admin.actions.verifying")
+                    : t("admin.actions.continue")}
                 </Button>
               </DialogFooter>
             </>
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>Delete account permanently?</DialogTitle>
+                <DialogTitle>{t("admin.actions.deleteQuestion")}</DialogTitle>
                 <DialogDescription>
-                  Type the visible account suffix <code>{accountSuffix}</code>{" "}
-                  to permanently delete this account and its unshared encrypted
-                  records.
+                  {t.rich("admin.actions.suffixBody", {
+                    suffix: accountSuffix,
+                    code: (chunks) => <code dir="ltr">{chunks}</code>,
+                  })}
                 </DialogDescription>
               </DialogHeader>
               <label className="grid gap-1.5 text-sm font-medium">
-                Account suffix
+                {t("admin.actions.suffixLabel")}
                 <Input
+                  dir="ltr"
                   value={confirmation}
                   onChange={(event) => setConfirmation(event.target.value)}
                   autoComplete="off"
@@ -425,7 +439,7 @@ export function AccountActions({
               </label>
               <DialogFooter>
                 <DialogClose render={<Button variant="outline" size="sm" />}>
-                  Cancel
+                  {t("common.cancel")}
                 </DialogClose>
                 <Button
                   variant="destructive"
@@ -440,7 +454,9 @@ export function AccountActions({
                       data-icon="inline-start"
                     />
                   )}
-                  {pending === "delete" ? "Deleting..." : "Delete account"}
+                  {pending === "delete"
+                    ? t("admin.actions.deleting")
+                    : t("admin.actions.deleteConfirm")}
                 </Button>
               </DialogFooter>
             </>
