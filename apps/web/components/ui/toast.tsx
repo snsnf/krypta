@@ -4,6 +4,7 @@ import * as React from "react"
 import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 
 import { cn } from "@/lib/utils"
+import { useAppT } from "@/lib/app-i18n"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, CheckmarkCircle02Icon, InformationCircleIcon, Alert02Icon, MultiplicationSignCircleIcon, Loading03Icon } from "@hugeicons/core-free-icons"
@@ -115,12 +116,13 @@ function ToastClose({
   className,
   children,
   render = <Button variant="ghost" size="icon-sm" />,
-  ...props
+    ...props
 }: ToastPrimitive.Close.Props) {
+  const t = useAppT()
   return (
     <ToastPrimitive.Close
       data-slot="toast-close"
-      aria-label="Close toast"
+      aria-label={t("common.closeToast")}
       render={render}
       className={cn(
         "relative shrink-0 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-foreground",
@@ -205,11 +207,12 @@ function Toaster({
   toastManager = toast,
   ...props
 }: ToastPrimitive.Provider.Props) {
+  const t = useAppT()
   return (
     <ToastProvider toastManager={toastManager} {...props}>
       {children}
       <ToastPortal>
-        <ToastViewport>
+        <ToastViewport aria-label={t("common.notifications")}>
           <ToastList />
         </ToastViewport>
       </ToastPortal>

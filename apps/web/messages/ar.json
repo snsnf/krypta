@@ -81,7 +81,9 @@
     "remove": "إزالة",
     "continue": "متابعة",
     "genericError": "حدث خطأ ما. حاول مرة أخرى.",
-    "listSeparator": "، "
+    "listSeparator": "، ",
+    "notifications": "الإشعارات",
+    "closeToast": "إغلاق الإشعار"
   },
   "errors": {
     "unauthorized": "غير مصرّح",

@@ -81,7 +81,9 @@
     "remove": "Remove",
     "continue": "Continue",
     "genericError": "Something went wrong. Try again.",
-    "listSeparator": ", "
+    "listSeparator": ", ",
+    "notifications": "Notifications",
+    "closeToast": "Close toast"
   },
   "errors": {
     "unauthorized": "Unauthorized",

@@ -59,13 +59,17 @@ describe("route-aware resolution", () => {
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/recover" })).toBe("ar")
     // An unknown path is a 404, which is translated.
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/no-such-page" })).toBe("ar")
-    for (const pathname of ["/", "/dashboard", "/dashboard/abc", "/admin/health", "/privacy", "/terms", "/security", "/invitations/accept"]) {
+    // The workspace and the invitation screens are translated too.
+    for (const pathname of ["/dashboard", "/dashboard/abc", "/dashboard/settings", "/invitations/accept"]) {
+      expect(resolveAppLanguage({ acceptLanguage: ar, pathname }), pathname).toBe("ar")
+    }
+    for (const pathname of ["/", "/admin/health", "/privacy", "/terms", "/security"]) {
       expect(resolveAppLanguage({ acceptLanguage: ar, pathname }), pathname).toBe("en")
     }
   })
 
   it("still honours an explicit choice on an untranslated route", () => {
-    expect(resolveAppLanguage({ cookie: "ar", pathname: "/dashboard" })).toBe("ar")
+    expect(resolveAppLanguage({ cookie: "ar", pathname: "/admin" })).toBe("ar")
     expect(resolveAppLanguage({ cookie: "ar", pathname: "/" })).toBe("ar")
   })
 
@@ -77,8 +81,8 @@ describe("route-aware resolution", () => {
   })
 
   it("does not mistake a prefix match for a route", () => {
-    expect(isUntranslatedRoute("/dashboard")).toBe(true)
-    expect(isUntranslatedRoute("/dashboards")).toBe(false)
+    expect(isUntranslatedRoute("/admin")).toBe(true)
+    expect(isUntranslatedRoute("/administrators")).toBe(false)
     expect(isUntranslatedRoute("/login")).toBe(false)
   })
 
