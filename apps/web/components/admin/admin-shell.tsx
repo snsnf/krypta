@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { canOpenAdmin, type AdminMe } from "@/lib/admin"
 import { apiFetch } from "@/lib/api"
 import { useAuthStore } from "@/lib/auth-store"
+import { useAppT } from "@/lib/app-i18n"
 
 interface AdminSessionMe extends AdminMe {
   user_id: string
@@ -22,13 +23,14 @@ interface AdminSessionMe extends AdminMe {
 }
 
 const navigation = [
-  { href: "/admin", label: "Accounts", icon: UserMultiple02Icon },
-  { href: "/admin/instance", label: "Instance", icon: Settings02Icon },
-  { href: "/admin/audit", label: "Audit", icon: ClipboardIcon },
-  { href: "/admin/health", label: "Health", icon: Pulse01Icon },
-]
+  { href: "/admin", key: "accounts", icon: UserMultiple02Icon },
+  { href: "/admin/instance", key: "instance", icon: Settings02Icon },
+  { href: "/admin/audit", key: "audit", icon: ClipboardIcon },
+  { href: "/admin/health", key: "health", icon: Pulse01Icon },
+] as const
 
 export function AdminShell({ children }: { children: ReactNode }) {
+  const t = useAppT()
   const pathname = usePathname()
   const router = useRouter()
   const setSession = useAuthStore((state) => state.setSession)
@@ -85,14 +87,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
          */}
         <aside className="w-full shrink-0 lg:sticky lg:top-[4.5rem] lg:w-40 lg:self-start">
           <p className="font-heading text-lg font-medium tracking-[-0.01em]">
-            Administration
+            {t("admin.title")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Instance metadata only
+            {t("admin.metadataOnly")}
           </p>
           <Separator className="my-4 lg:hidden" />
           <nav
-            aria-label="Administration"
+            aria-label={t("admin.title")}
             className="flex gap-1 lg:mt-5 lg:flex-col"
           >
             {navigation.map((item) => {
@@ -109,7 +111,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   }`}
                 >
                   <HugeiconsIcon icon={item.icon} size={15} />
-                  {item.label}
+                  {t(`admin.nav.${item.key}`)}
                 </Link>
               )
             })}

@@ -54,7 +54,6 @@ export function parseAcceptLanguage(
  */
 const UNTRANSLATED_ROUTES = [
   "/",
-  "/admin",
   "/privacy",
   "/terms",
   "/security",

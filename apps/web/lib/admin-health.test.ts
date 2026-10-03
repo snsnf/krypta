@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }))
+vi.mock("@/lib/app-i18n", async () => vi.importActual("./app-i18n"))
+vi.mock("@/lib/app-format", async () => vi.importActual("./app-format"))
 vi.mock("./api", () => ({ apiFetch: mocks.apiFetch }))
 // health-panels.tsx imports from "@/lib/admin-health", which is unresolvable
 // under this repo's vitest (see apps/web/CLAUDE.md). Route it to the real

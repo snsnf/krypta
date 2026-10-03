@@ -52,6 +52,7 @@ describe("app message catalogue", () => {
               ...values,
               strong: (chunks: unknown) => chunks,
               time: (chunks: unknown) => chunks,
+              code: (chunks: unknown) => chunks,
             })
           : translateKey(t as AppTranslator, key, values)
         const text = Array.isArray(message) ? message.join("") : String(message)

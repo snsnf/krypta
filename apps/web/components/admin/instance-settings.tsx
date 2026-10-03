@@ -2,15 +2,13 @@
 
 import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  FloppyDiskIcon,
-  Loading03Icon,
-} from "@hugeicons/core-free-icons"
+import { FloppyDiskIcon, Loading03Icon } from "@hugeicons/core-free-icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "@/components/ui/toast"
+import { useAppT } from "@/lib/app-i18n"
 import { updateAdminSettings, type AdminSettings } from "@/lib/admin"
 
 interface InstanceSettingsProps {
@@ -34,6 +32,8 @@ function nullableNumericValue(value: string): number | null {
 }
 
 export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
+  const t = useAppT()
+
   const [registrationEnabled, setRegistrationEnabled] = useState(
     settings.registrationEnabled
   )
@@ -75,11 +75,11 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
         defaultMaxResponsesPerPeriod: nullableNumericValue(maxResponses),
       })
       onSaved(updated)
-      toast.add({ title: "Instance settings saved", type: "success" })
+      toast.add({ title: t("admin.instance.saved"), type: "success" })
     } catch {
       toast.add({
-        title: "Could not save settings",
-        description: "Check the values and try again.",
+        title: t("admin.instance.saveFailed"),
+        description: t("admin.instance.saveFailedBody"),
         type: "error",
       })
     } finally {
@@ -90,26 +90,27 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
   return (
     <section>
       <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-        Instance
+        {t("admin.instance.title")}
       </h1>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-        Fixed registration, quota, and rate-limit settings. Deployment secrets
-        cannot be viewed or edited here.
+        {t("admin.instance.body")}
       </p>
 
       <div className="mt-8 max-w-xl rounded-xl border border-border p-4 sm:p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-medium">Registration</h2>
+            <h2 className="text-sm font-medium">
+              {t("admin.instance.registration")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Allow new accounts to register on this instance.
+              {t("admin.instance.registrationBody")}
             </p>
           </div>
           <Switch
             checked={registrationEnabled}
             onCheckedChange={setRegistrationEnabled}
             disabled={pending}
-            aria-label="Enable registration"
+            aria-label={t("admin.instance.enableRegistration")}
           />
         </div>
 
@@ -117,7 +118,7 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-1.5 text-sm font-medium">
-            Registrations per hour
+            {t("admin.instance.registerRate")}
             <Input
               type="number"
               min="1"
@@ -129,7 +130,7 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
             />
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Logins per minute
+            {t("admin.instance.loginRate")}
             <Input
               type="number"
               min="1"
@@ -141,7 +142,7 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
             />
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Default form quota
+            {t("admin.instance.formQuota")}
             <Input
               type="number"
               min="1"
@@ -153,7 +154,7 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
             />
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Default attachment quota (bytes)
+            {t("admin.instance.attachmentQuota")}
             <Input
               type="number"
               min="0"
@@ -164,43 +165,42 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
             />
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Default responses per month
+            {t("admin.instance.responsesQuota")}
             <Input
               type="number"
               min="0"
               inputMode="numeric"
-              placeholder="Unlimited"
+              placeholder={t("admin.instance.unlimited")}
               value={maxResponses}
               onChange={(event) => setMaxResponses(event.target.value)}
               disabled={pending}
             />
             <span className="text-xs font-normal text-muted-foreground">
-              Leave blank for no cap.
+              {t("admin.instance.noCap")}
             </span>
           </label>
         </div>
 
         {settings.billingEnabled ? (
           <p className="mt-4 text-xs text-muted-foreground">
-            This instance bills, so every account resolves its form,
-            attachment, and response quota from its plan and the three defaults
-            above are never reached. They are the floor for an instance with no
-            Stripe configuration.
+            {t("admin.instance.billingNote")}
           </p>
         ) : null}
 
         <Separator className="my-5" />
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-medium">Mail</h2>
+            <h2 className="text-sm font-medium">{t("admin.instance.mail")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {settings.mailConfigured
-                ? "Server mail is configured."
-                : "Server mail is not configured."}
+                ? t("admin.instance.mailOn")
+                : t("admin.instance.mailOff")}
             </p>
           </div>
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
-            {settings.mailConfigured ? "Configured" : "Unavailable"}
+            {settings.mailConfigured
+              ? t("admin.instance.configured")
+              : t("admin.instance.unavailable")}
           </span>
         </div>
 
@@ -214,11 +214,11 @@ export function InstanceSettings({ settings, onSaved }: InstanceSettingsProps) {
             />
             {pending ? (
               <span className="grid *:col-start-1 *:row-start-1">
-                <span className="invisible">Save settings</span>
-                <span>Saving...</span>
+                <span className="invisible">{t("admin.instance.save")}</span>
+                <span>{t("common.saving")}</span>
               </span>
             ) : (
-              "Save settings"
+              t("admin.instance.save")
             )}
           </Button>
         </div>
