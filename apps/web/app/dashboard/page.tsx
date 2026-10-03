@@ -459,7 +459,7 @@ export default function DashboardPage() {
                                   dir="auto"
                                   className="min-w-0 text-sm text-muted-foreground"
                                 >
-                                  {form.title}
+                                  {t("dashboard.unavailable")}
                                 </span>
                                 <span className="shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 text-[0.6875rem] leading-none font-medium text-muted-foreground">
                                   {t(`roles.${form.role}`)}
@@ -477,7 +477,10 @@ export default function DashboardPage() {
                                   />
                                 }
                                 aria-label={t("dashboard.actionsFor", {
-                                  title: form.title,
+                                  title:
+                                    form.accessState === "ready"
+                                      ? form.title
+                                      : t("dashboard.unavailable"),
                                 })}
                               >
                                 <HugeiconsIcon

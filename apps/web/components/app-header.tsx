@@ -16,7 +16,10 @@ import { useAuthStore } from "@/lib/auth-store"
 import { clearPersistedAccountKey } from "@/lib/device-key"
 import { KryptaLogo } from "@/components/krypta-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageMenu, LanguageRadioItems } from "@/components/language-switcher"
+import {
+  LanguageMenu,
+  LanguageRadioItems,
+} from "@/components/language-switcher"
 import { useAppT } from "@/lib/app-i18n"
 import { Button } from "@/components/ui/button"
 import {
@@ -140,12 +143,14 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
               {t("header.account")}
             </Link>
             {showAdmin && (
-              <Link
+              <a
+                // A full page load: /admin is English only, so it must not inherit this
+                // page's language or direction.
                 href="/admin"
                 className="text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
               >
                 {t("header.admin")}
-              </Link>
+              </a>
             )}
             <button
               type="button"
@@ -175,7 +180,7 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
                   {t("header.account")}
                 </DropdownMenuItem>
                 {showAdmin && (
-                  <DropdownMenuItem render={<Link href="/admin" />}>
+                  <DropdownMenuItem render={<a href="/admin" />}>
                     {t("header.admin")}
                   </DropdownMenuItem>
                 )}

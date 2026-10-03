@@ -478,7 +478,7 @@ make an Arabic-language form when picked in the Arabic app; Arabic runs two
 bytes a letter, so every template in both languages must still fit the
 1024-byte padding floor (a test enforces it), which is why the Arabic job
 application leaves out its optional start date. `e2e/rtl-workspace.spec.ts`
-walks the workspace in an Arabic browser and fails on any English left, so a
+walks the dashboard, account settings, the template gallery, the builder, a form's three tabs and the sharing dialog in an Arabic browser and fails on English left there, so a
 new workspace string that skipped `t()` is caught there.
 
 Strings live in `messages/<language>.json` under `form`. Components read them
