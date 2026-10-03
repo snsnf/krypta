@@ -12,6 +12,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { apiFetch } from "@/lib/api"
 import { useAuthStore } from "@/lib/auth-store"
+import { useAppT } from "@/lib/app-i18n"
 import { clearPersistedAccountKey } from "@/lib/device-key"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { AppHeader } from "@/components/app-header"
@@ -35,6 +36,7 @@ import {
 
 export default function AccountSettingsPage() {
   useEnsureUnlocked()
+  const t = useAppT()
   const email = useAuthStore((s) => s.email)
   const userId = useAuthStore((s) => s.userId)
   const clear = useAuthStore((s) => s.clear)
@@ -66,8 +68,8 @@ export default function AccountSettingsPage() {
       // pretending it worked.
       setSigningOut(false)
       toast.add({
-        title: "Could not sign out everywhere",
-        description: "Your other sessions may still be active. Try again.",
+        title: t("account.signOutFailed"),
+        description: t("account.signOutFailedBody"),
         type: "error",
       })
       return
@@ -87,16 +89,19 @@ export default function AccountSettingsPage() {
       <AppHeader />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:py-12">
         <h1 className="font-heading text-2xl font-medium tracking-[-0.01em]">
-          Account
+          {t("account.title")}
         </h1>
 
         <section className="mt-8">
           <h2 className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={UserCircleIcon} size={15} />
-            Signed in as
+            {t("account.signedInAs")}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {email ?? " "}
+          <p
+            dir="ltr"
+            className="mt-1 text-start text-sm text-muted-foreground"
+          >
+            {email ?? " "}
           </p>
         </section>
 
@@ -107,11 +112,13 @@ export default function AccountSettingsPage() {
         <section>
           <h2 className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={ShieldKeyIcon} size={15} />
-            Two-factor authentication
+            {t("account.twoFactorHeading")}
           </h2>
           <div className="mt-3">
             {totpEnabled === null ? (
-              <p className="text-sm text-muted-foreground">Checking...</p>
+              <p className="text-sm text-muted-foreground">
+                {t("account.checking")}
+              </p>
             ) : (
               <TwoFactorPanel
                 enabled={totpEnabled}
@@ -126,7 +133,7 @@ export default function AccountSettingsPage() {
         <section>
           <h2 className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={FingerPrintIcon} size={15} />
-            Passkeys
+            {t("account.passkeysHeading")}
           </h2>
           <div className="mt-3">
             <PasskeyPanel />
@@ -138,7 +145,7 @@ export default function AccountSettingsPage() {
         <section>
           <h2 className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={RefreshIcon} size={15} />
-            Vault recovery code
+            {t("account.recoveryHeading")}
           </h2>
           <div className="mt-3">
             <RecoveryCodePanel />
@@ -150,12 +157,10 @@ export default function AccountSettingsPage() {
         <section>
           <h2 className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={SmartPhone01Icon} size={15} />
-            Sessions
+            {t("account.sessionsHeading")}
           </h2>
           <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-            Signing out everywhere ends every session on every device,
-            including this one. Use it if you think someone else has access to
-            your account.
+            {t("account.sessionsBody")}
           </p>
 
           <Dialog>
@@ -169,20 +174,20 @@ export default function AccountSettingsPage() {
                 size={16}
                 data-icon="inline-start"
               />
-              Sign out everywhere
+              {t("account.signOutEverywhere")}
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Sign out everywhere?</DialogTitle>
+                <DialogTitle>
+                  {t("account.signOutEverywhereQuestion")}
+                </DialogTitle>
                 <DialogDescription>
-                  Every device will be signed out, including this one, and you
-                  will need your password to get back in. Your forms and
-                  responses are not affected.
+                  {t("account.signOutDescription")}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <DialogClose render={<Button variant="outline" size="sm" />}>
-                  Cancel
+                  {t("common.cancel")}
                 </DialogClose>
                 <Button
                   variant="destructive"
@@ -197,7 +202,9 @@ export default function AccountSettingsPage() {
                       data-icon="inline-start"
                     />
                   )}
-                  {signingOut ? "Signing out..." : "Sign out everywhere"}
+                  {signingOut
+                    ? t("account.signingOut")
+                    : t("account.signOutEverywhere")}
                 </Button>
               </DialogFooter>
             </DialogContent>

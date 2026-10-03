@@ -4,6 +4,13 @@ import { useEffect, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CreditCardIcon } from "@hugeicons/core-free-icons"
 import { apiFetch, apiFetchWithStatus, ApiClientError } from "@/lib/api"
+import {
+  useAppFormat,
+  useAppLanguage,
+  useAppT,
+  translateKey,
+} from "@/lib/app-i18n"
+import { describeApiError } from "@/lib/api-error-text"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
@@ -30,53 +37,20 @@ interface SubscriptionResponse {
   attachment_bytes_used: number
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  const units = ["KB", "MB", "GB", "TB"]
-  let value = bytes / 1024
-  let unitIndex = 0
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024
-    unitIndex += 1
-  }
-  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`
-}
-
-// `time`'s RFC3339 serializer has rendered as "Invalid Date" in this project
-// before, so this never trusts the string without checking the parse.
-function formatRenewalDate(value: string | null): string | null {
-  if (!value) return null
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return null
-  return parsed.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
-function statusLabel(status: string | null): string | null {
+function statusKey(status: string | null): string | null {
   if (!status) return null
-  switch (status) {
-    case "active":
-      return "Active"
-    case "trialing":
-      return "Trial"
-    case "past_due":
-      return "Past due"
-    case "canceled":
-      return "Canceled"
-    case "unpaid":
-      return "Unpaid"
-    case "incomplete":
-      return "Incomplete"
-    case "incomplete_expired":
-      return "Incomplete, expired"
-    case "paused":
-      return "Paused"
-    default:
-      return status.replace(/_/g, " ")
-  }
+  return Object.hasOwn(STATUS_KEYS, status) ? STATUS_KEYS[status] : null
+}
+
+const STATUS_KEYS: Record<string, string> = {
+  active: "account.plan.status.active",
+  trialing: "account.plan.status.trialing",
+  past_due: "account.plan.status.past_due",
+  canceled: "account.plan.status.canceled",
+  unpaid: "account.plan.status.unpaid",
+  incomplete: "account.plan.status.incomplete",
+  incomplete_expired: "account.plan.status.incomplete_expired",
+  paused: "account.plan.status.paused",
 }
 
 // `max` of null means there is nothing to fill up, so the track is left out
@@ -94,6 +68,7 @@ function UsageMeter({
   max: number | null
   formatValue: (value: number) => string
 }) {
+  const t = useAppT()
   const ratio = max !== null && max > 0 ? Math.min(1, used / max) : 0
   const atLimit = max !== null && max > 0 && used >= max
   return (
@@ -102,8 +77,11 @@ function UsageMeter({
         <span>{label}</span>
         <span className="text-muted-foreground">
           {max === null
-            ? `${formatValue(used)} used, unlimited`
-            : `${formatValue(used)} of ${formatValue(max)}`}
+            ? t("account.plan.usedUnlimited", { used: formatValue(used) })
+            : t("account.plan.usedOf", {
+                used: formatValue(used),
+                max: formatValue(max),
+              })}
         </span>
       </div>
       {max === null ? null : (
@@ -126,6 +104,9 @@ function UsageMeter({
 type LoadState = "loading" | "unavailable" | "error" | "loaded"
 
 export function PlanPanel() {
+  const t = useAppT()
+  const language = useAppLanguage()
+  const format = useAppFormat()
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(
     null
   )
@@ -173,7 +154,9 @@ export function PlanPanel() {
       setBusy(false)
       toast.add({
         title:
-          err instanceof ApiClientError ? err.message : "Could not start checkout",
+          err instanceof ApiClientError
+            ? describeApiError(err, t, language)
+            : t("account.plan.checkoutFailed"),
         type: "error",
       })
     }
@@ -191,8 +174,8 @@ export function PlanPanel() {
       toast.add({
         title:
           err instanceof ApiClientError
-            ? err.message
-            : "Could not open billing management",
+            ? describeApiError(err, t, language)
+            : t("account.plan.portalFailed"),
         type: "error",
       })
     }
@@ -215,11 +198,11 @@ export function PlanPanel() {
         <section>
           <h2 className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={CreditCardIcon} size={15} />
-            Plan and usage
+            {t("account.plan.heading")}
           </h2>
           <div className="mt-3 space-y-2">
             <p className="text-sm text-muted-foreground">
-              Could not load your plan and usage.
+              {t("account.plan.loadFailed")}
             </p>
             <Button
               size="sm"
@@ -229,7 +212,7 @@ export function PlanPanel() {
                 setRetryToken((n) => n + 1)
               }}
             >
-              Try again
+              {t("common.tryAgain")}
             </Button>
           </div>
         </section>
@@ -238,9 +221,20 @@ export function PlanPanel() {
   }
 
   const isPro = subscription.plan_id === "pro"
-  const planLabel = isPro ? "Pro" : subscription.plan_id === "free" ? "Free" : subscription.plan_id
-  const status = statusLabel(subscription.status)
-  const renewalDate = formatRenewalDate(subscription.current_period_end)
+  const planLabel = isPro
+    ? t("account.plan.pro")
+    : subscription.plan_id === "free"
+      ? t("account.plan.free")
+      : subscription.plan_id
+  const knownStatus = statusKey(subscription.status)
+  const status = knownStatus
+    ? translateKey(t, knownStatus)
+    : subscription.status?.replace(/_/g, " ")
+  // `time`'s RFC3339 serializer has rendered as "Invalid Date" in this project
+  // before, so the formatter returns "" for anything it cannot parse.
+  const renewalDate = subscription.current_period_end
+    ? format.date(subscription.current_period_end)
+    : ""
 
   return (
     <>
@@ -248,15 +242,15 @@ export function PlanPanel() {
       <section>
         <h2 className="flex items-center gap-1.5 text-sm font-medium">
           <HugeiconsIcon icon={CreditCardIcon} size={15} />
-          Plan and usage
+          {t("account.plan.heading")}
         </h2>
 
         <div className="mt-3 space-y-4">
           <div>
             <p className="text-sm font-medium">
-              {planLabel} plan
+              {t("account.plan.planName", { plan: planLabel })}
               {status ? (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                <span className="ms-2 text-xs font-normal text-muted-foreground">
                   {status}
                 </span>
               ) : null}
@@ -264,58 +258,58 @@ export function PlanPanel() {
             {isPro && renewalDate ? (
               <p className="mt-1 text-xs text-muted-foreground">
                 {subscription.cancel_at_period_end
-                  ? `Your subscription ends on ${renewalDate}.`
-                  : `Renews on ${renewalDate}.`}
+                  ? t("account.plan.ends", { date: renewalDate })
+                  : t("account.plan.renews", { date: renewalDate })}
               </p>
             ) : null}
           </div>
 
           <div className="space-y-3">
             <UsageMeter
-              label="Responses this period"
+              label={t("account.plan.responses")}
               used={subscription.responses_used}
               max={
                 subscription.responses_metered
                   ? subscription.max_responses_per_period
                   : null
               }
-              formatValue={(n) => n.toLocaleString()}
+              formatValue={format.number}
             />
             <UsageMeter
-              label="Open forms"
+              label={t("account.plan.openForms")}
               used={subscription.open_forms_used}
-              max={subscription.forms_metered ? subscription.max_open_forms : null}
-              formatValue={(n) => n.toLocaleString()}
+              max={
+                subscription.forms_metered ? subscription.max_open_forms : null
+              }
+              formatValue={format.number}
             />
             <UsageMeter
-              label="Attachment storage"
+              label={t("account.plan.attachments")}
               used={subscription.attachment_bytes_used}
               max={subscription.max_attachment_bytes}
-              formatValue={formatBytes}
+              formatValue={format.bytes}
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Reaching a limit blocks adding more until you are back under it, or
-            you upgrade. Nothing already stored is ever deleted for being over
-            a limit.
+            {t("account.plan.limitNote")}
           </p>
 
           {isPro ? (
             <Button size="sm" disabled={busy} onClick={handleManage}>
-              {busy ? "Opening..." : "Manage billing"}
+              {busy ? t("account.plan.opening") : t("account.plan.manage")}
             </Button>
           ) : (
             <div className="space-y-3">
               <label className="flex items-center gap-2 text-sm">
                 <Switch checked={yearly} onCheckedChange={setYearly} />
-                Bill yearly (save on the monthly rate)
+                {t("account.plan.yearly")}
               </label>
               <Button size="sm" disabled={busy} onClick={handleUpgrade}>
                 {busy
-                  ? "Starting checkout..."
+                  ? t("account.plan.starting")
                   : yearly
-                    ? "Upgrade, $120/year"
-                    : "Upgrade, $12/month"}
+                    ? t("account.plan.upgradeYearly")
+                    : t("account.plan.upgradeMonthly")}
               </Button>
             </div>
           )}

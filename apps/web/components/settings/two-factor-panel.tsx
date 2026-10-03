@@ -6,8 +6,10 @@ import { CheckmarkCircle02Icon, Copy01Icon } from "@hugeicons/core-free-icons"
 import { apiFetch, ApiClientError } from "@/lib/api"
 import { syncCurrentSessionTotpMetadata, useAuthStore } from "@/lib/auth-store"
 import { requestReauthenticationReceipt } from "@/lib/vault-access"
+import { useAppLanguage, useAppT } from "@/lib/app-i18n"
+import { describeApiError } from "@/lib/api-error-text"
+import { CredentialInput } from "@/components/credential-input"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/toast"
 
 interface Setup {
@@ -24,6 +26,8 @@ export function TwoFactorPanel({
   enabled,
   onEnabledChange,
 }: TwoFactorPanelProps) {
+  const t = useAppT()
+  const language = useAppLanguage()
   const email = useAuthStore((s) => s.email)
   const [setup, setSetup] = useState<Setup | null>(null)
   const [code, setCode] = useState("")
@@ -41,7 +45,7 @@ export function TwoFactorPanel({
     try {
       setSetup(await apiFetch<Setup>("/auth/2fa/setup", { method: "POST" }))
     } catch {
-      toast.add({ title: "Could not start setup", type: "error" })
+      toast.add({ title: t("account.twoFactor.startFailed"), type: "error" })
     } finally {
       setBusy(false)
     }
@@ -73,10 +77,10 @@ export function TwoFactorPanel({
       toast.add({
         title:
           err instanceof ApiClientError && err.code === "unauthorized"
-            ? "Your password was not accepted"
+            ? t("account.twoFactor.passwordRejected")
             : err instanceof ApiClientError
-              ? err.message
-              : "Could not enable two-factor authentication",
+              ? describeApiError(err, t, language)
+              : t("account.twoFactor.enableFailed"),
         type: "error",
       })
     } finally {
@@ -96,11 +100,13 @@ export function TwoFactorPanel({
       setCode("")
       onEnabledChange(false)
       syncCurrentSessionTotpMetadata(false)
-      toast.add({ title: "Two-factor authentication turned off" })
+      toast.add({ title: t("account.twoFactor.turnedOff") })
     } catch (err) {
       toast.add({
         title:
-          err instanceof ApiClientError ? err.message : "Could not turn it off",
+          err instanceof ApiClientError
+            ? describeApiError(err, t, language)
+            : t("account.twoFactor.disableFailed"),
         type: "error",
       })
     } finally {
@@ -113,12 +119,16 @@ export function TwoFactorPanel({
   if (recoveryCodes) {
     return (
       <div className="rounded-lg border border-primary/25 bg-primary/[0.04] p-4">
-        <h3 className="text-sm font-medium">Save your recovery codes</h3>
+        <h3 className="text-sm font-medium">
+          {t("account.twoFactor.saveCodesTitle")}
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Each code works once, and this is the only time they are shown. Store
-          them somewhere other than your authenticator app.
+          {t("account.twoFactor.saveCodesBody")}
         </p>
-        <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-sm">
+        <ul
+          dir="ltr"
+          className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-sm"
+        >
           {recoveryCodes.map((c) => (
             <li key={c}>{c}</li>
           ))}
@@ -130,22 +140,25 @@ export function TwoFactorPanel({
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(recoveryCodes.join("\n"))
-              toast.add({ title: "Codes copied", type: "success" })
+              toast.add({
+                title: t("account.twoFactor.codesCopied"),
+                type: "success",
+              })
             } catch {
               toast.add({
-                title: "Could not copy",
-                description: "Select the codes and copy them manually.",
+                title: t("account.twoFactor.copyFailed"),
+                description: t("account.twoFactor.copyFailedBody"),
                 type: "error",
               })
             }
           }}
         >
           <HugeiconsIcon icon={Copy01Icon} size={14} data-icon="inline-start" />
-          Copy codes
+          {t("account.twoFactor.copyCodes")}
         </Button>
         <Button
           size="sm"
-          className="mt-4 ml-2"
+          className="ms-2 mt-4"
           onClick={() => setRecoveryCodes(null)}
         >
           <HugeiconsIcon
@@ -153,7 +166,7 @@ export function TwoFactorPanel({
             size={14}
             data-icon="inline-start"
           />
-          I have saved them
+          {t("account.twoFactor.saved")}
         </Button>
       </div>
     )
@@ -163,48 +176,52 @@ export function TwoFactorPanel({
     return (
       <form onSubmit={confirmSetup} className="flex flex-col items-start gap-3">
         <p className="text-sm text-muted-foreground">
-          Scan this with your authenticator app, then enter the code it shows
-          and your password.
+          {t("account.twoFactor.scan")}
         </p>
         {/* Rendered by the API, so no QR library ships to the browser. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={setup.qr_data_uri}
-          alt="Two-factor setup QR code"
+          alt={t("account.twoFactor.qrAlt")}
           className="size-40 rounded-lg border border-border bg-white p-1"
         />
         <details className="text-sm">
           <summary className="text-muted-foreground">
-            Cannot scan the code?
+            {t("account.twoFactor.cannotScan")}
           </summary>
-          <code className="mt-2 block max-w-md text-xs break-all text-muted-foreground">
+          <code
+            dir="ltr"
+            className="mt-2 block max-w-md text-xs break-all text-muted-foreground"
+          >
             {setup.provisioning_uri}
           </code>
         </details>
-        <Input
+        <CredentialInput
           required
           autoFocus
           inputMode="numeric"
           autoComplete="one-time-code"
           placeholder="123456"
-          aria-label="Code from your authenticator app"
+          aria-label={t("account.twoFactor.codeLabel")}
           className="max-w-40"
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
-        <Input
+        <CredentialInput
           required
           type="password"
           autoComplete="current-password"
-          placeholder="Your password"
-          aria-label="Your password, to turn on two-factor authentication"
+          placeholder={t("account.twoFactor.passwordPlaceholder")}
+          aria-label={t("account.twoFactor.passwordLabel")}
           className="max-w-72"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={busy}>
-            {busy ? "Verifying..." : "Turn on"}
+            {busy
+              ? t("account.twoFactor.verifying")
+              : t("account.twoFactor.turnOn")}
           </Button>
           <Button
             type="button"
@@ -216,7 +233,7 @@ export function TwoFactorPanel({
               setPassword("")
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
@@ -230,22 +247,23 @@ export function TwoFactorPanel({
         className="flex flex-col items-start gap-3"
       >
         <p className="max-w-prose text-sm text-muted-foreground">
-          Enter a code from your authenticator app, or a recovery code, to turn
-          two-factor authentication off.
+          {t("account.twoFactor.disablePrompt")}
         </p>
-        <Input
+        <CredentialInput
           required
           autoFocus
           autoComplete="one-time-code"
           placeholder="123456"
-          aria-label="Code to confirm turning off two-factor authentication"
+          aria-label={t("account.twoFactor.disableCodeLabel")}
           className="max-w-40"
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
         <div className="flex gap-2">
           <Button type="submit" variant="destructive" size="sm" disabled={busy}>
-            {busy ? "Turning off..." : "Turn off"}
+            {busy
+              ? t("account.twoFactor.turningOff")
+              : t("account.twoFactor.turnOff")}
           </Button>
           <Button
             type="button"
@@ -256,7 +274,7 @@ export function TwoFactorPanel({
               setCode("")
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
@@ -267,8 +285,8 @@ export function TwoFactorPanel({
     <div className="flex flex-col items-start gap-3">
       <p className="max-w-prose text-sm text-muted-foreground">
         {enabled
-          ? "A code from your authenticator app is required to sign in. Your responses stay encrypted either way; this protects the account itself."
-          : "Require a code from an authenticator app when signing in, so a stolen password is not enough on its own."}
+          ? t("account.twoFactor.enabledBody")
+          : t("account.twoFactor.disabledBody")}
       </p>
       {enabled ? (
         <Button
@@ -276,11 +294,13 @@ export function TwoFactorPanel({
           size="sm"
           onClick={() => setDisabling(true)}
         >
-          Turn off two-factor authentication
+          {t("account.twoFactor.turnOffButton")}
         </Button>
       ) : (
         <Button size="sm" onClick={startSetup} disabled={busy}>
-          {busy ? "Preparing..." : "Set up two-factor authentication"}
+          {busy
+            ? t("account.twoFactor.preparing")
+            : t("account.twoFactor.setUp")}
         </Button>
       )}
     </div>
