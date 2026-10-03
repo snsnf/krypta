@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
   LOCALE_COOKIE,
-  isUntranslatedRoute,
   localeCookie,
   parseAcceptLanguage,
   resolveAppLanguage,
@@ -54,23 +53,15 @@ describe("localeCookie", () => {
 describe("route-aware resolution", () => {
   const ar = "ar-SA,ar;q=0.9"
 
-  it("applies the browser's language only where the screen is translated", () => {
+  it("applies the browser's language on every page of the app", () => {
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/login" })).toBe("ar")
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/recover" })).toBe("ar")
     // An unknown path is a 404, which is translated.
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/no-such-page" })).toBe("ar")
     // The workspace and the invitation screens are translated too.
-    for (const pathname of ["/dashboard", "/dashboard/abc", "/dashboard/settings", "/invitations/accept", "/admin", "/admin/health"]) {
+    for (const pathname of ["/", "/dashboard", "/dashboard/abc", "/dashboard/settings", "/invitations/accept", "/admin", "/admin/health", "/privacy", "/terms", "/security"]) {
       expect(resolveAppLanguage({ acceptLanguage: ar, pathname }), pathname).toBe("ar")
     }
-    for (const pathname of ["/", "/privacy", "/terms", "/security"]) {
-      expect(resolveAppLanguage({ acceptLanguage: ar, pathname }), pathname).toBe("en")
-    }
-  })
-
-  it("still honours an explicit choice on an untranslated route", () => {
-    expect(resolveAppLanguage({ cookie: "ar", pathname: "/privacy" })).toBe("ar")
-    expect(resolveAppLanguage({ cookie: "ar", pathname: "/" })).toBe("ar")
   })
 
   it("never applies any app language to a public form", () => {
@@ -78,12 +69,6 @@ describe("route-aware resolution", () => {
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/f/abc/r" })).toBe("en")
     // A path that merely starts with the same letter is not a form.
     expect(resolveAppLanguage({ acceptLanguage: ar, pathname: "/forms-are-great" })).toBe("ar")
-  })
-
-  it("does not mistake a prefix match for a route", () => {
-    expect(isUntranslatedRoute("/privacy")).toBe(true)
-    expect(isUntranslatedRoute("/privacys")).toBe(false)
-    expect(isUntranslatedRoute("/login")).toBe(false)
   })
 
   it("behaves as before when the path is unknown", () => {

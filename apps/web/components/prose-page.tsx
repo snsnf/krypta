@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { LanguageMenu } from "@/components/language-switcher"
 
 /**
  * The chrome the three text pages share: /security, /privacy and /terms.
@@ -12,9 +13,12 @@ import type { ReactNode } from "react"
 export function ProsePage({
   title,
   updated,
+  updatedLabel = "Last updated",
   children,
 }: {
   title: string
+  /** "Last updated", in the page's language. */
+  updatedLabel?: string
   /**
    * When the text last changed, in prose.
    *
@@ -29,13 +33,14 @@ export function ProsePage({
   return (
     <div className="min-h-svh">
       <header className="px-6 pt-10">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto flex max-w-3xl items-center justify-between">
           <Link
             href="/"
             className="font-heading text-lg font-semibold tracking-[-0.02em] transition-opacity duration-150 ease-out hover:opacity-70"
           >
             krypta
           </Link>
+          <LanguageMenu />
         </div>
       </header>
 
@@ -46,7 +51,7 @@ export function ProsePage({
           </h1>
           {updated && (
             <p className="mt-5 font-mono text-xs tracking-wide text-muted-foreground">
-              Last updated {updated}
+              {updatedLabel} {updated}
             </p>
           )}
           {children}
@@ -66,7 +71,9 @@ export function ProseLead({ children }: { children: ReactNode }) {
 
 /** A body paragraph, spaced to follow either a heading or another paragraph. */
 export function ProseText({ children }: { children: ReactNode }) {
-  return <p className="mt-5 leading-relaxed text-muted-foreground">{children}</p>
+  return (
+    <p className="mt-5 leading-relaxed text-muted-foreground">{children}</p>
+  )
 }
 
 export function ProseSection({

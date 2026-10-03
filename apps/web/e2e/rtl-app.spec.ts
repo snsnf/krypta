@@ -21,13 +21,17 @@ test("the entry screens switch to Arabic, right to left, and back", async ({
     .poll(() =>
       page.evaluate(() =>
         Array.from(document.fonts).some(
-          (face) => face.family.includes("Noto Sans Arabic") && face.status === "loaded"
+          (face) =>
+            face.family.includes("Noto Sans Arabic") && face.status === "loaded"
         )
       )
     )
     .toBe(true)
   // Credentials stay left to right on an Arabic page.
-  await expect(page.getByLabel("البريد الإلكتروني")).toHaveAttribute("dir", "ltr")
+  await expect(page.getByLabel("البريد الإلكتروني")).toHaveAttribute(
+    "dir",
+    "ltr"
+  )
 
   await page.getByRole("button", { name: /اللغة: English/ }).click()
   await expect(html).toHaveAttribute("lang", "en")
@@ -41,7 +45,9 @@ test("a browser that prefers Arabic gets Arabic with no cookie", async ({
   const page = await context.newPage()
   await page.goto("/login")
   await expect(page.locator("html")).toHaveAttribute("lang", "ar")
-  await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "تسجيل الدخول" })
+  ).toBeVisible()
   const cookies = await context.cookies()
   expect(cookies.some((cookie) => cookie.name === "krypta-locale")).toBe(false)
   await context.close()
@@ -69,15 +75,21 @@ test("the signed-in header switches language, fits a phone, and a form page keep
   // menu. Measured with every menu closed and unmounted: while one is open or
   // closing, Base UI's own 1px focus-guard spans add 1px of left overflow in
   // right-to-left only.
-  await expect(page.locator('[data-slot="dropdown-menu-content"]')).toHaveCount(0)
+  await expect(page.locator('[data-slot="dropdown-menu-content"]')).toHaveCount(
+    0
+  )
   await page.setViewportSize({ width: 375, height: 700 })
   await expect(page.getByRole("button", { name: "قائمة الحساب" })).toBeVisible()
   const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth
   )
   expect(overflow).toBeLessThanOrEqual(0)
   await page.getByRole("button", { name: "قائمة الحساب" }).click()
-  await expect(page.getByRole("menuitemradio", { name: "English" })).toBeVisible()
+  await expect(
+    page.getByRole("menuitemradio", { name: "English" })
+  ).toBeVisible()
 
   await page.getByRole("menuitemradio", { name: "English" }).click()
   await expect(html).toHaveAttribute("lang", "en")
@@ -96,19 +108,15 @@ test("an Arabic browser still gets an English form error page, and an Arabic not
   await page.goto("/f/does-not-exist")
   await expect(page.locator("html")).toHaveAttribute("lang", "en")
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr")
-  await expect(page.getByRole("heading", { name: "This link is incomplete" })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "This link is incomplete" })
+  ).toBeVisible()
 
-  // Pages that are not translated yet ignore the browser's preference too,
-  // rather than mirroring English text right to left.
-  for (const path of ["/", "/security"]) {
-    await page.goto(path)
-    await expect(page.locator("html"), path).toHaveAttribute("lang", "en")
-    await expect(page.locator("html"), path).toHaveAttribute("dir", "ltr")
-  }
-
-  // Everything else follows it.
+  // Every other page follows the browser's preference.
   await page.goto("/definitely-not-a-page")
-  await expect(page.getByRole("heading", { name: "لا شيء هنا لفك ختمه." })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "لا شيء هنا لفك ختمه." })
+  ).toBeVisible()
   await expect(page).toHaveTitle("الصفحة غير موجودة | krypta")
   await context.close()
 })

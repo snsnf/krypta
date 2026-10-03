@@ -3,16 +3,17 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import sodium from "libsodium-wrappers-sumo"
 import { generateSealKeyPair, sealBox } from "@krypta/crypto"
+import { useAppT, type AppTranslator } from "@/lib/app-i18n"
 
 /**
  * Answers people actually need encryption for. Kept short so the sealed
  * output stays a readable block rather than a wall of base64.
  */
-const SAMPLES = [
-  "I reported the incident to HR in March.",
-  "Diagnosed with type 1 diabetes in 2019.",
-  "My manager asked me to sign the audit early.",
-]
+const SAMPLE_KEYS = ["a", "b", "c"] as const
+
+function sampleText(t: AppTranslator, index: number): string {
+  return t(`landing.demo.samples.${SAMPLE_KEYS[index]}`)
+}
 
 const TYPE_MS = 38
 const HOLD_MS = 2800
@@ -58,6 +59,8 @@ const INITIAL_PROGRESS: Progress = { index: 0, chars: 0, sealed: false }
  * component and is never sent anywhere.
  */
 export function LiveSealDemo() {
+  const t = useAppT()
+
   const [publicKey, setPublicKey] = useState<string | null>(null)
   const [progress, setProgress] = useState<Progress>(INITIAL_PROGRESS)
 
@@ -81,7 +84,7 @@ export function LiveSealDemo() {
     }
   }, [])
 
-  const sample = SAMPLES[progress.index]
+  const sample = sampleText(t, progress.index)
 
   // Under reduced motion the sample is shown already typed.
   const typed = reduced ? sample : sample.slice(0, progress.chars)
@@ -109,14 +112,14 @@ export function LiveSealDemo() {
 
     const typeTimer = setInterval(() => {
       setProgress((current) => {
-        if (current.chars < SAMPLES[current.index].length) {
+        if (current.chars < sampleText(t, current.index).length) {
           return { ...current, chars: current.chars + 1 }
         }
 
         clearInterval(typeTimer)
         holdTimer = setTimeout(() => {
           setProgress({
-            index: (current.index + 1) % SAMPLES.length,
+            index: (current.index + 1) % SAMPLE_KEYS.length,
             chars: 0,
             sealed: false,
           })
@@ -129,7 +132,7 @@ export function LiveSealDemo() {
       clearInterval(typeTimer)
       clearTimeout(holdTimer)
     }
-  }, [progress.index, publicKey, reduced])
+  }, [progress.index, publicKey, reduced, t])
 
   const showCaret = !reduced && !progress.sealed
 
@@ -139,13 +142,10 @@ export function LiveSealDemo() {
      * and a third rounded box nested in the other two cannot be concentric
      * with them. Its corner visibly crossed the enclosure's before this.
      */
-    <figure
-      className="p-6 sm:p-8"
-      aria-label="A sample answer being encrypted in the browser, showing the ciphertext the server receives."
-    >
+    <figure className="p-6 sm:p-8" aria-label={t("landing.demo.label")}>
       <div className="flex flex-col gap-2">
         <span className="font-mono text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
-          In the visitor&apos;s browser
+          {t("landing.demo.browser")}
         </span>
         <p
           aria-hidden="true"
@@ -153,7 +153,7 @@ export function LiveSealDemo() {
         >
           {typed}
           {showCaret && (
-            <span className="ml-0.5 inline-block h-[1.1em] w-[0.5ch] translate-y-[0.15em] animate-caret-blink bg-brand align-baseline" />
+            <span className="ms-0.5 inline-block h-[1.1em] w-[0.5ch] translate-y-[0.15em] animate-caret-blink bg-brand align-baseline" />
           )}
         </p>
       </div>
@@ -162,7 +162,7 @@ export function LiveSealDemo() {
 
       <div className="flex flex-col gap-2">
         <span className="font-mono text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
-          What our server stores
+          {t("landing.demo.stores")}
         </span>
         <p
           aria-hidden="true"

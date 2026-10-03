@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { useAppT } from "@/lib/app-i18n"
 
 // The demo pulls in the hybrid ML-KEM-768 + X25519 sealing library (via
 // @krypta/crypto) just to show real ciphertext. That library is required
@@ -19,14 +20,13 @@ import dynamic from "next/dynamic"
 // live-seal-demo.tsx, so it tracks the real component's responsive height
 // at every breakpoint instead of only approximating one of them.
 function LiveSealDemoPlaceholder() {
+  const t = useAppT()
+
   return (
-    <div
-      aria-hidden
-      className="p-6 sm:p-8"
-    >
+    <div aria-hidden className="p-6 sm:p-8">
       <div className="flex flex-col gap-2">
         <span className="font-mono text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
-          In the visitor&apos;s browser
+          {t("landing.demo.browser")}
         </span>
         <div className="min-h-[3.5rem] sm:min-h-[3rem]" />
       </div>
@@ -35,7 +35,7 @@ function LiveSealDemoPlaceholder() {
 
       <div className="flex flex-col gap-2">
         <span className="font-mono text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
-          What our server stores
+          {t("landing.demo.stores")}
         </span>
         <div className="h-[7rem] sm:h-[6.5rem]" />
       </div>
