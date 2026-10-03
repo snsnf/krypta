@@ -25,6 +25,7 @@ import {
 import { ApiClientError, apiFetch } from "@/lib/api"
 import { memberControls, transferOwnership } from "@/lib/sharing-controls"
 import { sendInvitation } from "@/lib/sharing-invitations"
+import { useAppFormat, useAppT } from "@/lib/app-i18n"
 
 type MemberRole = "owner" | "editor" | "viewer"
 type CollaboratorRole = Exclude<MemberRole, "owner">
@@ -77,15 +78,8 @@ interface SharingDialogProps {
   onOwnershipTransferred: () => void
 }
 
-const roleLabels: Record<MemberRole, string> = {
-  owner: "Owner",
-  editor: "Editor",
-  viewer: "Viewer",
-}
-
 const pressFeedback =
   "transition-transform duration-150 ease-out active:translate-y-0 active:scale-[0.97]"
-const genericFailure = "Something went wrong. Refresh and try again."
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -147,15 +141,6 @@ function parseCollaboration(value: unknown): CollaborationData {
   return { members, invitations }
 }
 
-function formattedExpiry(value: string): string {
-  const date = new Date(value)
-  if (!Number.isFinite(date.getTime())) return "Unknown expiry"
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
-}
-
 function RoleSelect({
   value,
   label,
@@ -167,6 +152,7 @@ function RoleSelect({
   disabled: boolean
   onChange: (role: CollaboratorRole) => void
 }) {
+  const t = useAppT()
   return (
     <label className="flex items-center gap-2 text-xs text-muted-foreground">
       <span className="sr-only">{label}</span>
@@ -177,8 +163,8 @@ function RoleSelect({
         onChange={(event) => onChange(event.target.value as CollaboratorRole)}
         className="h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <option value="editor">Editor</option>
-        <option value="viewer">Viewer</option>
+        <option value="editor">{t("roles.editor")}</option>
+        <option value="viewer">{t("roles.viewer")}</option>
       </select>
     </label>
   )
@@ -199,29 +185,30 @@ function ConfirmationDialog({
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
 }) {
+  const t = useAppT()
   if (confirmation === null) return null
 
   const content =
     confirmation.kind === "transfer"
       ? {
-          title: "Transfer ownership?",
-          description: `Transfer this form to ${confirmation.email}? You will become an Editor and will no longer manage sharing.`,
-          action: "Transfer ownership",
+          title: t("sharing.transferTitle"),
+          description: t("sharing.transferBody", { email: confirmation.email }),
+          action: t("sharing.transferAction"),
           destructive: false,
           icon: UserSwitchIcon,
         }
       : confirmation.kind === "remove"
         ? {
-            title: "Remove collaborator?",
-            description: `Remove ${confirmation.email} from this form? They will lose future access.`,
-            action: "Remove",
+            title: t("sharing.removeTitle"),
+            description: t("sharing.removeBody", { email: confirmation.email }),
+            action: t("common.remove"),
             destructive: true,
             icon: UserRemove01Icon,
           }
         : {
-            title: "Revoke invitation?",
-            description: `Revoke the invitation for ${confirmation.email}? Its current link will stop working.`,
-            action: "Revoke",
+            title: t("sharing.revokeTitle"),
+            description: t("sharing.revokeBody", { email: confirmation.email }),
+            action: t("sharing.revoke"),
             destructive: true,
             icon: Cancel01Icon,
           }
@@ -234,7 +221,7 @@ function ConfirmationDialog({
         showCloseButton={false}
         initialFocus={cancelRef}
       >
-        <DialogHeader className="text-center sm:text-left">
+        <DialogHeader className="text-center sm:text-start">
           <DialogTitle>{content.title}</DialogTitle>
           <DialogDescription>{content.description}</DialogDescription>
         </DialogHeader>
@@ -252,7 +239,7 @@ function ConfirmationDialog({
                 data-icon="inline-start"
               />
             )}
-            {busy ? "Working…" : content.action}
+            {busy ? t("sharing.working") : content.action}
           </Button>
           <DialogClose
             render={
@@ -264,7 +251,7 @@ function ConfirmationDialog({
               />
             }
           >
-            Cancel
+            {t("common.cancel")}
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -278,6 +265,11 @@ export function SharingDialog({
   formPrivateKey,
   onOwnershipTransferred,
 }: SharingDialogProps) {
+  const t = useAppT()
+  const format = useAppFormat()
+  const roleLabel = (role: MemberRole) => t(`roles.${role}`)
+  const genericFailure = t("sharing.genericFailure")
+
   const [open, setOpen] = useState(false)
   const [collaboration, setCollaboration] = useState<CollaborationData | null>(
     null
@@ -360,8 +352,8 @@ export function SharingDialog({
   function reportFailure(): void {
     setFeedback(genericFailure)
     toast.add({
-      title: "Could not update sharing",
-      description: "Something went wrong. Try again.",
+      title: t("sharing.updateFailed"),
+      description: t("common.genericError"),
       type: "error",
     })
   }
@@ -406,7 +398,7 @@ export function SharingDialog({
       })
       await refreshCollaboration()
       setEmail("")
-      toast.add({ title: "Invitation sent", type: "success" })
+      toast.add({ title: t("sharing.invitationSent"), type: "success" })
     })
   }
 
@@ -428,7 +420,7 @@ export function SharingDialog({
         body: JSON.stringify({ role: next }),
       })
       await refreshCollaboration()
-      toast.add({ title: "Role updated", type: "success" })
+      toast.add({ title: t("sharing.roleUpdated"), type: "success" })
     })
   }
 
@@ -443,7 +435,7 @@ export function SharingDialog({
         formPrivateKey,
       })
       await refreshCollaboration()
-      toast.add({ title: "Invitation sent", type: "success" })
+      toast.add({ title: t("sharing.invitationSent"), type: "success" })
     })
   }
 
@@ -468,7 +460,7 @@ export function SharingDialog({
           refreshSequenceRef.current += 1
           setConfirmation(null)
           setOpen(false)
-          toast.add({ title: "Ownership transferred", type: "success" })
+          toast.add({ title: t("sharing.transferred"), type: "success" })
         },
         () => {
           ownerControlsActiveRef.current = true
@@ -488,8 +480,8 @@ export function SharingDialog({
       toast.add({
         title:
           confirmation.kind === "remove"
-            ? "Collaborator removed"
-            : "Invitation revoked",
+            ? t("sharing.removed")
+            : t("sharing.revoked"),
         type: "success",
       })
     })
@@ -526,7 +518,7 @@ export function SharingDialog({
             <Button
               variant="outline"
               size="sm"
-              aria-label="Share"
+              aria-label={t("sharing.share")}
               className={`${pressFeedback} max-sm:w-7 max-sm:px-0!`}
             />
           }
@@ -536,17 +528,15 @@ export function SharingDialog({
             size={14}
             data-icon="inline-start"
           />
-          <span className="hidden sm:inline">Share</span>
+          <span className="hidden sm:inline">{t("sharing.share")}</span>
         </DialogTrigger>
         <DialogContent
           className="sharing-dialog-surface sm:max-w-2xl"
           overlayClassName="sharing-dialog-overlay"
         >
           <DialogHeader>
-            <DialogTitle>Share form</DialogTitle>
-            <DialogDescription>
-              Invite collaborators and manage who can work with this form.
-            </DialogDescription>
+            <DialogTitle>{t("sharing.title")}</DialogTitle>
+            <DialogDescription>{t("sharing.description")}</DialogDescription>
           </DialogHeader>
 
           <form
@@ -554,8 +544,9 @@ export function SharingDialog({
             className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:items-end"
           >
             <label className="grid gap-1.5 text-sm font-medium">
-              Email address
+              {t("sharing.emailLabel")}
               <input
+                dir="ltr"
                 type="email"
                 required
                 autoComplete="email"
@@ -566,7 +557,7 @@ export function SharingDialog({
               />
             </label>
             <label className="grid gap-1.5 text-sm font-medium">
-              Role
+              {t("sharing.role")}
               <select
                 value={role}
                 onChange={(event) =>
@@ -574,8 +565,8 @@ export function SharingDialog({
                 }
                 className="h-9 rounded-lg border border-input bg-background px-2 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="editor">Editor</option>
-                <option value="viewer">Viewer</option>
+                <option value="editor">{t("roles.editor")}</option>
+                <option value="viewer">{t("roles.viewer")}</option>
               </select>
             </label>
             <Button
@@ -590,7 +581,9 @@ export function SharingDialog({
                   data-icon="inline-start"
                 />
               )}
-              {busyActions.has("invite") ? "Sending…" : "Invite"}
+              {busyActions.has("invite")
+                ? t("sharing.sending")
+                : t("sharing.invite")}
             </Button>
           </form>
 
@@ -604,13 +597,13 @@ export function SharingDialog({
             </p>
           ) : null}
 
-          <div className="max-h-[min(28rem,55vh)] space-y-5 overflow-y-auto pr-1">
+          <div className="max-h-[min(28rem,55vh)] space-y-5 overflow-y-auto pe-1">
             {loading && collaboration === null ? (
               <p
                 role="status"
                 className="py-8 text-center text-sm text-muted-foreground"
               >
-                Loading sharing details…
+                {t("sharing.loading")}
               </p>
             ) : (
               <>
@@ -619,11 +612,11 @@ export function SharingDialog({
                     id="active-collaborators-heading"
                     className="mb-2 text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase"
                   >
-                    Active collaborators
+                    {t("sharing.activeHeading")}
                   </h3>
                   {activeMembers.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      No active collaborators.
+                      {t("sharing.noActive")}
                     </p>
                   ) : (
                     <ul className="divide-y divide-border rounded-lg border border-border">
@@ -636,24 +629,29 @@ export function SharingDialog({
                             className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
                           >
                             <div className="min-w-0">
-                              <p className="text-sm font-medium break-all">
+                              <p
+                                dir="ltr"
+                                className="text-start text-sm font-medium break-all"
+                              >
                                 {member.email}
                               </p>
                               {!controls.canChangeRole ? (
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                  Owner
+                                  {t("roles.owner")}
                                 </p>
                               ) : null}
                             </div>
                             {!controls.canChangeRole ? (
                               <span className="w-fit rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-                                Owner
+                                {t("roles.owner")}
                               </span>
                             ) : (
                               <div className="flex flex-wrap items-center gap-2">
                                 <RoleSelect
                                   value={member.role as CollaboratorRole}
-                                  label={`Role for ${member.email}`}
+                                  label={t("sharing.roleFor", {
+                                    email: member.email,
+                                  })}
                                   disabled={busyActions.has(roleAction)}
                                   onChange={(next) =>
                                     void updateRole(member, next)
@@ -678,7 +676,7 @@ export function SharingDialog({
                                       size={14}
                                       data-icon="inline-start"
                                     />
-                                    Transfer
+                                    {t("sharing.transfer")}
                                   </Button>
                                 ) : null}
                                 {controls.canRemove ? (
@@ -702,7 +700,7 @@ export function SharingDialog({
                                       size={14}
                                       data-icon="inline-start"
                                     />
-                                    Remove
+                                    {t("common.remove")}
                                   </Button>
                                 ) : null}
                               </div>
@@ -720,7 +718,7 @@ export function SharingDialog({
                       id="awaiting-collaborators-heading"
                       className="mb-2 text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase"
                     >
-                      Awaiting secure access
+                      {t("sharing.awaitingHeading")}
                     </h3>
                     <ul className="divide-y divide-border rounded-lg border border-border">
                       {awaitingMembers.map((member) => (
@@ -729,12 +727,16 @@ export function SharingDialog({
                           className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="min-w-0">
-                            <p className="text-sm font-medium break-all">
+                            <p
+                              dir="ltr"
+                              className="text-start text-sm font-medium break-all"
+                            >
                               {member.email}
                             </p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {roleLabels[member.role]} · Waiting for secure
-                              access
+                              {t("sharing.waiting", {
+                                role: roleLabel(member.role),
+                              })}
                             </p>
                           </div>
                           {memberControls(member).canRemove ? (
@@ -756,7 +758,7 @@ export function SharingDialog({
                                 size={14}
                                 data-icon="inline-start"
                               />
-                              Remove
+                              {t("common.remove")}
                             </Button>
                           ) : null}
                         </li>
@@ -770,7 +772,7 @@ export function SharingDialog({
                     id="pending-invitations-heading"
                     className="mb-2 text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase"
                   >
-                    Pending invitations
+                    {t("sharing.pendingHeading")}
                   </h3>
                   {collaboration?.invitations.length ? (
                     <ul className="divide-y divide-border rounded-lg border border-border">
@@ -780,22 +782,30 @@ export function SharingDialog({
                           className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="min-w-0">
-                            <p className="text-sm font-medium break-all">
+                            <p
+                              dir="ltr"
+                              className="text-start text-sm font-medium break-all"
+                            >
                               {invitation.invited_email}
                             </p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {roleLabels[invitation.role]}
-                              {invitation.expires_at ? (
-                                <>
-                                  {" "}
-                                  · Expires{" "}
-                                  <time dateTime={invitation.expires_at}>
-                                    {formattedExpiry(invitation.expires_at)}
-                                  </time>
-                                </>
-                              ) : (
-                                " · No active expiry"
-                              )}
+                              {invitation.expires_at
+                                ? t.rich("sharing.expires", {
+                                    role: roleLabel(invitation.role),
+                                    date:
+                                      format.date(
+                                        invitation.expires_at,
+                                        true
+                                      ) || t("sharing.unknownExpiry"),
+                                    time: (chunks) => (
+                                      <time dateTime={invitation.expires_at!}>
+                                        {chunks}
+                                      </time>
+                                    ),
+                                  })
+                                : t("sharing.noExpiry", {
+                                    role: roleLabel(invitation.role),
+                                  })}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -816,8 +826,8 @@ export function SharingDialog({
                                 />
                               )}
                               {busyActions.has(`resend:${invitation.id}`)
-                                ? "Sending…"
-                                : "Resend"}
+                                ? t("sharing.sending")
+                                : t("sharing.resend")}
                             </Button>
                             <Button
                               size="sm"
@@ -839,7 +849,7 @@ export function SharingDialog({
                                 size={14}
                                 data-icon="inline-start"
                               />
-                              Revoke
+                              {t("sharing.revoke")}
                             </Button>
                           </div>
                         </li>
@@ -847,7 +857,7 @@ export function SharingDialog({
                     </ul>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      No pending invitations.
+                      {t("sharing.noPending")}
                     </p>
                   )}
                 </section>

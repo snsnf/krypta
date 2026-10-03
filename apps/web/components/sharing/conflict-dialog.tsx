@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useAppT } from "@/lib/app-i18n"
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ export function ConflictDialog({
   onCopyDraft,
   onReloadLatest,
 }: ConflictDialogProps) {
+  const t = useAppT()
   const keepEditingRef = useRef<HTMLButtonElement>(null)
   const [copying, setCopying] = useState(false)
 
@@ -41,11 +43,7 @@ export function ConflictDialog({
   }
 
   function confirmReload() {
-    if (
-      window.confirm(
-        "Reload the latest version? Your current local draft will be discarded."
-      )
-    ) {
+    if (window.confirm(t("sharing.confirmReload"))) {
       onReloadLatest()
     }
   }
@@ -59,11 +57,8 @@ export function ConflictDialog({
         initialFocus={keepEditingRef}
       >
         <DialogHeader>
-          <DialogTitle>This form changed elsewhere</DialogTitle>
-          <DialogDescription>
-            Your draft is still here. Keep editing, copy it for safekeeping, or
-            reload the latest saved version.
-          </DialogDescription>
+          <DialogTitle>{t("sharing.conflictTitle")}</DialogTitle>
+          <DialogDescription>{t("sharing.conflictBody")}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button
@@ -72,7 +67,7 @@ export function ConflictDialog({
             onClick={confirmReload}
             className={pressFeedback}
           >
-            Reload latest
+            {t("sharing.reloadLatest")}
           </Button>
           <Button
             type="button"
@@ -81,7 +76,7 @@ export function ConflictDialog({
             onClick={copyDraft}
             className={pressFeedback}
           >
-            Copy my draft
+            {t("sharing.copyDraft")}
           </Button>
           <Button
             ref={keepEditingRef}
@@ -89,7 +84,7 @@ export function ConflictDialog({
             onClick={() => onOpenChange(false)}
             className={pressFeedback}
           >
-            Keep editing
+            {t("sharing.keepEditing")}
           </Button>
         </DialogFooter>
       </DialogContent>
