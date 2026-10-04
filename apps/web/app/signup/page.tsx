@@ -83,6 +83,9 @@ function SignupPageContent() {
         body: JSON.stringify({
           email,
           verifier: deriveAuthVerifier(unlockKey.current),
+          // So the verification mail, and the account's later mail, is in the
+          // language this page is showing.
+          language,
         }),
       })
       setPendingToken(pending_token)

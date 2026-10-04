@@ -465,7 +465,10 @@ pub async fn put_member_grant(
     if let Some(recipient_email) = recipient_email
         && state
             .mailer
-            .send(mail::form_ready_mail(&recipient_email))
+            .send(mail::form_ready_mail(
+                &recipient_email,
+                mail::language_for_email(&state.db, &recipient_email).await,
+            ))
             .await
             .is_err()
     {

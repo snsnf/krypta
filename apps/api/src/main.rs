@@ -269,6 +269,10 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::post(auth::routes::logout),
         )
         .route(
+            "/api/v1/auth/language",
+            axum::routing::patch(auth::routes::set_language),
+        )
+        .route(
             "/api/v1/auth/logout-all",
             axum::routing::post(auth::routes::logout_all),
         )

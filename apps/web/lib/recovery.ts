@@ -22,13 +22,14 @@ import { ensureSodiumReady } from "./sodium-ready"
  */
 
 export async function startRecovery(
-  email: string
+  email: string,
+  language: string = "en"
 ): Promise<{ pendingToken: string }> {
   const { pending_token } = await apiFetch<{ pending_token: string }>(
     "/auth/recover/start",
     {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, language }),
     }
   )
   return { pendingToken: pending_token }

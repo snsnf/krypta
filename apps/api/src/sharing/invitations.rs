@@ -479,6 +479,21 @@ async fn send_invitation(
         "{}/invitations/accept#token={token}",
         state.config.web_base_url
     );
+    // The recipient's own language if they have an account; the inviter's if
+    // not, since that is the language the two of them are most likely to share.
+    let lang = match recipient_user_id {
+        Some(_) => mail::language_for_email(&state.db, &email).await,
+        None => {
+            mail::language_for_email(
+                &state.db,
+                &sqlx::query_scalar!("SELECT email FROM users WHERE id = $1", owner_id)
+                    .fetch_one(&state.db)
+                    .await
+                    .map_err(|error| ApiError::Internal(error.into()))?,
+            )
+            .await
+        }
+    };
     if state
         .mailer
         .send(mail::invitation_mail(
@@ -486,6 +501,7 @@ async fn send_invitation(
             body.role.as_str(),
             &invitation_url,
             7,
+            lang,
         ))
         .await
         .is_err()

@@ -1,6 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/lib/api", () => ({ apiFetch: vi.fn() }))
+vi.mock("@/lib/auth-store", () => ({
+  useAuthStore: { getState: () => ({ userId: null }) },
+}))
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: () => undefined }) }))
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
 vi.mock("@/lib/app-locale", async () => vi.importActual("../lib/app-locale"))
