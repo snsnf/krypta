@@ -70,7 +70,7 @@ export default function RecoverPage() {
     setError(null)
     setLoading(true)
     try {
-      const { pendingToken } = await startRecovery(email)
+      const { pendingToken } = await startRecovery(email, language)
       setPendingToken(pendingToken)
       setStep("verify")
     } catch (err) {

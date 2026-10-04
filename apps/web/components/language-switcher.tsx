@@ -11,6 +11,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { apiFetch } from "@/lib/api"
+import { useAuthStore } from "@/lib/auth-store"
 import { useAppLanguage, useAppT } from "@/lib/app-i18n"
 import { APP_LANGUAGES, localeCookie, type AppLanguage } from "@/lib/app-locale"
 import {
@@ -30,6 +32,15 @@ function chooseLanguage(
     language,
     window.location.protocol === "https:"
   )
+  // A signed-in account keeps its mail in the language it picked. Best
+  // effort: the page language has already changed, and a failure here only
+  // means the next email is in the previous one.
+  if (useAuthStore.getState().userId !== null) {
+    void apiFetch("/auth/language", {
+      method: "PATCH",
+      body: JSON.stringify({ language }),
+    }).catch(() => undefined)
+  }
   router.refresh()
 }
 

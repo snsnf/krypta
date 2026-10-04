@@ -904,6 +904,22 @@ Read these before changing anything in `apps/api/src/passkey.rs`,
   and `libssl3` at runtime because of it. `scripts/ci.sh images` builds and
   boots the image, so a break there fails that job rather than a release.
 
+## Mail language
+
+Every mail constructor in `src/mail.rs` takes a `Language` (English or Arabic)
+and renders both the text and the HTML in it, right to left with `dir` set for
+Arabic. The language is plaintext on `users.language` (migration `0032`), set
+at signup from the `language` the browser sent, carried through the pending
+record so a resend matches, and changed by `PATCH /auth/language`. An unknown
+code is English, never an error, except on that explicit PATCH. Pre-account
+mails (signup, recovery) use the request's language; a recovery for an address
+with an account uses the account's own. Mail to an invited address with no
+account uses the inviter's language. The server-side template is the one place
+Arabic text lives in Rust: a new mail needs both languages, and
+`mail::tests` runs every invariant (no fetched resource, one link, the footer)
+over both. The language is listed in `SECURITY.md`, `/privacy` and
+`/security`, in both languages of each.
+
 ## Email verification
 
 Signup is two steps. `POST /auth/register` creates nothing: it stores a

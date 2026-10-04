@@ -255,6 +255,7 @@ async fn notify_member(
         return Ok(());
     }
 
+    let lang = mail::language_for_email(db, &member.email).await;
     tokio::time::timeout(
         std::time::Duration::from_secs(MAIL_SEND_TIMEOUT_SECS),
         mailer.send(mail::response_notification_mail(
@@ -262,6 +263,7 @@ async fn notify_member(
             member.form_id,
             counted.count,
             web_base_url,
+            lang,
         )),
     )
     .await

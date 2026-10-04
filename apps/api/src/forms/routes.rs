@@ -932,11 +932,13 @@ pub async fn submit_response(
         .map_err(|error| ApiError::Internal(error.into()))?;
 
     if let Some(allowance) = warned_allowance {
+        let lang = crate::mail::language_for_email(&state.db, &form.owner_email).await;
         let mail = crate::mail::allowance_warning_mail(
             &form.owner_email,
             new_used,
             allowance,
             &state.config.web_base_url,
+            lang,
         );
         // The error itself is not logged: an SMTP relay's reply can quote the
         // recipient address, and every other mail path drops it for that

@@ -24,6 +24,7 @@ export const PRIVACY: LocalizedDoc = {
             kind: "list",
             items: [
               "Your email address. It identifies the account, receives the six-digit code that verifies it, and receives collaboration invitations and response notifications.",
+              "Which language, English or Arabic, our emails to you are written in. It is a display preference, set from the language your browser was showing and changed when you pick another one, and it says nothing about your forms.",
               "A hash of a verifier derived from your password. Your password is not sent to the server and is not stored here in any form: the browser derives a key from it and sends a one-way verifier, which the server then hashes again with Argon2id.",
               "Wrapped copies of your account key, one for each way you unlock it. These are ciphertext that only your password, your vault recovery code or your passkey can open.",
               "If you enrol two-factor authentication, the TOTP secret, which has to be readable to check your codes, and hashes of your TOTP recovery codes. If you enrol a passkey, the credential it registered.",
@@ -168,6 +169,7 @@ export const PRIVACY: LocalizedDoc = {
             kind: "list",
             items: [
               "بريدك الإلكتروني. يعرّف الحساب، ويستقبل الرمز المكوّن من ست خانات الذي يتحقق منه، ويستقبل دعوات التعاون وإشعارات الردود.",
+              "اللغة، الإنجليزية أو العربية، التي تُكتب بها رسائلنا إليك. هي تفضيل للعرض، تُضبط من اللغة التي كان متصفحك يعرضها وتتغير عندما تختار لغة أخرى، ولا تقول شيئًا عن نماذجك.",
               "تجزئة لمُحقِّق مشتق من كلمة مرورك. لا تُرسل كلمة المرور إلى الخادم ولا تُخزَّن هنا بأي صورة: يشتق المتصفح منها مفتاحًا ويرسل مُحقِّقًا أحادي الاتجاه، ثم يجزّئه الخادم مرة أخرى بخوارزمية Argon2id.",
               "نسخًا ملفوفة من مفتاح حسابك، واحدة لكل طريقة تفتح بها حسابك. هذه نصوص مشفرة لا يفتحها إلا كلمة مرورك أو رمز استرداد خزنتك أو مفتاح المرور الخاص بك.",
               "إذا فعّلت المصادقة الثنائية: سر TOTP الذي يجب أن يكون مقروءًا للتحقق من رموزك، وتجزئات رموز استرداد TOTP. وإذا سجّلت مفتاح مرور: بيانات الاعتماد التي سجّلها.",

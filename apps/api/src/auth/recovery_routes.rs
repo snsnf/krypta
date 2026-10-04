@@ -43,6 +43,10 @@ const PENDING_TTL_SECONDS: i64 = 15 * 60;
 #[derive(Deserialize)]
 pub struct RecoverStartBody {
     email: String,
+    /// The language the browser is showing; used only when the address has no
+    /// account of its own to take one from.
+    #[serde(default)]
+    language: Option<String>,
 }
 
 /// Step one: mail a six-digit code and hand back the handle that ties the rest
@@ -120,10 +124,17 @@ pub async fn recover_start(
         .await
         .map_err(ApiError::Internal)?;
 
-    let mail = if decoy {
-        mail::no_account_mail(&email)
+    // The account's own language when it has one; the browser's otherwise, so a
+    // decoy and a real mail look the same to the person who asked.
+    let lang = if decoy {
+        mail::Language::from_code(body.language.as_deref())
     } else {
-        mail::recovery_code_mail(&email, &code, (PENDING_TTL_SECONDS / 60) as u64)
+        mail::language_for_email(&state.db, &email).await
+    };
+    let mail = if decoy {
+        mail::no_account_mail(&email, lang)
+    } else {
+        mail::recovery_code_mail(&email, &code, (PENDING_TTL_SECONDS / 60) as u64, lang)
     };
     if let Err(error) = state.mailer.send(mail).await {
         // Leaving the record behind would strand the caller holding a handle

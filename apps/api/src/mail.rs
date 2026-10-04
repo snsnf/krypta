@@ -16,6 +16,65 @@ pub struct Mail {
     pub html: String,
 }
 
+/// The language a mail is written in. The same two the web app speaks; anything
+/// else a client sends is English.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Language {
+    #[default]
+    En,
+    Ar,
+}
+
+impl Language {
+    /// Total on purpose: an unknown or missing code is English, never an error.
+    pub fn from_code(code: Option<&str>) -> Self {
+        match code {
+            Some("ar") => Language::Ar,
+            _ => Language::En,
+        }
+    }
+
+    pub fn code(self) -> &'static str {
+        match self {
+            Language::En => "en",
+            Language::Ar => "ar",
+        }
+    }
+
+    fn dir(self) -> &'static str {
+        match self {
+            Language::En => "ltr",
+            Language::Ar => "rtl",
+        }
+    }
+
+    fn align(self) -> &'static str {
+        match self {
+            Language::En => "left",
+            Language::Ar => "right",
+        }
+    }
+
+    /// Picks the text for this language.
+    fn pick<'a>(self, en: &'a str, ar: &'a str) -> &'a str {
+        match self {
+            Language::En => en,
+            Language::Ar => ar,
+        }
+    }
+}
+
+/// The language an address's mail is written in: the account's own, or English
+/// when there is no account (or the lookup fails, which must never stop a mail).
+pub async fn language_for_email(db: &sqlx::PgPool, email: &str) -> Language {
+    let code = sqlx::query_scalar!("SELECT language FROM users WHERE email = $1", email)
+        .fetch_optional(db)
+        .await
+        .ok()
+        .flatten();
+    Language::from_code(code.as_deref())
+}
+
 #[cfg(test)]
 #[derive(Clone)]
 pub struct BlockingDelivery {
@@ -298,7 +357,13 @@ fn render_payload(payload: &Payload<'_>) -> String {
 /// payload belongs directly under the sentence that introduces it. The "if
 /// this was not you" line is always the last thing in a mail, never something
 /// the reader has to step over to reach the code they came for.
-fn letter(headline: &str, lead: &[&str], payload: Payload<'_>, note: &[&str]) -> String {
+fn letter(
+    lang: Language,
+    headline: &str,
+    lead: &[&str],
+    payload: Payload<'_>,
+    note: &[&str],
+) -> String {
     // The class travels with the colour: the dark-scheme block keys off it,
     // so a paragraph styled as meta must also be classed as meta or it comes
     // back at full strength on a dark ground.
@@ -319,7 +384,7 @@ fn letter(headline: &str, lead: &[&str], payload: Payload<'_>, note: &[&str]) ->
     let tail = paragraphs(note, 14, META, "meta");
 
     format!(
-        "<!doctype html><html lang=\"en\"><head>\
+        "<!doctype html><html lang=\"{lang_code}\" dir=\"{dir}\"><head>\
          <meta charset=\"utf-8\">\
          <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
          <meta name=\"color-scheme\" content=\"light dark\">\
@@ -329,7 +394,7 @@ fn letter(headline: &str, lead: &[&str], payload: Payload<'_>, note: &[&str]) ->
          <table role=\"presentation\" class=\"ground\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background-color:{GROUND};\">\
          <tr><td align=\"center\" style=\"padding:40px 20px;\">\
          <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"max-width:520px;\">\
-         <tr><td style=\"font-family:{SANS};text-align:left;\">\
+         <tr><td dir=\"{dir}\" style=\"font-family:{SANS};text-align:{align};\">\
          <p class=\"mark\" style=\"margin:0 0 14px;font-size:15px;font-weight:600;letter-spacing:-0.03em;color:{BRAND};\">krypta</p>\
          {rule}\
          <h1 class=\"ink\" style=\"margin:26px 0 0;font-size:24px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;color:{INK};\">{headline}</h1>\
@@ -339,58 +404,108 @@ fn letter(headline: &str, lead: &[&str], payload: Payload<'_>, note: &[&str]) ->
          <div style=\"height:32px;line-height:32px;font-size:0;\">&nbsp;</div>\
          {rule}\
          <p class=\"meta\" style=\"margin:14px 0 0;font-size:13px;line-height:1.6;color:{META};\">\
-         Sent by krypta. This message loads nothing when you open it: no images, no web fonts, no tracking.</p>\
+         {footer}</p>\
          </td></tr></table></td></tr></table></body></html>",
+        lang_code = lang.code(),
+        dir = lang.dir(),
+        align = lang.align(),
+        footer = escape(lang.pick(FOOTER_EN, FOOTER_AR)),
         headline = escape(headline),
         rule = hairline(),
         payload = render_payload(&payload),
     )
 }
 
+const FOOTER_EN: &str = "Sent by krypta. This message loads nothing when you open it: no images, no web fonts, no tracking.";
+const FOOTER_AR: &str =
+    "أُرسلت من krypta. لا تحمّل هذه الرسالة أي شيء عند فتحها: لا صور ولا خطوط ويب ولا تتبع.";
+
 /// The code mail. No links, no tracking pixel, no user content: a mail
 /// provider breach yields a six-digit number that has already expired.
-pub fn verification_mail(to: &str, code: &str, ttl_minutes: u64) -> Mail {
-    Mail {
-        to: to.to_string(),
-        subject: "Your krypta verification code".to_string(),
-        text: format!(
-            "Your krypta verification code is {code}\n\n\
-             It expires in {ttl_minutes} minutes. If you did not try to create an \
-             account, you can ignore this message."
-        ),
-        html: letter(
-            "Your verification code",
-            &[&format!(
-                "Enter it to finish creating your account. It expires in {ttl_minutes} minutes."
-            )],
-            Payload::Code(code),
-            &["If you did not try to create an account, ignore this message."],
-        ),
+pub fn verification_mail(to: &str, code: &str, ttl_minutes: u64, lang: Language) -> Mail {
+    match lang {
+        Language::En => Mail {
+            to: to.to_string(),
+            subject: "Your krypta verification code".to_string(),
+            text: format!(
+                "Your krypta verification code is {code}\n\n\
+                 It expires in {ttl_minutes} minutes. If you did not try to create an \
+                 account, you can ignore this message."
+            ),
+            html: letter(
+                lang,
+                "Your verification code",
+                &[&format!(
+                    "Enter it to finish creating your account. It expires in {ttl_minutes} minutes."
+                )],
+                Payload::Code(code),
+                &["If you did not try to create an account, ignore this message."],
+            ),
+        },
+        Language::Ar => Mail {
+            to: to.to_string(),
+            subject: "رمز التحقق من حسابك في krypta".to_string(),
+            text: format!(
+                "رمز التحقق من حسابك في krypta هو {code}\n\n\
+                 تنتهي صلاحيته خلال {ttl_minutes} دقيقة. إذا لم تحاول إنشاء حساب فيمكنك \
+                 تجاهل هذه الرسالة."
+            ),
+            html: letter(
+                lang,
+                "رمز التحقق الخاص بك",
+                &[&format!(
+                    "أدخله لإكمال إنشاء حسابك. تنتهي صلاحيته خلال {ttl_minutes} دقيقة."
+                )],
+                Payload::Code(code),
+                &["إذا لم تحاول إنشاء حساب فتجاهل هذه الرسالة."],
+            ),
+        },
     }
 }
 
 /// Sent instead of a code when the address already has an account. This is the
 /// only place the duplicate case is distinguishable, and only the real owner
 /// sees it; the HTTP response is identical either way.
-pub fn account_exists_mail(to: &str) -> Mail {
-    Mail {
-        to: to.to_string(),
-        subject: "Someone tried to sign up to krypta with your address".to_string(),
-        text: "An account with this address already exists, so no new one was \
-               created and no code was issued.\n\n\
-               If this was you, sign in instead. If it was not, no action is \
-               needed: whoever tried cannot access your account without your \
-               password."
-            .to_string(),
-        html: letter(
-            "This address already has an account",
-            &["No new account was created and no code was issued."],
-            Payload::None,
-            &[
-                "If this was you, sign in instead. If it was not, no action is needed: \
-               whoever tried cannot reach your account without your password.",
-            ],
-        ),
+pub fn account_exists_mail(to: &str, lang: Language) -> Mail {
+    match lang {
+        Language::En => Mail {
+            to: to.to_string(),
+            subject: "Someone tried to sign up to krypta with your address".to_string(),
+            text: "An account with this address already exists, so no new one was \
+                   created and no code was issued.\n\n\
+                   If this was you, sign in instead. If it was not, no action is \
+                   needed: whoever tried cannot access your account without your \
+                   password."
+                .to_string(),
+            html: letter(
+                lang,
+                "This address already has an account",
+                &["No new account was created and no code was issued."],
+                Payload::None,
+                &[
+                    "If this was you, sign in instead. If it was not, no action is needed: \
+                   whoever tried cannot reach your account without your password.",
+                ],
+            ),
+        },
+        Language::Ar => Mail {
+            to: to.to_string(),
+            subject: "حاول أحدهم التسجيل في krypta بعنوانك".to_string(),
+            text: "يوجد حساب بهذا العنوان من قبل، لذا لم يُنشأ حساب جديد ولم يصدر أي رمز.\n\n\
+                   إذا كنت أنت، فسجّل الدخول بدلًا من ذلك. وإذا لم تكن أنت فلا حاجة إلى \
+                   أي إجراء: من حاول لا يستطيع الوصول إلى حسابك دون كلمة مرورك."
+                .to_string(),
+            html: letter(
+                lang,
+                "لهذا العنوان حساب بالفعل",
+                &["لم يُنشأ حساب جديد ولم يصدر أي رمز."],
+                Payload::None,
+                &[
+                    "إذا كنت أنت، فسجّل الدخول بدلًا من ذلك. وإذا لم تكن أنت فلا حاجة إلى أي \
+                     إجراء: من حاول لا يستطيع الوصول إلى حسابك دون كلمة مرورك.",
+                ],
+            ),
+        },
     }
 }
 
@@ -401,28 +516,54 @@ pub fn account_exists_mail(to: &str) -> Mail {
 /// detail beyond the address it is being sent to, and no link: a mailed link
 /// that advances an account-recovery flow is exactly what the code-based design
 /// exists to avoid.
-pub fn recovery_code_mail(to: &str, code: &str, ttl_minutes: u64) -> Mail {
-    Mail {
-        to: to.to_string(),
-        subject: "Your krypta vault recovery code".to_string(),
-        text: format!(
-            "Your krypta vault recovery code is {code}\n\n\
-             It expires in {ttl_minutes} minutes. You will also need the recovery \
-             code you saved when you created your account. If you did not ask to \
-             recover your vault, you can ignore this message."
-        ),
-        html: letter(
-            "Your vault recovery code",
-            &[&format!(
-                "Enter it to continue. It expires in {ttl_minutes} minutes."
-            )],
-            Payload::Code(code),
-            &[
-                "You will also need the recovery code you saved when you created your \
-                 account. Without it, nobody can open your vault, and that includes us.",
-                "If you did not ask to recover your vault, ignore this message.",
-            ],
-        ),
+pub fn recovery_code_mail(to: &str, code: &str, ttl_minutes: u64, lang: Language) -> Mail {
+    match lang {
+        Language::En => Mail {
+            to: to.to_string(),
+            subject: "Your krypta vault recovery code".to_string(),
+            text: format!(
+                "Your krypta vault recovery code is {code}\n\n\
+                 It expires in {ttl_minutes} minutes. You will also need the recovery \
+                 code you saved when you created your account. If you did not ask to \
+                 recover your vault, you can ignore this message."
+            ),
+            html: letter(
+                lang,
+                "Your vault recovery code",
+                &[&format!(
+                    "Enter it to continue. It expires in {ttl_minutes} minutes."
+                )],
+                Payload::Code(code),
+                &[
+                    "You will also need the recovery code you saved when you created your \
+                     account. Without it, nobody can open your vault, and that includes us.",
+                    "If you did not ask to recover your vault, ignore this message.",
+                ],
+            ),
+        },
+        Language::Ar => Mail {
+            to: to.to_string(),
+            subject: "رمز استرداد خزنتك في krypta".to_string(),
+            text: format!(
+                "رمز استرداد خزنتك في krypta هو {code}\n\n\
+                 تنتهي صلاحيته خلال {ttl_minutes} دقيقة. ستحتاج أيضًا إلى رمز الاسترداد \
+                 الذي حفظته عند إنشاء حسابك. إذا لم تطلب استرداد خزنتك فيمكنك تجاهل هذه \
+                 الرسالة."
+            ),
+            html: letter(
+                lang,
+                "رمز استرداد خزنتك",
+                &[&format!(
+                    "أدخله للمتابعة. تنتهي صلاحيته خلال {ttl_minutes} دقيقة."
+                )],
+                Payload::Code(code),
+                &[
+                    "ستحتاج أيضًا إلى رمز الاسترداد الذي حفظته عند إنشاء حسابك. وبدونه لا \
+                     يستطيع أحد فتح خزنتك، ونحن منهم.",
+                    "إذا لم تطلب استرداد خزنتك فتجاهل هذه الرسالة.",
+                ],
+            ),
+        },
     }
 }
 
@@ -431,23 +572,41 @@ pub fn recovery_code_mail(to: &str, code: &str, ttl_minutes: u64) -> Mail {
 /// The mirror of `account_exists_mail`: the HTTP response to `recover/start` is
 /// identical either way, so this mail is the only place the two cases differ
 /// and only the address's owner ever sees it.
-pub fn no_account_mail(to: &str) -> Mail {
-    Mail {
-        to: to.to_string(),
-        subject: "No krypta account exists for this address".to_string(),
-        text: "Someone asked to recover a krypta vault for this address, but no \
-               account exists here, so nothing was sent and nothing was changed.\n\n\
-               If this was you, check which address you signed up with."
-            .to_string(),
-        html: letter(
-            "No account exists for this address",
-            &[
-                "Someone asked to recover a vault here. Nothing was sent and nothing \
-               was changed.",
-            ],
-            Payload::None,
-            &["If this was you, check which address you signed up with."],
-        ),
+pub fn no_account_mail(to: &str, lang: Language) -> Mail {
+    match lang {
+        Language::En => Mail {
+            to: to.to_string(),
+            subject: "No krypta account exists for this address".to_string(),
+            text: "Someone asked to recover a krypta vault for this address, but no \
+                   account exists here, so nothing was sent and nothing was changed.\n\n\
+                   If this was you, check which address you signed up with."
+                .to_string(),
+            html: letter(
+                lang,
+                "No account exists for this address",
+                &[
+                    "Someone asked to recover a vault here. Nothing was sent and nothing \
+                   was changed.",
+                ],
+                Payload::None,
+                &["If this was you, check which address you signed up with."],
+            ),
+        },
+        Language::Ar => Mail {
+            to: to.to_string(),
+            subject: "لا يوجد حساب في krypta بهذا العنوان".to_string(),
+            text: "طلب أحدهم استرداد خزنة في krypta لهذا العنوان، لكن لا يوجد حساب هنا، \
+                   لذا لم يُرسل شيء ولم يتغير شيء.\n\n\
+                   إذا كنت أنت، فتحقق من العنوان الذي سجّلت به."
+                .to_string(),
+            html: letter(
+                lang,
+                "لا يوجد حساب بهذا العنوان",
+                &["طلب أحدهم استرداد خزنة هنا. لم يُرسل شيء ولم يتغير شيء."],
+                Payload::None,
+                &["إذا كنت أنت، فتحقق من العنوان الذي سجّلت به."],
+            ),
+        },
     }
 }
 
@@ -460,54 +619,117 @@ fn article_for(role: &str) -> &'static str {
     }
 }
 
+/// The role as the Arabic text names it. Anything unknown is passed through, so
+/// a new role is merely untranslated rather than lost.
+fn role_ar(role: &str) -> &str {
+    match role {
+        "editor" => "محرر",
+        "viewer" => "مشاهد",
+        other => other,
+    }
+}
+
 /// A generic collaboration invitation. Form content and cryptographic
 /// material never enter mail; the opaque capability remains in the URL
 /// fragment until the browser explicitly continues the invitation flow.
-pub fn invitation_mail(to: &str, role: &str, invitation_url: &str, ttl_days: u64) -> Mail {
-    let article = article_for(role);
-    Mail {
-        to: to.to_string(),
-        subject: "You have been invited to collaborate in krypta".to_string(),
-        text: format!(
-            "You have been invited to collaborate as {article} {role} in krypta.\n\n\
-             Open this invitation to continue:\n{invitation_url}\n\n\
-             This invitation expires in {ttl_days} days. If you were not expecting it, \
-             you can ignore this message."
-        ),
-        html: letter(
-            "You have been invited to collaborate",
-            &[&format!(
-                "Someone has shared their work with you as {article} {role}."
-            )],
-            Payload::Action {
-                label: "Open invitation",
-                url: invitation_url,
-            },
-            &[&format!(
-                "The invitation expires in {ttl_days} days. If you were not expecting it, \
-                 ignore this message."
-            )],
-        ),
+pub fn invitation_mail(
+    to: &str,
+    role: &str,
+    invitation_url: &str,
+    ttl_days: u64,
+    lang: Language,
+) -> Mail {
+    match lang {
+        Language::En => {
+            let article = article_for(role);
+            Mail {
+                to: to.to_string(),
+                subject: "You have been invited to collaborate in krypta".to_string(),
+                text: format!(
+                    "You have been invited to collaborate as {article} {role} in krypta.\n\n\
+                     Open this invitation to continue:\n{invitation_url}\n\n\
+                     This invitation expires in {ttl_days} days. If you were not expecting it, \
+                     you can ignore this message."
+                ),
+                html: letter(
+                    lang,
+                    "You have been invited to collaborate",
+                    &[&format!(
+                        "Someone has shared their work with you as {article} {role}."
+                    )],
+                    Payload::Action {
+                        label: "Open invitation",
+                        url: invitation_url,
+                    },
+                    &[&format!(
+                        "The invitation expires in {ttl_days} days. If you were not expecting it, \
+                         ignore this message."
+                    )],
+                ),
+            }
+        }
+        Language::Ar => {
+            let role = role_ar(role);
+            Mail {
+                to: to.to_string(),
+                subject: "دُعيت إلى التعاون في krypta".to_string(),
+                text: format!(
+                    "دُعيت إلى التعاون بصفة {role} في krypta.\n\n\
+                     افتح هذه الدعوة للمتابعة:\n{invitation_url}\n\n\
+                     تنتهي صلاحية هذه الدعوة خلال {ttl_days} أيام. إذا لم تكن تتوقعها فيمكنك \
+                     تجاهل هذه الرسالة."
+                ),
+                html: letter(
+                    lang,
+                    "دُعيت إلى التعاون",
+                    &[&format!("شارك أحدهم عمله معك بصفة {role}.")],
+                    Payload::Action {
+                        label: "فتح الدعوة",
+                        url: invitation_url,
+                    },
+                    &[&format!(
+                        "تنتهي صلاحية الدعوة خلال {ttl_days} أيام. إذا لم تكن تتوقعها فتجاهل \
+                         هذه الرسالة."
+                    )],
+                ),
+            }
+        }
     }
 }
 
 /// A content-free notification sent only after an accepted membership has
 /// received both sealed form grants. It intentionally contains no form link,
 /// title, role, key material, or other collaboration metadata.
-pub fn form_ready_mail(to: &str) -> Mail {
-    Mail {
-        to: to.to_string(),
-        subject: "A shared form is ready in krypta".to_string(),
-        text: "A form shared with you is ready. You can sign in to krypta to open it.".to_string(),
-        html: letter(
-            "A shared form is ready",
-            &["You can sign in to krypta to open it."],
-            // No link, deliberately: this mail names no form and carries no
-            // capability, so there is nothing here worth linking to that the
-            // dashboard does not already show.
-            Payload::None,
-            &[],
-        ),
+pub fn form_ready_mail(to: &str, lang: Language) -> Mail {
+    match lang {
+        Language::En => Mail {
+            to: to.to_string(),
+            subject: "A shared form is ready in krypta".to_string(),
+            text: "A form shared with you is ready. You can sign in to krypta to open it."
+                .to_string(),
+            html: letter(
+                lang,
+                "A shared form is ready",
+                &["You can sign in to krypta to open it."],
+                // No link, deliberately: this mail names no form and carries no
+                // capability, so there is nothing here worth linking to that the
+                // dashboard does not already show.
+                Payload::None,
+                &[],
+            ),
+        },
+        Language::Ar => Mail {
+            to: to.to_string(),
+            subject: "نموذج مشترك جاهز في krypta".to_string(),
+            text: "نموذج شُورك معك أصبح جاهزًا. يمكنك تسجيل الدخول إلى krypta لفتحه.".to_string(),
+            html: letter(
+                lang,
+                "نموذج مشترك جاهز",
+                &["يمكنك تسجيل الدخول إلى krypta لفتحه."],
+                Payload::None,
+                &[],
+            ),
+        },
     }
 }
 
@@ -517,22 +739,59 @@ pub fn form_ready_mail(to: &str) -> Mail {
 /// so there is nothing to put in a subject line. The recipient's browser
 /// decrypts the name after following the link. Never add response content or a
 /// title here: the server has neither.
-pub fn response_notification_mail(to: &str, form_id: Uuid, count: i64, web_base_url: &str) -> Mail {
+pub fn response_notification_mail(
+    to: &str,
+    form_id: Uuid,
+    count: i64,
+    web_base_url: &str,
+    lang: Language,
+) -> Mail {
     let link = format!("{}/dashboard/{form_id}", web_base_url.trim_end_matches('/'));
-    let noun = if count == 1 { "response" } else { "responses" };
-    Mail {
-        to: to.to_string(),
-        subject: format!("New {noun} in krypta"),
-        text: format!("You have {count} new {noun}. Open the form to read them: {link}"),
-        html: letter(
-            &format!("You have {count} new {noun}"),
-            &["They are waiting in your dashboard, encrypted until your browser opens them."],
-            Payload::Action {
-                label: "Open the form",
-                url: &link,
-            },
-            &[],
-        ),
+    match lang {
+        Language::En => {
+            let noun = if count == 1 { "response" } else { "responses" };
+            Mail {
+                to: to.to_string(),
+                subject: format!("New {noun} in krypta"),
+                text: format!("You have {count} new {noun}. Open the form to read them: {link}"),
+                html: letter(
+                    lang,
+                    &format!("You have {count} new {noun}"),
+                    &[
+                        "They are waiting in your dashboard, encrypted until your browser opens them.",
+                    ],
+                    Payload::Action {
+                        label: "Open the form",
+                        url: &link,
+                    },
+                    &[],
+                ),
+            }
+        }
+        Language::Ar => {
+            // Arabic counts: one, two, 3 to 10 take the plural, 11 and over the singular.
+            let phrase = match count {
+                1 => "رد جديد واحد".to_string(),
+                2 => "ردّان جديدان".to_string(),
+                3..=10 => format!("{count} ردود جديدة"),
+                _ => format!("{count} ردًا جديدًا"),
+            };
+            Mail {
+                to: to.to_string(),
+                subject: "ردود جديدة في krypta".to_string(),
+                text: format!("لديك {phrase}. افتح النموذج لقراءتها: {link}"),
+                html: letter(
+                    lang,
+                    &format!("لديك {phrase}"),
+                    &["هي بانتظارك في لوحتك، مشفرة حتى يفتحها متصفحك."],
+                    Payload::Action {
+                        label: "فتح النموذج",
+                        url: &link,
+                    },
+                    &[],
+                ),
+            }
+        }
     }
 }
 
@@ -542,32 +801,64 @@ pub fn response_notification_mail(to: &str, form_id: Uuid, count: i64, web_base_
 /// No form title: `forms.title_ciphertext` is encrypted and the API holds no
 /// key. The link goes to account settings rather than any one form, because
 /// the allowance is per account, not per form.
-pub fn allowance_warning_mail(to: &str, used: i64, allowance: i64, web_base_url: &str) -> Mail {
+pub fn allowance_warning_mail(
+    to: &str,
+    used: i64,
+    allowance: i64,
+    web_base_url: &str,
+    lang: Language,
+) -> Mail {
     let link = format!("{}/dashboard/settings", web_base_url.trim_end_matches('/'));
-    Mail {
-        to: to.to_string(),
-        subject: "You are approaching your krypta response limit".to_string(),
-        text: format!(
-            "You have used {used} of your {allowance} responses for this billing \
-             period.\n\n\
-             Once you reach the limit, new responses will stop being collected \
-             until the period resets or you upgrade. Manage your plan: {link}"
-        ),
-        html: letter(
-            "You are close to your response limit",
-            &[
-                &format!(
-                    "You have used {used} of your {allowance} responses for this billing period."
-                ),
-                "At the limit, new responses stop being collected until the period resets \
-                 or you upgrade. Nothing already collected is ever deleted.",
-            ],
-            Payload::Action {
-                label: "Manage your plan",
-                url: &link,
-            },
-            &[],
-        ),
+    match lang {
+        Language::En => Mail {
+            to: to.to_string(),
+            subject: "You are approaching your krypta response limit".to_string(),
+            text: format!(
+                "You have used {used} of your {allowance} responses for this billing \
+                 period.\n\n\
+                 Once you reach the limit, new responses will stop being collected \
+                 until the period resets or you upgrade. Manage your plan: {link}"
+            ),
+            html: letter(
+                lang,
+                "You are close to your response limit",
+                &[
+                    &format!(
+                        "You have used {used} of your {allowance} responses for this billing period."
+                    ),
+                    "At the limit, new responses stop being collected until the period resets \
+                     or you upgrade. Nothing already collected is ever deleted.",
+                ],
+                Payload::Action {
+                    label: "Manage your plan",
+                    url: &link,
+                },
+                &[],
+            ),
+        },
+        Language::Ar => Mail {
+            to: to.to_string(),
+            subject: "اقتربت من حد الردود في krypta".to_string(),
+            text: format!(
+                "استخدمت {used} من أصل {allowance} ردًا في فترة الفوترة هذه.\n\n\
+                 عند بلوغ الحد يتوقف جمع الردود الجديدة حتى تبدأ فترة جديدة أو تقوم \
+                 بالترقية. أدر خطتك: {link}"
+            ),
+            html: letter(
+                lang,
+                "اقتربت من حد الردود",
+                &[
+                    &format!("استخدمت {used} من أصل {allowance} ردًا في فترة الفوترة هذه."),
+                    "عند بلوغ الحد يتوقف جمع الردود الجديدة حتى تبدأ فترة جديدة أو تقوم \
+                     بالترقية. لا يُحذف أي شيء جُمع بالفعل.",
+                ],
+                Payload::Action {
+                    label: "إدارة خطتك",
+                    url: &link,
+                },
+                &[],
+            ),
+        },
     }
 }
 
@@ -598,7 +889,12 @@ mod tests {
     async fn capture_mailer_records_what_it_was_asked_to_send() {
         let mailer = Mailer::capture();
         mailer
-            .send(verification_mail("someone@example.com", "123456", 15))
+            .send(verification_mail(
+                "someone@example.com",
+                "123456",
+                15,
+                Language::En,
+            ))
             .await
             .unwrap();
 
@@ -616,6 +912,7 @@ mod tests {
                 "viewer",
                 "https://app.example/invitations/accept#token=opaque",
                 7,
+                Language::En,
             ))
             .await;
         assert!(result.is_err());
@@ -623,27 +920,42 @@ mod tests {
 
     /// Every mail krypta sends, in one place, so the invariants below cannot
     /// be satisfied by seven of them.
-    fn every_mail() -> Vec<Mail> {
+    fn every_mail_in(lang: Language) -> Vec<Mail> {
         vec![
-            verification_mail("someone@example.com", "007007", 15),
-            account_exists_mail("someone@example.com"),
-            recovery_code_mail("someone@example.com", "424242", 15),
-            no_account_mail("someone@example.com"),
+            verification_mail("someone@example.com", "007007", 15, lang),
+            account_exists_mail("someone@example.com", lang),
+            recovery_code_mail("someone@example.com", "424242", 15, lang),
+            no_account_mail("someone@example.com", lang),
             invitation_mail(
                 "someone@example.com",
                 "editor",
                 "https://app.example/invitations/accept#token=opaque",
                 7,
+                lang,
             ),
-            form_ready_mail("someone@example.com"),
+            form_ready_mail("someone@example.com", lang),
             response_notification_mail(
                 "someone@example.com",
                 Uuid::now_v7(),
                 3,
                 "https://krypta.example",
+                lang,
             ),
-            allowance_warning_mail("someone@example.com", 200, 250, "https://krypta.example"),
+            allowance_warning_mail(
+                "someone@example.com",
+                200,
+                250,
+                "https://krypta.example",
+                lang,
+            ),
         ]
+    }
+
+    fn every_mail() -> Vec<Mail> {
+        [Language::En, Language::Ar]
+            .into_iter()
+            .flat_map(every_mail_in)
+            .collect()
     }
 
     /// Opening a krypta mail must request nothing from anywhere.
@@ -693,7 +1005,8 @@ mod tests {
             );
             assert!(
                 mail.html
-                    .contains("This message loads nothing when you open it"),
+                    .contains("This message loads nothing when you open it")
+                    || mail.html.contains("لا تحمّل هذه الرسالة أي شيء"),
                 "{} lost the footer",
                 mail.subject
             );
@@ -702,7 +1015,7 @@ mod tests {
 
     #[test]
     fn verification_mail_carries_the_code_and_no_links() {
-        let mail = verification_mail("someone@example.com", "007007", 15);
+        let mail = verification_mail("someone@example.com", "007007", 15, Language::En);
         assert!(mail.text.contains("007007"));
         assert!(mail.html.contains("007007"));
         // No URL may appear: a mailed link that grants account state is
@@ -713,7 +1026,7 @@ mod tests {
 
     #[test]
     fn verification_mail_ttl_follows_the_argument() {
-        let mail = verification_mail("someone@example.com", "007007", 5);
+        let mail = verification_mail("someone@example.com", "007007", 5, Language::En);
         assert!(mail.text.contains("5 minutes"));
         assert!(mail.html.contains("5 minutes"));
         assert!(!mail.text.contains("15 minutes"));
@@ -722,7 +1035,7 @@ mod tests {
 
     #[test]
     fn recovery_code_mail_carries_the_code_and_nothing_about_the_account() {
-        let mail = recovery_code_mail("someone@example.com", "424242", 15);
+        let mail = recovery_code_mail("someone@example.com", "424242", 15, Language::En);
         assert!(mail.text.contains("424242"));
         assert!(mail.html.contains("424242"));
         assert!(mail.text.contains("15 minutes"));
@@ -738,14 +1051,14 @@ mod tests {
 
     #[test]
     fn no_account_mail_carries_no_code() {
-        let mail = no_account_mail("someone@example.com");
+        let mail = no_account_mail("someone@example.com", Language::En);
         assert!(!mail.text.chars().any(|c| c.is_ascii_digit()));
         assert!(!mail.text.contains("http"));
     }
 
     #[test]
     fn account_exists_mail_carries_no_code() {
-        let mail = account_exists_mail("someone@example.com");
+        let mail = account_exists_mail("someone@example.com", Language::En);
         assert!(!mail.text.chars().any(|c| c.is_ascii_digit()));
         assert!(mail.subject.to_lowercase().contains("krypta"));
     }
@@ -757,6 +1070,7 @@ mod tests {
             "viewer",
             "https://app.example/invitations/accept#token=opaque",
             7,
+            Language::En,
         );
         assert!(mail.text.contains("#token=opaque"));
         assert!(mail.text.contains("7 days"));
@@ -767,8 +1081,13 @@ mod tests {
     #[test]
     fn response_notification_names_no_form_and_carries_a_deep_link() {
         let form_id = Uuid::now_v7();
-        let mail =
-            response_notification_mail("owner@example.com", form_id, 12, "https://krypta.example");
+        let mail = response_notification_mail(
+            "owner@example.com",
+            form_id,
+            12,
+            "https://krypta.example",
+            Language::En,
+        );
 
         assert_eq!(mail.to, "owner@example.com");
         assert_eq!(mail.subject, "New responses in krypta");
@@ -790,6 +1109,7 @@ mod tests {
             Uuid::now_v7(),
             1,
             "https://krypta.example",
+            Language::En,
         );
 
         assert_eq!(mail.subject, "New response in krypta");
@@ -799,7 +1119,13 @@ mod tests {
 
     #[test]
     fn allowance_warning_carries_the_numbers_and_a_settings_link_but_no_form_title() {
-        let mail = allowance_warning_mail("owner@example.com", 200, 250, "https://krypta.example");
+        let mail = allowance_warning_mail(
+            "owner@example.com",
+            200,
+            250,
+            "https://krypta.example",
+            Language::En,
+        );
 
         assert_eq!(mail.to, "owner@example.com");
         assert!(mail.text.contains("200"));
@@ -820,12 +1146,74 @@ mod tests {
 }
 
 #[cfg(test)]
+mod arabic {
+    use super::*;
+
+    #[test]
+    fn an_arabic_mail_is_right_to_left_and_in_arabic() {
+        let mail = verification_mail("someone@example.com", "007007", 15, Language::Ar);
+        assert!(mail.html.contains("lang=\"ar\" dir=\"rtl\""));
+        assert!(mail.html.contains("text-align:right"));
+        assert!(mail.text.contains("007007"));
+        assert!(mail.text.contains("15 دقيقة"));
+        assert!(mail.subject.contains("krypta"));
+        assert!(
+            mail.text
+                .chars()
+                .any(|c| ('\u{0600}'..='\u{06ff}').contains(&c))
+        );
+    }
+
+    #[test]
+    fn english_stays_left_to_right() {
+        let mail = verification_mail("someone@example.com", "007007", 15, Language::En);
+        assert!(mail.html.contains("lang=\"en\" dir=\"ltr\""));
+    }
+
+    #[test]
+    fn an_unknown_language_is_english() {
+        assert_eq!(Language::from_code(Some("ar")), Language::Ar);
+        assert_eq!(Language::from_code(Some("fr")), Language::En);
+        assert_eq!(Language::from_code(Some("")), Language::En);
+        assert_eq!(Language::from_code(None), Language::En);
+    }
+
+    #[test]
+    fn arabic_response_counts_follow_arabic_grammar() {
+        let text = |count| {
+            response_notification_mail(
+                "a@b.c",
+                Uuid::now_v7(),
+                count,
+                "https://k.example",
+                Language::Ar,
+            )
+            .text
+        };
+        assert!(text(1).contains("رد جديد واحد"));
+        assert!(text(2).contains("ردّان جديدان"));
+        assert!(text(5).contains("5 ردود جديدة"));
+        assert!(text(12).contains("12 ردًا جديدًا"));
+    }
+
+    #[test]
+    fn an_arabic_mail_carries_no_dash() {
+        for lang in [Language::Ar] {
+            let mail = invitation_mail("a@b.c", "viewer", "https://k.example/x", 7, lang);
+            for text in [&mail.text, &mail.html, &mail.subject] {
+                assert!(!text.contains('\u{2014}') && !text.contains('\u{2013}'));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
 mod form_ready {
     use super::form_ready_mail;
 
     #[test]
     fn contains_no_form_content_or_key_material() {
-        let mail = form_ready_mail("recipient@example.com");
+        let mail = form_ready_mail("recipient@example.com", super::Language::En);
         assert_eq!(mail.subject, "A shared form is ready in krypta");
         assert!(mail.text.contains("sign in to krypta"));
         assert!(mail.html.contains("sign in to krypta"));

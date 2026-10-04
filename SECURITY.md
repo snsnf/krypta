@@ -97,6 +97,9 @@ to function at all, and pretending otherwise would be dishonest:
   grades themselves are encrypted under a key derived from the form's private
   key, which respondents never hold, so neither the server nor anyone holding
   the form link can read them.
+- Which language (English or Arabic) an account's email is written in, because the
+  server has to pick a template before it sends. It is a display preference and
+  says nothing about any form or answer.
 - TOTP secrets, which must be readable to verify codes. This is an
   authentication factor rather than form content.
 - On an instance that bills, each account's plan, its subscription status and

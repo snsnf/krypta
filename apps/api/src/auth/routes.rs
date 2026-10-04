@@ -52,6 +52,10 @@ pub(super) fn cleared_session_cookie() -> Cookie<'static> {
 pub struct RegisterBody {
     email: String,
     verifier: String,
+    /// The language the browser is showing, for the mail and the account.
+    /// Anything but a supported code is English.
+    #[serde(default)]
+    language: Option<String>,
 }
 
 /// A verifier is always 32 bytes, base64url without padding, as produced by
@@ -173,6 +177,7 @@ pub async fn register(
     // path exists to close.
     let verifier_hash = password::hash_auth_verifier(&body.verifier).map_err(ApiError::Internal)?;
 
+    let lang = mail::Language::from_code(body.language.as_deref());
     let code = email_verify::generate_code();
     let now = OffsetDateTime::now_utc();
     let record = email_verify::PendingSignup {
@@ -182,6 +187,7 @@ pub async fn register(
         attempts: 0,
         resends: 0,
         decoy,
+        language: lang.code().to_string(),
         verified_user_id: None,
         resend_reservation: None,
         expires_at: now + Duration::seconds(state.config.verify_code_ttl_seconds as i64),
@@ -193,9 +199,14 @@ pub async fn register(
         .map_err(ApiError::Internal)?;
 
     let mail = if decoy {
-        mail::account_exists_mail(&email)
+        mail::account_exists_mail(&email, lang)
     } else {
-        mail::verification_mail(&email, &code, state.config.verify_code_ttl_seconds / 60)
+        mail::verification_mail(
+            &email,
+            &code,
+            state.config.verify_code_ttl_seconds / 60,
+            lang,
+        )
     };
     if let Err(err) = state.mailer.send(mail).await {
         // Leaving the record behind would strand the user holding a handle for
@@ -347,13 +358,15 @@ pub async fn resend_verification(
         }
     };
 
+    let lang = mail::Language::from_code(Some(&record.language));
     let mail = if record.decoy {
-        mail::account_exists_mail(&record.email)
+        mail::account_exists_mail(&record.email, lang)
     } else {
         mail::verification_mail(
             &record.email,
             &code,
             remaining_verification_minutes(&record),
+            lang,
         )
     };
     if let Err(err) = state.mailer.send(mail).await {
@@ -392,12 +405,13 @@ async fn ensure_verified_user(
         .map_err(|error| ApiError::Internal(error.into()))?;
 
     let inserted = sqlx::query_scalar!(
-        "INSERT INTO users (id, email, password_hash, email_verified_at) \
-         VALUES ($1, $2, $3, now()) \
+        "INSERT INTO users (id, email, password_hash, email_verified_at, language) \
+         VALUES ($1, $2, $3, now(), $4) \
          ON CONFLICT DO NOTHING RETURNING id",
         user_id,
         record.email,
         record.verifier_hash,
+        mail::Language::from_code(Some(&record.language)).code(),
     )
     .fetch_optional(&mut *transaction)
     .await
@@ -778,6 +792,33 @@ pub async fn logout(State(mut state): State<AppState>, jar: CookieJar) -> Respon
     }
     let jar = jar.remove(cleared_session_cookie());
     (jar, ApiResponse::ok(json!({}))).into_response()
+}
+
+#[derive(Deserialize)]
+pub struct LanguageBody {
+    language: String,
+}
+
+/// Sets the language the caller's mail is written in. Anything but a supported
+/// code is refused rather than coerced: unlike a signup hint, this is an
+/// explicit choice, and a typo should be an error rather than English.
+pub async fn set_language(
+    State(state): State<AppState>,
+    user: SessionUser,
+    Json(body): Json<LanguageBody>,
+) -> Result<Response, ApiError> {
+    if !matches!(body.language.as_str(), "en" | "ar") {
+        return Err(ApiError::BadRequest("Invalid request".to_string()));
+    }
+    sqlx::query!(
+        "UPDATE users SET language = $2 WHERE id = $1",
+        user.user_id,
+        body.language,
+    )
+    .execute(&state.db)
+    .await
+    .map_err(|error| ApiError::Internal(error.into()))?;
+    Ok(ApiResponse::ok(json!({ "language": body.language })).into_response())
 }
 
 /// Revokes every session for the caller, including the one making the request.
@@ -1199,6 +1240,7 @@ mod tests {
             attempts: 0,
             resends: 0,
             decoy: false,
+            language: "en".to_string(),
             verified_user_id: None,
             resend_reservation: None,
             expires_at: now + Duration::minutes(15),
@@ -1273,6 +1315,33 @@ mod tests {
                 .await
                 .unwrap()
                 .is_some()
+        );
+
+        cleanup(&db, &mut redis, &token, user_id).await;
+    }
+
+    #[tokio::test]
+    async fn the_account_keeps_the_language_it_signed_up_in() {
+        let db = test_db().await;
+        let mut redis = test_redis().await;
+        let mut record = pending(format!("language-{}@example.com", Uuid::now_v7()));
+        record.language = "ar".to_string();
+        let token = email_verify::create_pending(&mut redis, &record)
+            .await
+            .unwrap();
+        let (record, user_id) = authorize(&mut redis, &token).await;
+        ensure_verified_user(&db, None, user_id, &record, test_keys())
+            .await
+            .unwrap();
+
+        let stored = sqlx::query_scalar!("SELECT language FROM users WHERE id = $1", user_id)
+            .fetch_one(&db)
+            .await
+            .unwrap();
+        assert_eq!(stored, "ar");
+        assert_eq!(
+            crate::mail::language_for_email(&db, &record.email).await,
+            crate::mail::Language::Ar
         );
 
         cleanup(&db, &mut redis, &token, user_id).await;

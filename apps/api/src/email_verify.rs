@@ -136,6 +136,11 @@ pub struct PendingSignup {
     /// True when the address already has an account. Such a record can never
     /// be redeemed; it exists so the duplicate case is indistinguishable.
     pub decoy: bool,
+    /// The language code the browser was showing at signup, which the account
+    /// keeps for its mail. Absent in a record written before this field
+    /// existed, which reads as English.
+    #[serde(default)]
+    pub language: String,
     /// Set exactly once by the atomic successful-code transition. Keeping the
     /// receipt under the original TTL makes cross-store failures retryable;
     /// the same token and code are still required on every retry.
@@ -399,6 +404,7 @@ mod tests {
             attempts: 0,
             resends: 0,
             decoy: false,
+            language: "en".to_string(),
             verified_user_id: None,
             resend_reservation: None,
             expires_at: now + Duration::seconds(900),
