@@ -286,7 +286,8 @@
     "titleLabel": "Title",
     "titleEmpty": "Title can't be empty.",
     "renameConflict": "This form changed elsewhere. Your typed title is still here. Try again.",
-    "unavailable": "Form unavailable"
+    "unavailable": "Form unavailable",
+    "awaiting": "Shared form: waiting for secure access"
   },
   "templates": {
     "title": "New form",
