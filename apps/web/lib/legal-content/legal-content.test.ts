@@ -59,7 +59,7 @@ describe.each([
   it("is written in Arabic, with no dash and no stray English paragraph", () => {
     for (const text of everyText(doc.ar)) {
       expect(text).toMatch(/[؀-ۿ]/)
-      expect(text).not.toMatch(/[–—]/)
+      expect(text).not.toMatch(/[\u2013\u2014]/)
     }
   })
 })
