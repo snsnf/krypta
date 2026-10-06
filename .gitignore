@@ -22,3 +22,7 @@ infra/docker/backups/
 skills-lock.json
 .superpowers/
 docs/superpowers/
+
+# age backup keys: generated and kept outside the repository (see infra/docker/README.md)
+krypta-backup-key.txt
+*-backup-key.txt
