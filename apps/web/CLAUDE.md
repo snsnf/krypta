@@ -440,7 +440,7 @@ language a form is in. `normalizeFormTheme` keeps it only when it is a
 supported non-English value, so an English form serialises exactly as it did
 before languages existed (the starter templates' padding budget depends on
 that). `FormThemeSurface` sets `dir` and `lang`, provides
-`FormLanguageContext`, and for Arabic loads the self-hosted Noto Sans Arabic
+`FormLanguageContext`, and for Arabic loads the self-hosted IBM Plex Sans Arabic (declared in `globals.css`, Arabic subset only)
 that `toFontStack` puts behind every chosen font.
 
 The app language is resolved on the server by `getAppLanguage()` in
@@ -452,7 +452,7 @@ language (`language-switcher.tsx`), never by default, because `/privacy`
 promises that the only cookies are the sign-in ones plus this one; adding any
 other cookie means changing that page in the same commit. The root layout sets
 `<html lang dir>`, provides `AppLanguageContext` and Base UI's
-`DirectionProvider`, and for Arabic links the self-hosted Noto Sans Arabic
+`DirectionProvider`, and for Arabic links the self-hosted IBM Plex Sans Arabic (declared in `globals.css`, Arabic subset only)
 behind the app fonts (`globals.css`). Components read the language with
 `useAppT()`; the server-safe translator lives in `lib/app-translator.ts`
 because a Server Component (`not-found.tsx`) must not import the module that

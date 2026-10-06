@@ -86,15 +86,6 @@ export default async function RootLayout({
         headingFont.variable
       )}
     >
-      {language === "ar" && (
-        <head>
-          {/* Self-hosted, like every font: the face behind the app fonts for Arabic.
-              A generated file under public/, not a CSS import, and only Arabic
-              pages need it, hence the manual link. */}
-          {/* eslint-disable-next-line @next/next/no-css-tags */}
-          <link rel="stylesheet" href="/fonts/noto-sans-arabic.css" />
-        </head>
-      )}
       <body>
         <AppLocaleProvider language={language}>
           <ThemeProvider nonce={nonce}>

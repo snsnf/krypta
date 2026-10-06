@@ -154,18 +154,6 @@ export function FormThemeSurface({
     return () => links.forEach((link) => link.remove())
   }, [approvedExternalFamiliesKey, catalog])
 
-  // The Arabic face behind every font stack (see toFontStack), fetched only
-  // for Arabic forms and from this origin like every other font.
-  useEffect(() => {
-    if (language !== "ar") return
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
-    link.href = "/fonts/noto-sans-arabic.css"
-    link.dataset.formLanguageFont = language
-    document.head.appendChild(link)
-    return () => link.remove()
-  }, [language])
-
   return (
     <div
       data-testid="form-theme-surface"

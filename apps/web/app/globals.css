@@ -296,13 +296,29 @@
    * the selection is stated by aria-pressed and shown by the form itself.
    */
   .form-theme-surface .form-theme-outline-button {
-    background-color: color-mix(in oklch, var(--card) 55%, transparent) !important;
-    border-color: color-mix(in oklch, var(--foreground) 18%, transparent) !important;
+    background-color: color-mix(
+      in oklch,
+      var(--card) 55%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in oklch,
+      var(--foreground) 18%,
+      transparent
+    ) !important;
     color: var(--foreground) !important;
   }
   .form-theme-surface .form-theme-outline-button:hover {
-    background-color: color-mix(in oklch, var(--card) 85%, transparent) !important;
-    border-color: color-mix(in oklch, var(--foreground) 30%, transparent) !important;
+    background-color: color-mix(
+      in oklch,
+      var(--card) 85%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in oklch,
+      var(--foreground) 30%,
+      transparent
+    ) !important;
   }
   .form-theme-header {
     font-family: var(--form-header-font);
@@ -707,14 +723,105 @@
   }
 }
 
-/* Arabic app: the app fonts have no Arabic letters, so the self-hosted Noto
-   Sans Arabic goes first. Its unicode-range is Arabic and a few marks only, so
-   Latin text still falls through to the app fonts; listed after them instead,
-   Arabic would stop at next/font's generated fallback face (a local Arial,
-   which has Arabic glyphs) and never reach Noto. Mono keeps its own stack. */
+/* The Arabic face, self-hosted like every font (scripts/build-fonts.ts writes
+   the files from families.json). Only the Arabic subset is declared here, so
+   Latin text never reaches it, and a browser downloads a file only once some
+   Arabic text on the page needs that weight: an English page fetches nothing.
+   Declared here rather than linked per page, so the app and Arabic forms
+   share one definition. */
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-100-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-200-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-300-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-400-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-500-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-600-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-700-normal.woff2)
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF,
+    U+FE70-FE74, U+FE76-FEFC;
+}
+
+/* Arabic app: the app fonts have no Arabic letters, so IBM Plex Sans Arabic
+   goes first. Its unicode-range is Arabic only, so Latin text still falls
+   through to the app fonts; listed after them instead, Arabic would stop at
+   next/font's generated fallback face (a local Arial, which has Arabic
+   glyphs) and never reach it. Mono keeps its own stack. */
 html[lang="ar"] body {
-  font-family: "Noto Sans Arabic", var(--font-sans), sans-serif;
+  font-family: "IBM Plex Sans Arabic", var(--font-sans), sans-serif;
 }
 html[lang="ar"] .font-heading {
-  font-family: "Noto Sans Arabic", var(--font-heading), sans-serif;
+  font-family: "IBM Plex Sans Arabic", var(--font-heading), sans-serif;
 }
