@@ -84,6 +84,7 @@ server being able to enforce a quota or a close date at all.
 | **Two layouts** | Classic shows a page of questions with section breaks. Focus shows one at a time. Same question types, same rules underneath. |
 | **Starter templates** | Event feedback, RSVP, job application, contact and anonymous report, ready to edit. The choice stays in your browser. |
 | **Arabic and right-to-left** | Set a form's language to Arabic and respondents get Arabic text, laid out right to left. The whole app, from the landing page and sign-in through the dashboard, builder, sharing and admin, follows your browser's language or your choice. More languages are one message file each. |
+| **Duplicate forms** | Copy a form with new keys and a new link. The copy shares no keys with the original. |
 | **Conditional questions** | Show a question only when an earlier answer says so. Evaluated entirely in the respondent's browser. |
 | **Anonymous responses** | No account needed. Open a link, fill it in, and the answers are sealed to the form's public key. |
 | **Encrypted uploads** | Any S3-compatible object store holds them, and cannot read them. |

@@ -21,7 +21,7 @@ vi.mock("./api", () => ({
 }))
 
 import type { AccountSharingMaterial } from "./account-sharing-key"
-import { loadFormWorkspace } from "./form-workspace"
+import { loadFormDefinition, loadFormWorkspace } from "./form-workspace"
 
 const sharing: AccountSharingMaterial = {
   sharingPublicKey: "sharing-public-key",
@@ -189,5 +189,21 @@ describe("loadFormWorkspace", () => {
       loadFormWorkspace("form-1", "account-key", sharing)
     ).rejects.toThrow()
     expect(mocks.apiFetch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("loadFormDefinition", () => {
+  it("opens the form's definition without fetching any responses", async () => {
+    respondWith(formWire(), [{ id: "r1", ciphertext: "ct-1" }])
+
+    const definition = await loadFormDefinition("form-1", "account-key", sharing)
+
+    expect(definition.title).toBe("My form")
+    expect(definition.questions).toEqual(schema.questions)
+    expect(definition.formDataKey).toBe("data-key")
+    expect(definition.hasHeaderImage).toBe(true)
+    expect("responses" in definition).toBe(false)
+    const paths = mocks.apiFetch.mock.calls.map((call) => call[0] as string)
+    expect(paths.some((path) => path.includes("/responses"))).toBe(false)
   })
 })
