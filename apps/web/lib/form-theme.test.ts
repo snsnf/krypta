@@ -303,12 +303,12 @@ describe("Arabic font fallback", () => {
     const style = getFormThemeStyle({ language: "ar" })
     for (const role of ["header", "question", "text"] as const) {
       const stack = style[`--form-${role}-font`]
-      expect(stack).toMatch(/'Noto Sans Arabic', var\(--font-heading\)$/)
+      expect(stack).toMatch(/'IBM Plex Sans Arabic', var\(--font-heading\)$/)
     }
   })
 
   test("leaves an English form's font stacks as they were", () => {
     const style = getFormThemeStyle({})
-    expect(style["--form-text-font"]).not.toContain("Noto Sans Arabic")
+    expect(style["--form-text-font"]).not.toContain("IBM Plex Sans Arabic")
   })
 })

@@ -265,13 +265,13 @@ type FormThemeStyle = CSSProperties & {
 }
 
 /*
- * An Arabic form puts the self-hosted Noto Sans Arabic behind the chosen font:
- * the creator's font still draws any Latin text, and Arabic letters, which the
- * default fonts do not have, get a proper face instead of whatever the device
- * falls back to.
+ * An Arabic form puts IBM Plex Sans Arabic (declared in globals.css) behind the
+ * chosen font: the creator's font still draws any Latin text, and Arabic
+ * letters, which the default fonts do not have, get a proper face instead of
+ * whatever the device falls back to.
  */
 function toFontStack(font: string, language: FormTheme["language"]): string {
-  const arabic = language === "ar" ? " 'Noto Sans Arabic'," : ""
+  const arabic = language === "ar" ? " 'IBM Plex Sans Arabic'," : ""
   return `'${font.replaceAll("'", "")}',${arabic} var(--font-heading)`
 }
 
@@ -360,7 +360,10 @@ export function getFormThemeStyle(
     "--form-accent": accent,
     "--form-accent-foreground": accentForeground,
     "--form-page-background": pageBackground,
-    "--form-header-font": toFontStack(theme.typography.header.font, theme.language),
+    "--form-header-font": toFontStack(
+      theme.typography.header.font,
+      theme.language
+    ),
     "--form-header-size": `${theme.typography.header.size}px`,
     "--form-question-font": toFontStack(
       theme.typography.question.font,

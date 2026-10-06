@@ -13,16 +13,16 @@ test("the entry screens switch to Arabic, right to left, and back", async ({
   await expect(html).toHaveAttribute("dir", "rtl")
   const heading = page.getByRole("heading", { name: "تسجيل الدخول" })
   await expect(heading).toBeVisible()
-  await expect(heading).toHaveCSS("font-family", /^"?Noto Sans Arabic/)
+  await expect(heading).toHaveCSS("font-family", /^"?IBM Plex Sans Arabic/)
   // Declaring the face is not using it: a font file only loads once some text
   // actually needs it, so this fails if Arabic stops at the app fonts'
-  // fallback instead of reaching Noto.
+  // fallback instead of reaching IBM Plex Sans Arabic.
   await expect
     .poll(() =>
       page.evaluate(() =>
         Array.from(document.fonts).some(
           (face) =>
-            face.family.includes("Noto Sans Arabic") && face.status === "loaded"
+            face.family.includes("IBM Plex Sans Arabic") && face.status === "loaded"
         )
       )
     )
