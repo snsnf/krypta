@@ -287,7 +287,15 @@
     "titleEmpty": "Title can't be empty.",
     "renameConflict": "This form changed elsewhere. Your typed title is still here. Try again.",
     "unavailable": "Form unavailable",
-    "awaiting": "Shared form: waiting for secure access"
+    "awaiting": "Shared form: waiting for secure access",
+    "duplicate": "Duplicate",
+    "duplicating": "Duplicating...",
+    "duplicatingToast": "Duplicating the form...",
+    "headerNotCopied": "Copied, but the header image couldn't be copied",
+    "headerNotCopiedBody": "Add it again from Appearance.",
+    "duplicateFailed": "Could not duplicate the form",
+    "duplicateLimit": "This account is at its limit of open forms. Close another form, then try again.",
+    "copyOf": "Copy of {title}"
   },
   "templates": {
     "title": "New form",

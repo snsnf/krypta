@@ -79,6 +79,11 @@ interface FormWorkspace {
   answerKey: AnswerKey | null
 }
 
+export type FormDefinition = Omit<
+  FormWorkspace,
+  "responses" | "unreadableResponses"
+>
+
 interface FormWire {
   title_ciphertext: string
   schema_ciphertext: string
@@ -99,7 +104,9 @@ interface FormWire {
 }
 
 /**
- * Fetches and opens one form for a member who holds the account key.
+ * The form itself, opened with the member's own access: title, schema,
+ * plaintext columns and the answer key. No responses, so Duplicate never
+ * downloads what it does not copy.
  *
  * Throws `"Form access is not ready"` for a membership whose keys have not been
  * provisioned yet, and for a payload that does not describe a usable
@@ -107,11 +114,11 @@ interface FormWire {
  * tell "waiting for the owner" apart from "keys unreadable", so rewording it
  * silently reclassifies the screen a collaborator sees.
  */
-export async function loadFormWorkspace(
+export async function loadFormDefinition(
   formId: string,
   accountKey: string,
   sharing: AccountSharingMaterial
-): Promise<FormWorkspace> {
+): Promise<FormDefinition> {
   const form = await apiFetch<FormWire>(`/forms/${formId}`)
 
   if (
@@ -132,6 +139,34 @@ export async function loadFormWorkspace(
   const schema = JSON.parse(
     decryptWithKey(form.schema_ciphertext, formDataKey)
   ) as FormSchema
+
+  return {
+    role: form.role,
+    version: form.version,
+    formDataKey,
+    formPrivateKey,
+    title,
+    questions: schema.questions,
+    theme: normalizeFormTheme(schema.theme),
+    settings: normalizeFormSettings(schema.settings),
+    allowResponseEditing: form.allow_response_editing,
+    acceptingResponses: form.accepting_responses,
+    closesAt: form.closes_at,
+    maxResponses: form.max_responses,
+    notifyOnResponse: form.notify_on_response,
+    hasHeaderImage: form.header_image === true,
+    answerKey: openAnswerKey(form.answer_key_ciphertext, formPrivateKey),
+  }
+}
+
+/** The form's definition plus every response, opened in this browser. */
+export async function loadFormWorkspace(
+  formId: string,
+  accountKey: string,
+  sharing: AccountSharingMaterial
+): Promise<FormWorkspace> {
+  const definition = await loadFormDefinition(formId, accountKey, sharing)
+  const { formPrivateKey } = definition
 
   // The API pages this listing so no single request holds a whole form's
   // responses in server memory. The workspace still needs every response
@@ -168,23 +203,5 @@ export async function loadFormWorkspace(
     }
   }
 
-  return {
-    role: form.role,
-    version: form.version,
-    formDataKey,
-    formPrivateKey,
-    title,
-    questions: schema.questions,
-    theme: normalizeFormTheme(schema.theme),
-    settings: normalizeFormSettings(schema.settings),
-    allowResponseEditing: form.allow_response_editing,
-    acceptingResponses: form.accepting_responses,
-    closesAt: form.closes_at,
-    maxResponses: form.max_responses,
-    notifyOnResponse: form.notify_on_response,
-    hasHeaderImage: form.header_image === true,
-    responses,
-    unreadableResponses,
-    answerKey: openAnswerKey(form.answer_key_ciphertext, formPrivateKey),
-  }
+  return { ...definition, responses, unreadableResponses }
 }

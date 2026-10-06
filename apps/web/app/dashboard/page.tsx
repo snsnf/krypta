@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { encryptWithKey } from "@krypta/crypto"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
+  Copy01Icon,
   MoreVerticalIcon,
   PencilEdit02Icon,
   PlusSignIcon,
@@ -19,12 +21,16 @@ import {
 import { useAuthStore } from "@/lib/auth-store"
 import { useAppT } from "@/lib/app-i18n"
 import {
+  canDuplicate,
   decryptFormList,
   groupDashboardForms,
   type DashboardFormListItem,
   type FormListWireItem,
 } from "@/lib/dashboard-forms"
 import { provisionPendingMembers } from "@/lib/provisioning"
+import { duplicateForm } from "@/lib/duplicate-form"
+import { ensureSodiumReady } from "@/lib/sodium-ready"
+import { toast } from "@/components/ui/toast"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -110,6 +116,9 @@ export default function DashboardPage() {
   const [renameTitle, setRenameTitle] = useState("")
   const [renameError, setRenameError] = useState<string | null>(null)
   const [renamePending, setRenamePending] = useState(false)
+  const router = useRouter()
+  // Held while a copy is being made, so a second click cannot make a second.
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (userId === null || accountKey === null) {
@@ -212,6 +221,53 @@ export default function DashboardPage() {
               archivedForms: [form, ...prev.archivedForms],
               activeForms: prev.activeForms.filter((f) => f.id !== form.id),
             }
+      })
+    }
+  }
+
+  async function handleDuplicate(form: DashboardFormListItem) {
+    if (!accountKey || !userId || duplicatingId !== null) return
+    setDuplicatingId(form.id)
+    // The menu closes on click and the work takes a few seconds (opening the
+    // original, new keys, the header image), so say that something is
+    // happening.
+    const pending = toast.add({
+      title: t("dashboard.duplicatingToast"),
+      type: "loading",
+      timeout: 0,
+    })
+    try {
+      await ensureSodiumReady()
+      const sharing = await ensureAccountSharingKey({
+        expectedUserId: userId,
+        accountKey,
+      })
+      const copy = await duplicateForm(form.id, accountKey, sharing, (title) =>
+        t("dashboard.copyOf", { title })
+      )
+      toast.close(pending)
+      if (!copy.headerCopied) {
+        toast.add({
+          title: t("dashboard.headerNotCopied"),
+          description: t("dashboard.headerNotCopiedBody"),
+          type: "error",
+        })
+      }
+      // The key travels in the fragment, never the query string, exactly as
+      // after publishing a new form.
+      router.push(
+        `/dashboard/${copy.id}?created=1#key=${encodeURIComponent(copy.formDataKey)}`
+      )
+    } catch (error) {
+      toast.close(pending)
+      setDuplicatingId(null)
+      toast.add({
+        title: t("dashboard.duplicateFailed"),
+        description:
+          error instanceof ApiClientError && error.code === "rate_limited"
+            ? t("dashboard.duplicateLimit")
+            : t("common.genericError"),
+        type: "error",
       })
     }
   }
@@ -504,6 +560,20 @@ export default function DashboardPage() {
                                       size={16}
                                     />
                                     {t("common.rename")}
+                                  </DropdownMenuItem>
+                                ) : null}
+                                {canDuplicate(form) ? (
+                                  <DropdownMenuItem
+                                    disabled={duplicatingId !== null}
+                                    onClick={() => handleDuplicate(form)}
+                                  >
+                                    <HugeiconsIcon
+                                      icon={Copy01Icon}
+                                      size={16}
+                                    />
+                                    {duplicatingId === form.id
+                                      ? t("dashboard.duplicating")
+                                      : t("dashboard.duplicate")}
                                   </DropdownMenuItem>
                                 ) : null}
                                 <DropdownMenuItem
