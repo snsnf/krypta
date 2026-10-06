@@ -40,6 +40,17 @@ CARGO_AUDIT_IGNORE=(
   RUSTSEC-2026-0195
 )
 
+# npm advisories with no available fix, reviewed and accepted, on the same
+# terms as the list above.
+#
+#   GHSA-vfj7-8cjw-p6xm  braces stack exhaustion on deeply nested patterns.
+#                        Reached only through fast-glob in the shadcn CLI and
+#                        eslint-config-next, dev tools that expand patterns we
+#                        write, never user input. 3.0.3 is the latest release.
+WEB_AUDIT_IGNORE=(
+  GHSA-vfj7-8cjw-p6xm
+)
+
 FAILED=()
 STEP=0
 # Each step is numbered and timed, so a long run shows where it is and a slow
@@ -57,6 +68,12 @@ run() {
     printf '\033[31m✗ [%d] %s\033[0m (%ds)\n' "$STEP" "$label" "$((SECONDS - started))"
     FAILED+=("$label")
   fi
+}
+
+web_audit() {
+  local args=()
+  for id in "${WEB_AUDIT_IGNORE[@]}"; do args+=(--ignore="$id"); done
+  (cd "$WEB" && bun audit "${args[@]}")
 }
 
 cargo_audit() {
@@ -267,7 +284,7 @@ static_checks() {
   run "web: typecheck"   bash -c "cd '$WEB' && bun run typecheck"
   run "web: lint"        bash -c "cd '$WEB' && bun run lint"
   run "web: unit tests"  bash -c "cd '$WEB' && bun run test:unit"
-  run "web: audit"       bash -c "cd '$WEB' && bun audit"
+  run "web: audit"       web_audit
   run "crypto: tests"    bash -c "cd '$ROOT/packages/crypto' && bun run test"
   run "web: build"       bash -c "cd '$WEB' && bun run build"
 }
