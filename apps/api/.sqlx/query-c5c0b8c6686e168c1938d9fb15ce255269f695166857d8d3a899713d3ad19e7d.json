@@ -1,12 +1,17 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id FROM users WHERE email = $1 AND suspended_at IS NULL AND deletion_started_at IS NULL",
+  "query": "SELECT id, language FROM users WHERE email = $1 AND suspended_at IS NULL AND deletion_started_at IS NULL",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "language",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -20,8 +25,9 @@
       ]
     },
     "nullable": [
+      false,
       false
     ]
   },
-  "hash": "7954e0ca3505bccb7e0767faa212ab656dfe025a251dea4577eec629960b7095"
+  "hash": "c5c0b8c6686e168c1938d9fb15ce255269f695166857d8d3a899713d3ad19e7d"
 }
