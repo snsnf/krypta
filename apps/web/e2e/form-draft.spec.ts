@@ -1,4 +1,4 @@
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm, choose } from "./fixtures"
 
 /*
  * Draft persistence is browser behavior end to end: a state change, a
@@ -104,10 +104,10 @@ test("a form edited after the draft was written drops only the answers that no l
   // answered, but it matches no option: without reconciliation they would come
   // back to an unselected set of radios that nothing asks them to fill in, and
   // the old sentence would be sealed into their response anyway.
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .first()
-    .selectOption("multiple_choice")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }).first(),
+    "Multiple choice"
+  )
   const options = page.locator('input[placeholder^="Option "]')
   await options.nth(0).fill("Daily")
   await page.click('button:has-text("+ Add option")')

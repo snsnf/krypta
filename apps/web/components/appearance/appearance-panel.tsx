@@ -22,6 +22,13 @@ import {
   FORM_LANGUAGE_LABELS,
   normalizeFormLanguage,
 } from "@/lib/form-language"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 /**
  * Absent means this form cannot take an image yet, which is true before it has
@@ -178,11 +185,12 @@ export function AppearancePanel({
         <Label htmlFor={`${idPrefix}form-language`}>
           {t("appearance.language")}
         </Label>
-        <select
+        <Select
           id={`${idPrefix}form-language`}
+          items={FORM_LANGUAGE_LABELS}
           value={normalizeFormLanguage(value.language)}
-          onChange={(event) => {
-            const language = normalizeFormLanguage(event.target.value)
+          onValueChange={(next) => {
+            const language = normalizeFormLanguage(next ?? undefined)
             // English is the absence of a language, so an English form
             // serialises exactly as it did before languages existed.
             onChange({
@@ -190,14 +198,18 @@ export function AppearancePanel({
               language: language === "en" ? undefined : language,
             })
           }}
-          className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
         >
-          {FORM_LANGUAGES.map((language) => (
-            <option key={language} value={language}>
-              {FORM_LANGUAGE_LABELS[language]}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FORM_LANGUAGES.map((language) => (
+              <SelectItem key={language} value={language} lang={language}>
+                {FORM_LANGUAGE_LABELS[language]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <p className="text-xs text-muted-foreground">
           {t("appearance.languageBody")}
         </p>
@@ -304,26 +316,30 @@ export function AppearancePanel({
                   ariaLabel={t("appearance.weightAria", {
                     role: roleName(role),
                   })}
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="w-full"
                 />
-                <select
-                  aria-label={t("appearance.sizeAria", {
-                    role: roleName(role),
-                  })}
+                <Select
                   value={value.typography[role].size}
-                  onChange={(event) =>
-                    updateTypography(role, {
-                      size: Number(event.target.value),
-                    })
+                  onValueChange={(size) =>
+                    size !== null && updateTypography(role, { size })
                   }
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
-                  {FORM_TYPOGRAPHY_SIZES[role].map((size) => (
-                    <option key={size} value={size}>
-                      {size}px
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    aria-label={t("appearance.sizeAria", {
+                      role: roleName(role),
+                    })}
+                    className="w-full"
+                  >
+                    <SelectValue>{(size: number) => `${size}px`}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FORM_TYPOGRAPHY_SIZES[role].map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}px
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           ))}

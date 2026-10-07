@@ -34,6 +34,13 @@ import { deriveAuthVerifier } from "@krypta/crypto"
 import { deriveVaultUnlockKey } from "@/lib/vault-access"
 import { useAppT, type AppTranslator } from "@/lib/app-i18n"
 import { CredentialInput } from "@/components/credential-input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface EligibleTransfer {
   formId: string
@@ -291,14 +298,10 @@ export function AccountActions({
 
       {eligibleTransfers.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <label className="sr-only" htmlFor={`transfer-form-${account.id}`}>
-            {t("admin.actions.sharedForm")}
-          </label>
-          <select
-            id={`transfer-form-${account.id}`}
+          <Select
             value={selectedFormId}
-            onChange={(event) => {
-              const formId = event.target.value
+            onValueChange={(formId) => {
+              if (formId === null) return
               const editorMemberId = eligibleTransfers.find(
                 (transfer) => transfer.formId === formId
               )?.editorMemberIds[0]
@@ -307,38 +310,51 @@ export function AccountActions({
                 editorMemberId: editorMemberId ?? "",
               })
             }}
-            className="h-7 max-w-36 rounded-lg border border-input bg-transparent px-2 text-xs"
             disabled={pending !== null}
           >
-            {eligibleTransfers.map((transfer) => (
-              <option key={transfer.formId} value={transfer.formId}>
-                {transfer.formId}
-              </option>
-            ))}
-          </select>
-          <label className="sr-only" htmlFor={`transfer-editor-${account.id}`}>
-            {t("admin.actions.eligibleEditor")}
-          </label>
-          <select
-            id={`transfer-editor-${account.id}`}
+            <SelectTrigger
+              size="sm"
+              aria-label={t("admin.actions.sharedForm")}
+              className="max-w-36 text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {eligibleTransfers.map((transfer) => (
+                <SelectItem key={transfer.formId} value={transfer.formId}>
+                  {transfer.formId}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
             value={selectedEditorMemberId}
-            onChange={(event) =>
+            onValueChange={(editorMemberId) => {
+              if (editorMemberId === null) return
               setTransferSelection((current) => ({
                 ...current,
-                editorMemberId: event.target.value,
+                editorMemberId,
               }))
-            }
-            className="h-7 max-w-36 rounded-lg border border-input bg-transparent px-2 text-xs"
+            }}
             disabled={
               pending !== null || !selectedTransfer?.editorMemberIds.length
             }
           >
-            {selectedTransfer?.editorMemberIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              size="sm"
+              aria-label={t("admin.actions.eligibleEditor")}
+              className="max-w-36 text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {selectedTransfer?.editorMemberIds.map((id) => (
+                <SelectItem key={id} value={id}>
+                  {id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"

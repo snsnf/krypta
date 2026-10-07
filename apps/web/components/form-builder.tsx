@@ -16,7 +16,7 @@ import {
   SquareIcon,
   Sun02Icon,
 } from "@hugeicons/core-free-icons"
-import type { FormTheme, Question, QuestionCondition } from "@krypta/crypto"
+import type { FormTheme, Question } from "@krypta/crypto"
 import { cn } from "@/lib/utils"
 import {
   Alert,
@@ -46,12 +46,23 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { AnswerKeyEditor } from "@/components/quiz/answer-key-editor"
 import { entryFor, renameOptionInKey, type AnswerKey } from "@/lib/quiz"
 import { distinctOptions, hasDuplicateOptions } from "@/lib/question-options"
-import { conditionValues, isRangeOperator } from "@/lib/form-visibility"
+import {
+  conditionOperators,
+  conditionValues,
+  isRangeOperator,
+} from "@/lib/form-visibility"
 import { RatingSettingsEditor } from "@/components/rating-settings"
 import { useAppT } from "@/lib/app-i18n"
 import { autoDir } from "@/lib/text-direction"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-const QUESTION_TYPES: Question["type"][] = [
+export const QUESTION_TYPES: Question["type"][] = [
   "short_text",
   "long_text",
   "multiple_choice",
@@ -63,6 +74,15 @@ const QUESTION_TYPES: Question["type"][] = [
   "file_upload",
   "rating",
 ]
+
+// Each operator's label, and the label it carries when the rule is ignored
+// because its source is no longer a rating.
+const OPERATOR_LABELS = {
+  is: ["builder.is", "builder.is"],
+  is_not: ["builder.isNot", "builder.isNot"],
+  at_most: ["builder.atMost", "builder.atMostIgnored"],
+  at_least: ["builder.atLeast", "builder.atLeastIgnored"],
+} as const
 
 // The types whose empty answer field is drawn as a dashed placeholder.
 const ANSWER_PREVIEW_TYPES: Question["type"][] = [
@@ -81,9 +101,6 @@ const OPTION_BASED_TYPES: Question["type"][] = [
 
 const UNDERLINE_INPUT_CLASSES =
   "w-full border-0 border-b border-transparent bg-transparent px-0 py-1 outline-none transition-colors duration-150 ease-out placeholder:text-muted-foreground/60 focus:border-border"
-
-const TYPE_SELECT_CLASSES =
-  "h-8 w-40 shrink-0 rounded-lg border border-input bg-transparent px-2 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
 
 // How long the broken-condition ring stays up once it starts fading out.
 
@@ -328,26 +345,28 @@ export function FormBuilder({
                       "form-theme-question flex-1"
                     )}
                   />
-                  <select
-                    aria-label={t("builder.questionType")}
+                  <Select
                     value={q.type}
-                    onChange={(e) =>
-                      changeQuestionType(
-                        q.id,
-                        e.target.value as Question["type"]
-                      )
+                    onValueChange={(type) =>
+                      type !== null && changeQuestionType(q.id, type)
                     }
-                    className={cn(
-                      TYPE_SELECT_CLASSES,
-                      "form-theme-text w-full sm:w-40"
-                    )}
                   >
-                    {QUESTION_TYPES.map((value) => (
-                      <option key={value} value={value}>
-                        {t(`builder.types.${value}`)}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      aria-label={t("builder.questionType")}
+                      className="form-theme-text w-full shrink-0 sm:w-40"
+                    >
+                      <SelectValue>
+                        {(type: Question["type"]) => t(`builder.types.${type}`)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {QUESTION_TYPES.map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {t(`builder.types.${value}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {ANSWER_PREVIEW_TYPES.includes(q.type) && (
@@ -517,6 +536,49 @@ export function FormBuilder({
                     source !== undefined &&
                     !(conditionValues(source) ?? []).includes(condition.value)
                   const staleValue = missingValue && !ignoredRange
+                  const sourceItems = [
+                    ...(dangling && condition
+                      ? [
+                          {
+                            value: condition.questionId,
+                            label: t("builder.unavailable"),
+                          },
+                        ]
+                      : []),
+                    ...sources.map((s) => ({
+                      value: s.id,
+                      label: s.label || t("quiz.untitled"),
+                    })),
+                  ]
+                  // A stranded range rule is listed as it is, so the row
+                  // matches the alert below and picking "is" is a real change
+                  // rather than a click on what already looks selected.
+                  const operatorItems = conditionOperators(
+                    source,
+                    condition?.operator ?? "is"
+                  ).map((operator) => ({
+                    value: operator,
+                    label: t(
+                      OPERATOR_LABELS[operator][
+                        ignoredRange && operator === condition?.operator ? 1 : 0
+                      ]
+                    ),
+                  }))
+                  const valueItems = [
+                    ...(missingValue && condition
+                      ? [
+                          {
+                            value: condition.value,
+                            label: t("builder.removedValue", {
+                              value: condition.value,
+                            }),
+                          },
+                        ]
+                      : []),
+                    ...distinctOptions(conditionValues(source) ?? []).map(
+                      (option) => ({ value: option, label: option })
+                    ),
+                  ]
                   const ignored = dangling || ignoredRange
 
                   if (condition === undefined && sources.length === 0)
@@ -545,16 +607,17 @@ export function FormBuilder({
                           <span className="text-muted-foreground">
                             {t("builder.showIf")}
                           </span>
-                          <select
-                            aria-label={t("builder.conditionQuestion")}
+                          <Select
+                            items={sourceItems}
                             value={condition.questionId}
-                            onChange={(event) => {
+                            onValueChange={(questionId) => {
+                              if (questionId === null) return
                               const next = questions.find(
-                                (o) => o.id === event.target.value
+                                (o) => o.id === questionId
                               )
                               updateQuestion(q.id, {
                                 condition: {
-                                  questionId: event.target.value,
+                                  questionId,
                                   // Range rules exist only for ratings, so
                                   // moving to a choice source starts over at is.
                                   operator:
@@ -566,84 +629,42 @@ export function FormBuilder({
                                 },
                               })
                             }}
-                            className="rounded-md border border-border bg-background px-2 py-1"
                           >
-                            {dangling && (
-                              <option value={condition.questionId}>
-                                {t("builder.unavailable")}
-                              </option>
-                            )}
-                            {sources.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.label || t("quiz.untitled")}
-                              </option>
-                            ))}
-                          </select>
-                          <select
-                            aria-label={t("builder.conditionOperator")}
+                            <ConditionTrigger
+                              label={t("builder.conditionQuestion")}
+                            />
+                            <ConditionItems items={sourceItems} />
+                          </Select>
+                          <Select
+                            items={operatorItems}
                             value={condition.operator}
-                            onChange={(event) =>
+                            onValueChange={(operator) =>
+                              operator !== null &&
                               updateQuestion(q.id, {
-                                condition: {
-                                  ...condition,
-                                  operator: event.target
-                                    .value as QuestionCondition["operator"],
-                                },
+                                condition: { ...condition, operator },
                               })
                             }
-                            className="rounded-md border border-border bg-background px-2 py-1"
                           >
-                            <option value="is">{t("builder.is")}</option>
-                            <option value="is_not">{t("builder.isNot")}</option>
-                            {/* Shown as it is, so the row matches the alert
-                                below and picking "is" is a real change rather
-                                than a click on what already looks selected. */}
-                            {ignoredRange && (
-                              <option value={condition.operator}>
-                                {condition.operator === "at_most"
-                                  ? t("builder.atMostIgnored")
-                                  : t("builder.atLeastIgnored")}
-                              </option>
-                            )}
-                            {source?.type === "rating" && (
-                              <>
-                                <option value="at_most">
-                                  {t("builder.atMost")}
-                                </option>
-                                <option value="at_least">
-                                  {t("builder.atLeast")}
-                                </option>
-                              </>
-                            )}
-                          </select>
-                          <select
-                            aria-label={t("builder.conditionValue")}
+                            <ConditionTrigger
+                              label={t("builder.conditionOperator")}
+                            />
+                            <ConditionItems items={operatorItems} />
+                          </Select>
+                          <Select
+                            items={valueItems}
                             value={condition.value}
-                            onChange={(event) =>
+                            onValueChange={(value) =>
+                              value !== null &&
                               updateQuestion(q.id, {
-                                condition: {
-                                  ...condition,
-                                  value: event.target.value,
-                                },
+                                condition: { ...condition, value },
                               })
                             }
-                            className="rounded-md border border-border bg-background px-2 py-1"
                           >
-                            {missingValue && (
-                              <option value={condition.value}>
-                                {t("builder.removedValue", {
-                                  value: condition.value,
-                                })}
-                              </option>
-                            )}
-                            {distinctOptions(conditionValues(source) ?? []).map(
-                              (option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              )
-                            )}
-                          </select>
+                            <ConditionTrigger
+                              label={t("builder.conditionValue")}
+                            />
+                            <ConditionItems items={valueItems} />
+                          </Select>
                           <button
                             type="button"
                             onClick={() =>
@@ -843,5 +864,29 @@ export function FormBuilder({
         headerImageUrl={headerImage?.previewUrl ?? null}
       />
     </>
+  )
+}
+
+function ConditionTrigger({ label }: { label: string }) {
+  return (
+    <SelectTrigger size="sm" aria-label={label} className="max-w-48">
+      <SelectValue />
+    </SelectTrigger>
+  )
+}
+
+function ConditionItems({
+  items,
+}: {
+  items: { value: string; label: string }[]
+}) {
+  return (
+    <SelectContent>
+      {items.map((item) => (
+        <SelectItem key={item.value} value={item.value}>
+          <span dir="auto">{item.label}</span>
+        </SelectItem>
+      ))}
+    </SelectContent>
   )
 }

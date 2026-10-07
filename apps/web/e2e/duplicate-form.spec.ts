@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, startBlankForm, test, unlock } from "./fixtures"
+import { expect, shareLinkFor, startBlankForm, test, unlock, choose } from "./fixtures"
 
 // A 1x1 transparent PNG.
 const PNG = Buffer.from(
@@ -27,7 +27,7 @@ test("duplicating a form copies its questions, rule and header image to a new li
 
   await page.getByLabel("Form title").fill("Original form")
   await page.getByLabel("Question label").fill("Coming?")
-  await page.getByRole("combobox", { name: "Question type" }).selectOption("multiple_choice")
+  await choose(page.getByRole("combobox", { name: "Question type" }), "Multiple choice")
   const options = page.locator('input[placeholder^="Option "]')
   await options.nth(0).fill("Yes")
   await page.getByRole("button", { name: "+ Add option" }).click()

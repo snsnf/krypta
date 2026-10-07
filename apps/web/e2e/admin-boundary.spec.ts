@@ -90,12 +90,12 @@ test("admin keeps content APIs outside its request boundary and resets every con
 
   await page.goto("/admin")
   await expect(page.getByRole("heading", { name: "Accounts" })).toBeVisible()
-  await expect(page.getByRole("combobox", { name: "Shared form" })).toHaveValue(
+  await expect(page.getByRole("combobox", { name: "Shared form" })).toHaveText(
     formId
   )
   await expect(
     page.getByRole("combobox", { name: "Eligible editor" })
-  ).toHaveValue(editorMemberId)
+  ).toHaveText(editorMemberId)
 
   const deleteButton = page.getByRole("button", { name: "Delete" })
   await deleteButton.hover()
@@ -198,7 +198,7 @@ test("admin transfer refresh replaces stale form and editor membership selection
   const transferButton = page.getByRole("button", { name: "Transfer" })
   await expect(transferButton).toBeEnabled()
   await transferButton.click()
-  await expect(page.getByRole("combobox", { name: "Shared form" })).toHaveValue(
+  await expect(page.getByRole("combobox", { name: "Shared form" })).toHaveText(
     second.formId
   )
   await transferButton.click()

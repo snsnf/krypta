@@ -1,5 +1,12 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import {
+  expect,
+  shareLinkFor,
+  test,
+  unlock,
+  startBlankForm,
+  choose,
+} from "./fixtures"
 
 /*
  * The radios are sr-only, so the visible label is what a respondent clicks;
@@ -27,18 +34,15 @@ test("a star rating reveals its follow-up at two stars and is summarised", async
 
   await page.getByLabel("Form title").fill("Rating form")
   await page.getByLabel("Question label").fill("How was the event?")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .selectOption("rating")
+  await choose(page.getByRole("combobox", { name: "Question type" }), "Rating")
   await page.getByRole("button", { name: "Add question" }).click()
   await page.getByLabel("Question label").nth(1).fill("What went wrong?")
   await page.getByRole("button", { name: /only show this if/i }).click()
-  await page
-    .getByRole("combobox", { name: "Condition operator" })
-    .selectOption("at_most")
-  await page
-    .getByRole("combobox", { name: "Condition value" })
-    .selectOption("2")
+  await choose(
+    page.getByRole("combobox", { name: "Condition operator" }),
+    "is at most"
+  )
+  await choose(page.getByRole("combobox", { name: "Condition value" }), "2")
 
   await page.getByRole("button", { name: /publish form/i }).click()
   await page.waitForURL(/\/dashboard\/[^/]+\?created=1/)

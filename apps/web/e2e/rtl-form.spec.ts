@@ -1,4 +1,11 @@
-import { expect, shareLinkFor, startBlankForm, test, unlock } from "./fixtures"
+import {
+  expect,
+  shareLinkFor,
+  startBlankForm,
+  test,
+  unlock,
+  choose,
+} from "./fixtures"
 
 test("an Arabic form reaches respondents right to left, in Arabic", async ({
   page,
@@ -16,7 +23,7 @@ test("an Arabic form reaches respondents right to left, in Arabic", async ({
   await page.getByLabel("Question label").fill("الاسم")
   await page.getByRole("switch", { name: "Required" }).click()
   // At desktop width the Appearance panel sits open beside the builder.
-  await page.getByLabel("Form language").first().selectOption("ar")
+  await choose(page.getByLabel("Form language").first(), "العربية")
 
   await page.getByRole("button", { name: /publish form/i }).click()
   await page.waitForURL(/\/dashboard\/[^/]+\?created=1/)

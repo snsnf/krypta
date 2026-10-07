@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { MAX_QUIZ_POINTS, isChoiceType, type AnswerKeyEntry } from "@/lib/quiz"
 import { distinctOptions } from "@/lib/question-options"
 import { autoDir } from "@/lib/text-direction"
+import { Textarea } from "@/components/ui/textarea"
 
 interface AnswerKeyEditorProps {
   question: Question
@@ -101,7 +102,7 @@ export function AnswerKeyEditor({
           <span className="text-muted-foreground">{t("quiz.accepted")}</span>
           {/* Raw lines are kept, empty ones included, so pressing Enter does
               not eat the new line; scoring ignores empty lines. */}
-          <textarea
+          <Textarea
             dir={autoDir((current.accepted ?? []).join(""))}
             aria-label={t("quiz.acceptedLabel")}
             rows={3}
@@ -109,7 +110,6 @@ export function AnswerKeyEditor({
             onChange={(event) =>
               onChange(withAnswer({ accepted: event.target.value.split("\n") }))
             }
-            className="rounded-md border border-input bg-transparent px-2 py-1.5 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
         </label>
       ) : question.type === "number" ? (

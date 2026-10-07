@@ -67,6 +67,13 @@ visited**. This race is timing-sensitive enough that unrelated changes, adding
 a few CSS rules included, will flip it, and a test that passes alone can fail in
 a full run.
 
+Dropdowns in the app are the shadcn Select (`components/ui/select.tsx`, Base
+UI underneath): a button and a portalled list, not a native `<select>`, so
+Playwright's `selectOption` cannot drive them. Use `choose(trigger, label)`
+from `e2e/fixtures.ts`, and assert the shown label with `toHaveText`, not
+`toHaveValue`. The respondent's dropdown question is the one native select
+left, because a portalled list would escape the form's themed surface.
+
 `waitForInteractive` waits for `networkidle`, so it cannot settle against a page
 that never stops requesting. If it times out, suspect a render loop in the page
 before suspecting the test.

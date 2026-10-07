@@ -1,5 +1,12 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import {
+  expect,
+  shareLinkFor,
+  test,
+  unlock,
+  startBlankForm,
+  choose,
+} from "./fixtures"
 
 type PageCookies = Awaited<ReturnType<ReturnType<Page["context"]>["cookies"]>>
 
@@ -83,13 +90,13 @@ test("builder is wide and applies appearance changes live", async ({
   await page.getByRole("combobox", { name: "Header font" }).click()
   await page.getByPlaceholder("Search fonts").fill("Noto Sans Arabic")
   await page.getByRole("option", { name: "Noto Sans Arabic" }).click()
-  await page.getByLabel("Header size").selectOption("30")
-  await page.getByLabel("Question size").selectOption("16")
-  await page.getByLabel("Text size").selectOption("18")
+  await choose(page.getByLabel("Header size"), "30px")
+  await choose(page.getByLabel("Question size"), "16px")
+  await choose(page.getByLabel("Text size"), "18px")
   await expect(page.getByLabel("Form title")).toHaveCSS("font-size", "30px")
   await expect(page.getByLabel("Question label")).toHaveCSS("font-size", "16px")
 
-  await page.getByLabel("Header weight and style").selectOption("700")
+  await choose(page.getByLabel("Header weight and style"), "Bold")
   await expect(page.getByLabel("Form title")).toHaveCSS("font-weight", "700")
 })
 
@@ -206,9 +213,9 @@ test("saved appearance renders on edit, preview, and public form", async ({
     .locator('[role="option"]:visible', { hasText: "Fraunces" })
     .last()
     .click()
-  await page.getByLabel("Header size").selectOption("30")
-  await page.getByLabel("Question size").selectOption("16")
-  await page.getByLabel("Text size").selectOption("18")
+  await choose(page.getByLabel("Header size"), "30px")
+  await choose(page.getByLabel("Question size"), "16px")
+  await choose(page.getByLabel("Text size"), "18px")
 
   await page.getByRole("button", { name: "Preview" }).click()
   const preview = page.getByRole("dialog")
@@ -263,9 +270,9 @@ test("saved appearance renders on edit, preview, and public form", async ({
   await expect(page.getByRole("combobox", { name: "Text font" })).toContainText(
     "Fraunces"
   )
-  await expect(page.getByLabel("Header size")).toHaveValue("30")
-  await expect(page.getByLabel("Question size")).toHaveValue("16")
-  await expect(page.getByLabel("Text size")).toHaveValue("18")
+  await expect(page.getByLabel("Header size")).toHaveText("30px")
+  await expect(page.getByLabel("Question size")).toHaveText("16px")
+  await expect(page.getByLabel("Text size")).toHaveText("18px")
 
   const context = await browser.newContext({ colorScheme: "dark" })
   const respondent = await context.newPage()
@@ -359,10 +366,10 @@ test("a light-only form stays light inside a dark app shell", async ({
   await page.getByLabel("Question label").fill("Your name")
   await page.getByRole("button", { name: "Add question" }).click()
   await page.getByLabel("Question label").nth(1).fill("Choose an option")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .nth(1)
-    .selectOption("checkboxes")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }).nth(1),
+    "Checkboxes"
+  )
   await page.locator('input[aria-label="Option 1"]').fill("Selected choice")
   await page.getByRole("button", { name: "Publish form" }).click()
   await page.waitForURL(/\/dashboard\/.+\?created=1/)

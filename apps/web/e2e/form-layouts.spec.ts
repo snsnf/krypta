@@ -1,4 +1,11 @@
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import {
+  expect,
+  shareLinkFor,
+  test,
+  unlock,
+  startBlankForm,
+  choose,
+} from "./fixtures"
 
 test("classic layout paginates at a section break and submits on the last page", async ({
   page,
@@ -94,10 +101,10 @@ test("in Focus, a letter chooses an option and Enter moves on without the button
   await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Shortcut form")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .first()
-    .selectOption("multiple_choice")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }).first(),
+    "Multiple choice"
+  )
   await page
     .getByRole("textbox", { name: "Question label" })
     .first()

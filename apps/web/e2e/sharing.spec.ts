@@ -14,6 +14,7 @@ import {
   waitForInteractive,
   type SharedAccount,
   startBlankForm,
+  choose,
 } from "./fixtures"
 
 const API_BASE =
@@ -54,7 +55,10 @@ async function openSharing(page: Page) {
 async function invite(page: Page, email: string, role: "editor" | "viewer") {
   const dialog = await openSharing(page)
   await dialog.getByLabel("Email address").fill(email)
-  await dialog.locator("form select").selectOption(role)
+  await choose(
+    dialog.getByRole("combobox", { name: "Role" }),
+    role === "editor" ? "Editor" : "Viewer"
+  )
   await dialog.getByRole("button", { name: "Invite" }).click()
   await expect(page.getByText("Invitation sent", { exact: true })).toBeVisible()
   return dialog

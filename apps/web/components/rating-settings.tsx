@@ -12,9 +12,13 @@ import {
 import { RatingField } from "@/components/rating-field"
 import { useAppT } from "@/lib/app-i18n"
 import { autoDir } from "@/lib/text-direction"
-
-const SMALL_SELECT_CLASSES =
-  "h-7 rounded-md border border-border bg-background px-2 text-sm"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const LABEL_INPUT_CLASSES =
   "w-full border-0 border-b border-border/60 bg-transparent px-0 py-1 text-sm outline-none transition-colors duration-150 ease-out placeholder:text-muted-foreground/60 focus:border-border"
@@ -78,56 +82,31 @@ export function RatingSettingsEditor({
           ))}
         </div>
         {range.style === "stars" ? (
-          <label className="flex items-center gap-2">
+          <span className="flex items-center gap-2">
             {t("builder.stars")}
-            <select
-              aria-label={t("builder.numberOfStars")}
+            <NumberSelect
+              label={t("builder.numberOfStars")}
               value={range.max}
-              onChange={(event) =>
-                onChange({
-                  style: "stars",
-                  min: 1,
-                  max: Number(event.target.value),
-                })
-              }
-              className={SMALL_SELECT_CLASSES}
-            >
-              {STAR_COUNTS.map((count) => (
-                <option key={count} value={count}>
-                  {count}
-                </option>
-              ))}
-            </select>
-          </label>
+              values={STAR_COUNTS}
+              onChange={(max) => onChange({ style: "stars", min: 1, max })}
+            />
+          </span>
         ) : (
           <span className="flex items-center gap-2">
             {t("builder.from")}
-            <select
-              aria-label={t("builder.scaleStart")}
+            <NumberSelect
+              label={t("builder.scaleStart")}
               value={range.min}
-              onChange={(event) =>
-                onChange({ ...range, min: event.target.value === "0" ? 0 : 1 })
-              }
-              className={SMALL_SELECT_CLASSES}
-            >
-              <option value={0}>0</option>
-              <option value={1}>1</option>
-            </select>
+              values={[0, 1]}
+              onChange={(min) => onChange({ ...range, min: min === 0 ? 0 : 1 })}
+            />
             {t("builder.to")}
-            <select
-              aria-label={t("builder.scaleEnd")}
+            <NumberSelect
+              label={t("builder.scaleEnd")}
               value={range.max}
-              onChange={(event) =>
-                onChange({ ...range, max: Number(event.target.value) })
-              }
-              className={SMALL_SELECT_CLASSES}
-            >
-              {SCALE_ENDS.map((end) => (
-                <option key={end} value={end}>
-                  {end}
-                </option>
-              ))}
-            </select>
+              values={SCALE_ENDS}
+              onChange={(max) => onChange({ ...range, max })}
+            />
           </span>
         )}
       </div>
@@ -163,5 +142,35 @@ export function RatingSettingsEditor({
         preview
       />
     </div>
+  )
+}
+
+function NumberSelect({
+  label,
+  value,
+  values,
+  onChange,
+}: {
+  label: string
+  value: number
+  values: readonly number[]
+  onChange: (value: number) => void
+}) {
+  return (
+    <Select
+      value={value}
+      onValueChange={(next) => next !== null && onChange(next)}
+    >
+      <SelectTrigger size="sm" aria-label={label}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {values.map((number) => (
+          <SelectItem key={number} value={number}>
+            {number}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
