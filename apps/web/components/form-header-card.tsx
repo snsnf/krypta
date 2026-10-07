@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useFormT } from "@/lib/form-i18n"
+import { autoDir } from "@/lib/text-direction"
 
 interface FormHeaderCardProps {
   /** Object URL for the decrypted header image, or null when there is none. */
@@ -70,7 +71,7 @@ export function FormHeaderCard({
       <div className="p-5">
         {onTitleChange ? (
           <input
-            dir="auto"
+            dir={autoDir(title)}
             placeholder={t("untitled")}
             aria-label={t("formTitle")}
             value={title}

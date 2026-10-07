@@ -11,6 +11,7 @@ import {
 } from "@/lib/question-rating"
 import { RatingField } from "@/components/rating-field"
 import { useAppT } from "@/lib/app-i18n"
+import { autoDir } from "@/lib/text-direction"
 
 const SMALL_SELECT_CLASSES =
   "h-7 rounded-md border border-border bg-background px-2 text-sm"
@@ -134,7 +135,7 @@ export function RatingSettingsEditor({
       {range.style === "scale" && (
         <div className="grid gap-2 sm:grid-cols-2">
           <input
-            dir="auto"
+            dir={autoDir(range.minLabel)}
             aria-label={t("builder.lowLabel")}
             placeholder={t("builder.endLabel", { value: range.min })}
             value={range.minLabel ?? ""}
@@ -144,7 +145,7 @@ export function RatingSettingsEditor({
             className={LABEL_INPUT_CLASSES}
           />
           <input
-            dir="auto"
+            dir={autoDir(range.maxLabel)}
             aria-label={t("builder.highLabel")}
             placeholder={t("builder.endLabel", { value: range.max })}
             value={range.maxLabel ?? ""}

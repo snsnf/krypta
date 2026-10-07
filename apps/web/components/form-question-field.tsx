@@ -22,6 +22,7 @@ import { distinctOptions } from "@/lib/question-options"
 import { useFormLanguage, useFormT } from "@/lib/form-i18n"
 import { usesNumericShortcuts } from "@/lib/form-language"
 import { appFormatters } from "@/lib/app-format"
+import { autoDir } from "@/lib/text-direction"
 
 const TEXTAREA_CLASSES =
   "w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -189,11 +190,8 @@ export function FormQuestionField({
 }: FormQuestionFieldProps) {
   const t = useFormT()
   const numericMarkers = usesNumericShortcuts(useFormLanguage())
-  // A typed answer sets its own direction, but only once it has letters:
-  // HTML resolves dir="auto" on an empty field to ltr rather than to the
-  // parent, which would push an Arabic form's placeholder and caret left.
-  const textDir =
-    typeof value === "string" && value !== "" ? ("auto" as const) : undefined
+  // A typed answer sets its own direction once it has text (see autoDir).
+  const textDir = autoDir(typeof value === "string" ? value : undefined)
   if (question.type === "short_text") {
     return (
       <Input
@@ -513,7 +511,7 @@ function OtherChoiceRow({
        */}
       {selected && (
         <input
-          dir={text !== "" ? "auto" : undefined}
+          dir={autoDir(text)}
           ref={inputRef}
           type="text"
           aria-label={t("otherAnswerFor", { question: question.label })}

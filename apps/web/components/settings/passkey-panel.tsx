@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/toast"
+import { autoDir } from "@/lib/text-direction"
 
 interface PasskeyRow {
   id: string
@@ -189,7 +190,7 @@ export function PasskeyPanel() {
         <Input
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          dir="auto"
+          dir={autoDir(nickname)}
           placeholder={t("account.passkeys.nameDevice")}
           aria-label={t("account.passkeys.nameDevice")}
           maxLength={64}

@@ -8,6 +8,7 @@ import { useAppT } from "@/lib/app-i18n"
 import { cn } from "@/lib/utils"
 import { MAX_QUIZ_POINTS, isChoiceType, type AnswerKeyEntry } from "@/lib/quiz"
 import { distinctOptions } from "@/lib/question-options"
+import { autoDir } from "@/lib/text-direction"
 
 interface AnswerKeyEditorProps {
   question: Question
@@ -101,7 +102,7 @@ export function AnswerKeyEditor({
           {/* Raw lines are kept, empty ones included, so pressing Enter does
               not eat the new line; scoring ignores empty lines. */}
           <textarea
-            dir="auto"
+            dir={autoDir((current.accepted ?? []).join(""))}
             aria-label={t("quiz.acceptedLabel")}
             rows={3}
             value={(current.accepted ?? []).join("\n")}
