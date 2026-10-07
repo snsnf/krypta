@@ -141,7 +141,7 @@ export function FontPicker({ value, onChange, ariaLabel }: FontPickerProps) {
                   variant="outline"
                   onClick={retry}
                 >
-                  {t("appearance.retry")}
+                  {t("common.retry")}
                 </Button>
               </div>
             )}

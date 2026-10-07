@@ -201,7 +201,7 @@ export function PasskeyPanel() {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder={t("account.passkeys.passwordPlaceholder")}
+          placeholder={t("common.yourPassword")}
           aria-label={t("account.passkeys.passwordLabel")}
           className="min-w-40 flex-1"
         />

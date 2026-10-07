@@ -66,9 +66,7 @@ export function AuthLanguageToggle() {
 
 /** Header, from `sm` up: an icon-only menu beside the theme toggle. */
 export function LanguageMenu() {
-  const router = useRouter()
   const t = useAppT()
-  const current = useAppLanguage()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -84,31 +82,13 @@ export function LanguageMenu() {
         <HugeiconsIcon icon={Globe02Icon} size={16} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-36">
-        <DropdownMenuRadioGroup
-          value={current}
-          onValueChange={(value) =>
-            chooseLanguage(normalizeFormLanguage(value), router)
-          }
-        >
-          {APP_LANGUAGES.map((language) => (
-            <DropdownMenuRadioItem
-              key={language}
-              value={language}
-              lang={language}
-              // Radio items stay open by default; choosing a language reloads
-              // the page's text, so the menu should get out of the way.
-              closeOnClick
-            >
-              {FORM_LANGUAGE_LABELS[language]}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+        <LanguageRadioItems />
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
 
-/** Inside the mobile account menu, beside the theme choices. */
+/** The choice itself: inside the mobile account menu and the header globe menu. */
 export function LanguageRadioItems() {
   const router = useRouter()
   const current = useAppLanguage()

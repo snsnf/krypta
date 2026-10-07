@@ -102,7 +102,7 @@ export function AccountList({
               size={14}
               data-icon="inline-start"
             />
-            {t("admin.common.retry")}
+            {t("common.retry")}
           </Button>
         </div>
       ) : loading && accounts.length === 0 ? (

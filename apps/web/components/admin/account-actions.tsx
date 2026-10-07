@@ -280,7 +280,7 @@ export function AccountActions({
                 />
               )}
               {pending === "suspend"
-                ? t("admin.actions.saving")
+                ? t("common.saving")
                 : account.suspended
                   ? t("admin.actions.reactivateConfirm")
                   : t("admin.actions.suspendConfirm")}
@@ -371,7 +371,7 @@ export function AccountActions({
             size={14}
             data-icon="inline-start"
           />
-          {t("admin.actions.delete")}
+          {t("common.delete")}
         </Button>
         <DialogContent>
           {receipt === null ? (
@@ -383,7 +383,7 @@ export function AccountActions({
                 </DialogDescription>
               </DialogHeader>
               <label className="grid gap-1.5 text-sm font-medium">
-                {t("admin.actions.password")}
+                {t("common.password")}
                 <CredentialInput
                   type="password"
                   value={password}
@@ -410,8 +410,8 @@ export function AccountActions({
                     />
                   )}
                   {pending === "delete"
-                    ? t("admin.actions.verifying")
-                    : t("admin.actions.continue")}
+                    ? t("common.verifying")
+                    : t("common.continue")}
                 </Button>
               </DialogFooter>
             </>

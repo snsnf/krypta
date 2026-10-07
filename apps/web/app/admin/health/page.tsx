@@ -60,7 +60,7 @@ export default function AdminHealthPage() {
           {t("admin.health.loadFailed")}
         </p>
         <Button className="mt-3" size="sm" onClick={refresh}>
-          {t("admin.common.retry")}
+          {t("common.retry")}
         </Button>
       </section>
     )

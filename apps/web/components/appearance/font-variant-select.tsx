@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { parseFontVariant } from "@/lib/form-theme"
-import { translateKey, useAppT, type AppTranslator } from "@/lib/app-i18n"
+import { fontVariantLabel, parseFontVariant } from "@/lib/form-theme"
+import { useAppT } from "@/lib/app-i18n"
 import { loadFontCatalog } from "@/lib/font-catalog-client"
 
 interface FontVariantSelectProps {
@@ -21,19 +21,6 @@ function byWeight(a: string, b: string): number {
   return (
     left.weight - right.weight || Number(left.italic) - Number(right.italic)
   )
-}
-
-/** A catalogue variant as a person reads it: "700italic" is "Bold Italic". */
-function variantLabel(variant: string, t: AppTranslator): string {
-  const { weight, italic } = parseFontVariant(variant)
-  const key = `appearance.weights.${weight}`
-  const name = [100, 200, 300, 400, 500, 600, 700, 800, 900].includes(weight)
-    ? translateKey(t, key)
-    : String(weight)
-  if (!italic) return name
-  return weight === 400
-    ? t("appearance.italic")
-    : t("appearance.weightItalic", { name })
 }
 
 /**
@@ -86,7 +73,7 @@ export function FontVariantSelect({
       <option value="">{t("appearance.default")}</option>
       {options.map((variant) => (
         <option key={variant} value={variant}>
-          {variantLabel(variant, t)}
+          {fontVariantLabel(variant, t)}
         </option>
       ))}
     </select>

@@ -40,7 +40,7 @@ export default function AdminInstancePage() {
           size="sm"
           onClick={() => window.location.reload()}
         >
-          {t("admin.common.retry")}
+          {t("common.retry")}
         </Button>
       </section>
     )

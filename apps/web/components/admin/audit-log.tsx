@@ -139,7 +139,7 @@ export function AuditLog({
               size={14}
               data-icon="inline-start"
             />
-            {t("admin.common.retry")}
+            {t("common.retry")}
           </Button>
         </div>
       ) : loading && events.length === 0 ? (

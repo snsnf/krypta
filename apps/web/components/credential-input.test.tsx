@@ -6,6 +6,7 @@ vi.mock("@/lib/utils", () => ({
 }))
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
 vi.mock("@/lib/form-language", async () => vi.importActual("../lib/form-language"))
+vi.mock("@/lib/app-format", async () => vi.importActual("../lib/app-format"))
 vi.mock("@/components/ui/input", () => ({
   Input: (props: React.ComponentProps<"input">) => <input {...props} />,
 }))

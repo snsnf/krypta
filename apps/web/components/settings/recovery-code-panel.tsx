@@ -80,7 +80,7 @@ export function RecoveryCodePanel() {
           autoFocus
           type="password"
           autoComplete="current-password"
-          aria-label={t("account.recovery.passwordLabel")}
+          aria-label={t("common.password")}
           className="max-w-72"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -88,9 +88,7 @@ export function RecoveryCodePanel() {
         />
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={busy || !password}>
-            {busy
-              ? t("account.twoFactor.verifying")
-              : t("account.recovery.generate")}
+            {busy ? t("common.verifying") : t("account.recovery.generate")}
           </Button>
           <Button
             type="button"

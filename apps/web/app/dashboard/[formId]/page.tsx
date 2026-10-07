@@ -751,7 +751,7 @@ export default function FormDetailPage() {
                         <span className="grid *:col-start-1 *:row-start-1">
                           <span className="invisible">
                             <span className="sm:hidden">
-                              {t("formPage.saveShort")}
+                              {t("common.save")}
                             </span>
                             <span className="hidden sm:inline">
                               {t("formPage.saveChanges")}
@@ -761,9 +761,7 @@ export default function FormDetailPage() {
                         </span>
                       ) : (
                         <>
-                          <span className="sm:hidden">
-                            {t("formPage.saveShort")}
-                          </span>
+                          <span className="sm:hidden">{t("common.save")}</span>
                           <span className="hidden sm:inline">
                             {t("formPage.saveChanges")}
                           </span>

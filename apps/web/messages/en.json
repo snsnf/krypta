@@ -83,7 +83,10 @@
     "genericError": "Something went wrong. Try again.",
     "listSeparator": ", ",
     "notifications": "Notifications",
-    "closeToast": "Close toast"
+    "closeToast": "Close toast",
+    "retry": "Retry",
+    "yourPassword": "Your password",
+    "copyFailed": "Could not copy"
   },
   "errors": {
     "unauthorized": "Unauthorized",
@@ -183,11 +186,9 @@
       "copy": "Copy",
       "download": "Download",
       "copied": "Recovery code copied",
-      "copyFailed": "Could not copy",
       "copyFailedHint": "Select the code and copy it manually.",
       "notTwoFactor": "This is <strong>not</strong> a two-factor recovery code. Two-factor codes get you back into your account when you lose your authenticator; they cannot decrypt anything. This one decrypts your vault and does nothing for signing in.",
       "acknowledge": "I have saved this code somewhere safe. I understand it will not be shown again.",
-      "continue": "Continue",
       "fileTitle": "Krypta vault recovery code",
       "fileBody": "This recovers your encrypted forms and responses if you forget your\npassword. It is not a two-factor recovery code. Keep it somewhere\nonly you can reach. Nobody can reissue it.\n"
     }
@@ -336,7 +337,6 @@
       "saveCodesTitle": "Save your recovery codes",
       "saveCodesBody": "Each code works once, and this is the only time they are shown. Store them somewhere other than your authenticator app.",
       "codesCopied": "Codes copied",
-      "copyFailed": "Could not copy",
       "copyFailedBody": "Select the codes and copy them manually.",
       "copyCodes": "Copy codes",
       "saved": "I have saved them",
@@ -344,10 +344,8 @@
       "qrAlt": "Two-factor setup QR code",
       "cannotScan": "Cannot scan the code?",
       "codeLabel": "Code from your authenticator app",
-      "passwordPlaceholder": "Your password",
       "passwordLabel": "Your password, to turn on two-factor authentication",
       "turnOn": "Turn on",
-      "verifying": "Verifying...",
       "disablePrompt": "Enter a code from your authenticator app, or a recovery code, to turn two-factor authentication off.",
       "disableCodeLabel": "Code to confirm turning off two-factor authentication",
       "turnOff": "Turn off",
@@ -374,7 +372,6 @@
       "intro": "Sign in and unlock your vault with your device instead of your password. Your password still works, and removing a passkey never locks you out.",
       "usage": "Added {created}, last used {used}",
       "nameDevice": "Name this device",
-      "passwordPlaceholder": "Your password",
       "passwordLabel": "Your password, to add a passkey",
       "waiting": "Waiting for your device",
       "add": "Add a passkey",
@@ -385,7 +382,6 @@
       "generateFailed": "Could not generate a new code",
       "generateFailedBody": "Check your password and try again.",
       "confirm": "Enter your password to confirm. The code you saved at signup will stop working the moment the new one is issued.",
-      "passwordLabel": "Password",
       "generate": "Generate new code",
       "intro": "Your vault recovery code was shown once, at signup. If you lost it, generate a new one; it will replace the old one immediately, and the old one will no longer work.",
       "generateButton": "Generate new recovery code"
@@ -451,7 +447,6 @@
     "linkCopyFailed": "Could not copy the link",
     "linkCopyFailedBody": "Select the link and copy it manually.",
     "copyLink": "Copy link",
-    "saveShort": "Save",
     "saveChanges": "Save changes",
     "exportCsv": "Export CSV",
     "exportMatching": "{count, plural, one {Export # matching response as CSV} other {Export # matching responses as CSV}}",
@@ -765,7 +760,6 @@
     "searchFonts": "Search fonts",
     "loadingFonts": "Loading fonts",
     "fontsFailed": "The font list could not be loaded.",
-    "retry": "Retry",
     "noFonts": "No fonts match your search.",
     "default": "Default",
     "italic": "Italic",
@@ -799,7 +793,6 @@
     },
     "metadataOnly": "Instance metadata only",
     "common": {
-      "retry": "Retry",
       "loadMore": "Load more",
       "loading": "Loading..."
     },
@@ -846,18 +839,13 @@
       "eligibleEditor": "Eligible editor",
       "transfer": "Transfer",
       "transferring": "Transferring...",
-      "delete": "Delete",
       "verifyTitle": "Verify before deleting",
       "verifyBody": "Deleting this account is irreversible. First verify your password; the confirmation step follows immediately.",
-      "password": "Password",
-      "verifying": "Verifying...",
-      "continue": "Continue",
       "deleteQuestion": "Delete account permanently?",
       "suffixBody": "Type the visible account suffix <code>{suffix}</code> to permanently delete this account and its unshared encrypted records.",
       "suffixLabel": "Account suffix",
       "deleting": "Deleting...",
-      "deleteConfirm": "Delete account",
-      "saving": "Saving..."
+      "deleteConfirm": "Delete account"
     },
     "audit": {
       "title": "Audit log",
