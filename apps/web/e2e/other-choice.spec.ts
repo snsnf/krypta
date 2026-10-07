@@ -1,4 +1,11 @@
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import {
+  expect,
+  shareLinkFor,
+  test,
+  unlock,
+  startBlankForm,
+  choose,
+} from "./fixtures"
 
 /*
  * The Other row is one label wrapping the control, the word and the text box,
@@ -24,9 +31,10 @@ test("tapping anywhere on the Other row selects it, and typing does not undo tha
 
   await page.getByLabel("Form title").fill("Other row form")
   await page.getByLabel("Question label").fill("Pick colours")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .selectOption("checkboxes")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }),
+    "Checkboxes"
+  )
   await page.getByRole("textbox", { name: "Option 1" }).fill("Red")
   await page.getByRole("checkbox", { name: /Add an .Other. choice/ }).click()
 
@@ -89,9 +97,7 @@ test("a number question says it wants a number", async ({
 
   await page.getByLabel("Form title").fill("Number form")
   await page.getByLabel("Question label").fill("How many")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .selectOption("number")
+  await choose(page.getByRole("combobox", { name: "Question type" }), "Number")
 
   await page.getByRole("button", { name: /publish form/i }).click()
   await page.waitForURL(/\/dashboard\/[^/]+\?created=1/)

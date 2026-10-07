@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import { expect, shareLinkFor, test, unlock, startBlankForm, choose } from "./fixtures"
 
 /**
  * Click a `multiple_choice` option the way a respondent does.
@@ -38,19 +38,20 @@ test("a quiz is scored for members and its answers never reach a respondent", as
 
   await page.getByLabel("Form title").fill("Geography quiz")
   await page.getByLabel("Question label").fill("Capital of France")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .selectOption("multiple_choice")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }),
+    "Multiple choice"
+  )
   await page.getByRole("textbox", { name: "Option 1" }).fill("Paris")
   await page.getByRole("button", { name: "+ Add option" }).click()
   await page.getByRole("textbox", { name: "Option 2" }).fill("Lyon")
 
   await page.getByRole("button", { name: "Add question" }).click()
   await page.getByLabel("Question label").nth(1).fill("Why is it the capital")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .nth(1)
-    .selectOption("long_text")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }).nth(1),
+    "Long answer"
+  )
 
   // Quiz mode is a form setting, available on the draft before publishing.
   await page.getByRole("tab", { name: "Settings" }).click()

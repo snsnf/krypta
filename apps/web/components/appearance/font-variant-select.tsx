@@ -4,6 +4,13 @@ import { useEffect, useState } from "react"
 import { fontVariantLabel, parseFontVariant } from "@/lib/form-theme"
 import { useAppT } from "@/lib/app-i18n"
 import { loadFontCatalog } from "@/lib/font-catalog-client"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface FontVariantSelectProps {
   family: string
@@ -60,22 +67,31 @@ export function FontVariantSelect({
     value !== undefined && !(variants ?? []).includes(value)
       ? [...(variants ?? []), value].sort(byWeight)
       : (variants ?? [])
+  // The theme's own weight is no variant at all, so it is the null item.
+  const items: { value: string | null; label: string }[] = [
+    { value: null, label: t("appearance.default") },
+    ...options.map((variant) => ({
+      value: variant,
+      label: fontVariantLabel(variant, t),
+    })),
+  ]
 
   return (
-    <select
-      aria-label={ariaLabel}
-      value={value ?? ""}
-      onChange={(event) =>
-        onChange(event.target.value === "" ? undefined : event.target.value)
-      }
-      className={className}
+    <Select
+      items={items}
+      value={value ?? null}
+      onValueChange={(next) => onChange(next ?? undefined)}
     >
-      <option value="">{t("appearance.default")}</option>
-      {options.map((variant) => (
-        <option key={variant} value={variant}>
-          {fontVariantLabel(variant, t)}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger aria-label={ariaLabel} className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((item) => (
+          <SelectItem key={item.value ?? ""} value={item.value}>
+            {item.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

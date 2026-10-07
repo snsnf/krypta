@@ -15,6 +15,13 @@ import {
   type AdminAuditResult,
   type AdminCursor,
 } from "@/lib/admin"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface AuditLogProps {
   events: AdminAuditEvent[]
@@ -38,6 +45,8 @@ const ACTIONS: AdminAuditAction[] = [
   "account_deleted",
 ]
 
+const RESULTS: AdminAuditResult[] = ["succeeded", "rejected", "failed"]
+
 export function AuditLog({
   events,
   nextCursor,
@@ -52,6 +61,20 @@ export function AuditLog({
 
   const [action, setAction] = useState<AdminAuditAction | "">("")
   const [result, setResult] = useState<AdminAuditResult | "">("")
+  const actionItems: { value: AdminAuditAction | ""; label: string }[] = [
+    { value: "", label: t("admin.audit.allActions") },
+    ...ACTIONS.map((value) => ({
+      value,
+      label: t(`admin.audit.actions.${value}`),
+    })),
+  ]
+  const resultItems: { value: AdminAuditResult | ""; label: string }[] = [
+    { value: "", label: t("admin.audit.allResults") },
+    ...RESULTS.map((value) => ({
+      value,
+      label: t(`admin.audit.results.${value}`),
+    })),
+  ]
 
   return (
     <section>
@@ -65,46 +88,48 @@ export function AuditLog({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <label className="sr-only" htmlFor="audit-action">
-            {t("admin.audit.action")}
-          </label>
-          <select
-            id="audit-action"
+          <Select
+            items={actionItems}
             value={action}
-            onChange={(event) =>
-              setAction(event.target.value as AdminAuditAction | "")
-            }
-            className="h-7 rounded-lg border border-input bg-transparent px-2 text-xs"
+            onValueChange={(next) => next !== null && setAction(next)}
             disabled={loading}
           >
-            <option value="">{t("admin.audit.allActions")}</option>
-            {ACTIONS.map((value) => (
-              <option key={value} value={value}>
-                {t(`admin.audit.actions.${value}`)}
-              </option>
-            ))}
-          </select>
-          <label className="sr-only" htmlFor="audit-result">
-            {t("admin.audit.result")}
-          </label>
-          <select
-            id="audit-result"
+            <SelectTrigger
+              size="sm"
+              aria-label={t("admin.audit.action")}
+              className="text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {actionItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            items={resultItems}
             value={result}
-            onChange={(event) =>
-              setResult(event.target.value as AdminAuditResult | "")
-            }
-            className="h-7 rounded-lg border border-input bg-transparent px-2 text-xs"
+            onValueChange={(next) => next !== null && setResult(next)}
             disabled={loading}
           >
-            <option value="">{t("admin.audit.allResults")}</option>
-            <option value="succeeded">
-              {t("admin.audit.results.succeeded")}
-            </option>
-            <option value="rejected">
-              {t("admin.audit.results.rejected")}
-            </option>
-            <option value="failed">{t("admin.audit.results.failed")}</option>
-          </select>
+            <SelectTrigger
+              size="sm"
+              aria-label={t("admin.audit.result")}
+              className="text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {resultItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             size="sm"
             disabled={loading}

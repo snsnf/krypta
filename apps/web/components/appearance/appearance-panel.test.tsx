@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/components/ui/select", async () => vi.importActual("../ui/select"))
 vi.mock("@/lib/form-language", async () =>
   vi.importActual("../../lib/form-language")
 )

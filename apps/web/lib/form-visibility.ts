@@ -32,6 +32,19 @@ export function isRangeOperator(operator: QuestionCondition["operator"]): boolea
   return operator === "at_most" || operator === "at_least"
 }
 
+/**
+ * The operators the builder offers for a condition on `source`. A range rule
+ * stranded on a source that is no longer a rating is kept in the list, so the
+ * picker shows the rule as it is and choosing "is" is a real change.
+ */
+export function conditionOperators(
+  source: Question | undefined,
+  current: QuestionCondition["operator"]
+): QuestionCondition["operator"][] {
+  if (source?.type === "rating") return ["is", "is_not", "at_most", "at_least"]
+  return isRangeOperator(current) ? ["is", "is_not", current] : ["is", "is_not"]
+}
+
 function isUsableSource(question: Question | undefined): boolean {
   return conditionValues(question) !== null
 }

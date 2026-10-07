@@ -8,6 +8,7 @@ import {
   waitForAnimations,
   waitForInteractive,
   startBlankForm,
+  choose,
 } from "./fixtures"
 
 // Registration is capped at 5/hour/IP server-side (apps/api/src/auth/routes.rs). Tests that
@@ -160,7 +161,7 @@ sharedAccountTest(
 
   await page.getByRole("button", { name: "Add question" }).click()
   const labels = page.getByRole("textbox", { name: "Question label" })
-  await page.getByRole("combobox", { name: "Question type" }).nth(1).selectOption("checkboxes")
+  await choose(page.getByRole("combobox", { name: "Question type" }).nth(1), "Checkboxes")
   await labels.nth(1).fill("Pick your favorites")
   const options = page.locator('input[placeholder^="Option "]')
   await options.nth(0).fill("Red")
@@ -168,7 +169,7 @@ sharedAccountTest(
   await options.nth(1).fill("Blue")
 
   await page.getByRole("button", { name: "Add question" }).click()
-  await page.getByRole("combobox", { name: "Question type" }).nth(2).selectOption("email")
+  await choose(page.getByRole("combobox", { name: "Question type" }).nth(2), "Email")
   await labels.nth(2).fill("Your email")
   // Mark the email question required through the interactive switch, not its hidden checkbox.
   await page.getByRole("switch", { name: "Required" }).nth(2).click()
@@ -217,7 +218,7 @@ sharedAccountTest(
     await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("File upload test form")
     await page.getByRole("textbox", { name: "Question label" }).fill("Attach a file")
-    await page.getByRole("combobox", { name: "Question type" }).selectOption("file_upload")
+    await choose(page.getByRole("combobox", { name: "Question type" }), "File upload")
 
     // The form builder only lets the owner define the question (label + type); it doesn't
     // render a file input of its own: file selection only happens on the public form page,
@@ -410,10 +411,10 @@ sharedAccountTest(
     await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("Conditional form")
 
-    await page
-      .getByRole("combobox", { name: "Question type" })
-      .first()
-      .selectOption("multiple_choice")
+    await choose(
+      page.getByRole("combobox", { name: "Question type" }).first(),
+      "Multiple choice"
+    )
     await page.getByRole("textbox", { name: "Question label" }).first().fill("Delivery?")
     const options = page.locator('input[placeholder^="Option "]')
     await options.nth(0).fill("Yes")
@@ -425,9 +426,9 @@ sharedAccountTest(
     await questionLabels.nth(1).fill("Address")
 
     await page.click('button:has-text("+ Only show this if…")')
-    await page.getByLabel("Condition question").selectOption({ label: "Delivery?" })
-    await page.getByLabel("Condition operator").selectOption("is")
-    await page.getByLabel("Condition value").selectOption("Yes")
+    await choose(page.getByLabel("Condition question"), "Delivery?")
+    await choose(page.getByLabel("Condition operator"), "is")
+    await choose(page.getByLabel("Condition value"), "Yes")
 
     await page.click('button:has-text("Publish form")')
     await page.waitForURL(/\/dashboard\/.+\?created=1/)
@@ -506,10 +507,10 @@ sharedAccountTest(
     await startBlankForm(page)
     await page.getByRole("textbox", { name: "Form title" }).fill("Focus conditional form")
 
-    await page
-      .getByRole("combobox", { name: "Question type" })
-      .first()
-      .selectOption("multiple_choice")
+    await choose(
+      page.getByRole("combobox", { name: "Question type" }).first(),
+      "Multiple choice"
+    )
     await page.getByRole("textbox", { name: "Question label" }).first().fill("Delivery?")
     const options = page.locator('input[placeholder^="Option "]')
     await options.nth(0).fill("Yes")
@@ -521,9 +522,9 @@ sharedAccountTest(
     await questionLabels.nth(1).fill("Address")
 
     await page.click('button:has-text("+ Only show this if…")')
-    await page.getByLabel("Condition question").selectOption({ label: "Delivery?" })
-    await page.getByLabel("Condition operator").selectOption("is")
-    await page.getByLabel("Condition value").selectOption("Yes")
+    await choose(page.getByLabel("Condition question"), "Delivery?")
+    await choose(page.getByLabel("Condition operator"), "is")
+    await choose(page.getByLabel("Condition value"), "Yes")
 
     // Add the unconditional final question only after the condition is wired up,
     // so there is exactly one "+ Only show this if…" button to click above.
@@ -700,10 +701,10 @@ sharedAccountTest(
       .getByRole("textbox", { name: "Form title" })
       .fill("Reorder breaks a condition")
 
-    await page
-      .getByRole("combobox", { name: "Question type" })
-      .first()
-      .selectOption("multiple_choice")
+    await choose(
+      page.getByRole("combobox", { name: "Question type" }).first(),
+      "Multiple choice"
+    )
     await page.getByRole("textbox", { name: "Question label" }).first().fill("Delivery?")
     const options = page.locator('input[placeholder^="Option "]')
     await options.nth(0).fill("Yes")
@@ -717,9 +718,9 @@ sharedAccountTest(
     // Only the second question has an earlier choice question to point at, so
     // there is exactly one "+ Only show this if…" trigger on the page.
     await page.click('button:has-text("+ Only show this if…")')
-    await page.getByLabel("Condition question").selectOption({ label: "Delivery?" })
-    await page.getByLabel("Condition operator").selectOption("is")
-    await page.getByLabel("Condition value").selectOption("Yes")
+    await choose(page.getByLabel("Condition question"), "Delivery?")
+    await choose(page.getByLabel("Condition operator"), "is")
+    await choose(page.getByLabel("Condition value"), "Yes")
 
     const danglingWarning = page.getByText(DANGLING_CONDITION_WARNING)
     await expect(danglingWarning).toHaveCount(0)

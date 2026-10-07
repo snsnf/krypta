@@ -26,6 +26,14 @@ import { ApiClientError, apiFetch } from "@/lib/api"
 import { memberControls, transferOwnership } from "@/lib/sharing-controls"
 import { sendInvitation } from "@/lib/sharing-invitations"
 import { useAppFormat, useAppT } from "@/lib/app-i18n"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { CredentialInput } from "@/components/credential-input"
 
 type MemberRole = "owner" | "editor" | "viewer"
 type CollaboratorRole = Exclude<MemberRole, "owner">
@@ -144,29 +152,39 @@ function parseCollaboration(value: unknown): CollaborationData {
 function RoleSelect({
   value,
   label,
-  disabled,
+  disabled = false,
   onChange,
+  className,
 }: {
   value: CollaboratorRole
   label: string
-  disabled: boolean
+  disabled?: boolean
   onChange: (role: CollaboratorRole) => void
+  className?: string
 }) {
   const t = useAppT()
+  const items = [
+    { value: "editor" as const, label: t("roles.editor") },
+    { value: "viewer" as const, label: t("roles.viewer") },
+  ]
   return (
-    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span className="sr-only">{label}</span>
-      <select
-        aria-label={label}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value as CollaboratorRole)}
-        className="h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-      >
-        <option value="editor">{t("roles.editor")}</option>
-        <option value="viewer">{t("roles.viewer")}</option>
-      </select>
-    </label>
+    <Select
+      items={items}
+      value={value}
+      disabled={disabled}
+      onValueChange={(next) => next !== null && onChange(next)}
+    >
+      <SelectTrigger aria-label={label} className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((item) => (
+          <SelectItem key={item.value} value={item.value}>
+            {item.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
@@ -545,30 +563,25 @@ export function SharingDialog({
           >
             <label className="grid gap-1.5 text-sm font-medium">
               {t("sharing.emailLabel")}
-              <input
-                dir="ltr"
+              <CredentialInput
                 type="email"
                 required
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="collaborator@example.com"
-                className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm font-normal outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="font-normal"
               />
             </label>
-            <label className="grid gap-1.5 text-sm font-medium">
-              {t("sharing.role")}
-              <select
+            <div className="grid gap-1.5 text-sm font-medium">
+              <span aria-hidden="true">{t("sharing.role")}</span>
+              <RoleSelect
                 value={role}
-                onChange={(event) =>
-                  setRole(event.target.value as CollaboratorRole)
-                }
-                className="h-9 rounded-lg border border-input bg-background px-2 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                <option value="editor">{t("roles.editor")}</option>
-                <option value="viewer">{t("roles.viewer")}</option>
-              </select>
-            </label>
+                label={t("sharing.role")}
+                onChange={setRole}
+                className="w-full font-normal"
+              />
+            </div>
             <Button
               type="submit"
               disabled={busyActions.has("invite") || email.length === 0}

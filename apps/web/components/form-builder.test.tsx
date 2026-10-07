@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("@/components/ui/select", async () => vi.importActual("./ui/select"))
 vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
 vi.mock("@/lib/text-direction", async () => vi.importActual("../lib/text-direction"))
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
@@ -78,7 +79,8 @@ vi.mock("@/components/rating-settings", async () =>
   vi.importActual("./rating-settings")
 )
 
-import { FormBuilder } from "./form-builder"
+import { FormBuilder, QUESTION_TYPES } from "./form-builder"
+import { conditionOperators } from "../lib/form-visibility"
 import { DEFAULT_FORM_THEME } from "../lib/form-theme"
 import type { Question } from "@krypta/crypto"
 
@@ -394,8 +396,9 @@ const fiveStars: Question = {
 
 describe("FormBuilder rating questions", () => {
   it("offers Rating in the question type menu", () => {
-    const markup = renderBuilder([{ id: "a", type: "short_text", label: "Name" }])
-    expect(markup).toContain('<option value="rating">Rating</option>')
+    expect(QUESTION_TYPES).toContain("rating")
+    const markup = renderBuilder([fiveStars])
+    expect(markup).toMatch(/aria-label="Question type"[^>]*><span[^>]*>Rating</)
   })
 
   it("shows star settings and a preview for a rating question", () => {
@@ -430,10 +433,13 @@ describe("FormBuilder rating questions", () => {
         condition: { questionId: "a", operator: "at_most", value: "2" },
       },
     ])
-    expect(markup).toContain(
-      '<option value="at_most" selected="">is at most</option>'
-    )
-    expect(markup).toContain('<option value="at_least">is at least</option>')
+    expect(markup).toContain(">is at most</span>")
+    expect(conditionOperators(fiveStars, "at_most")).toEqual([
+      "is",
+      "is_not",
+      "at_most",
+      "at_least",
+    ])
     expect(markup).not.toContain("This condition never matches")
   })
 
@@ -465,7 +471,12 @@ describe("FormBuilder rating questions", () => {
     expect(markup).toContain("This condition is ignored")
     expect(markup).toContain("no longer a rating")
     expect(markup).not.toContain("This condition never matches")
-    expect(markup).not.toContain('value="at_least"')
+    expect(
+      conditionOperators(
+        { id: "a", type: "multiple_choice", label: "Pick", options: ["Yes"] },
+        "at_most"
+      )
+    ).toEqual(["is", "is_not", "at_most"])
   })
 
   it("shows a stranded range rule as it is, so choosing is fires a change", () => {
@@ -478,10 +489,8 @@ describe("FormBuilder rating questions", () => {
         condition: { questionId: "a", operator: "at_most", value: "2" },
       },
     ])
-    expect(markup).toContain(
-      '<option value="at_most" selected="">is at most (ignored)</option>'
-    )
-    expect(markup).toContain('<option value="2" selected="">2 (removed)</option>')
+    expect(markup).toContain("is at most (ignored)")
+    expect(markup).toContain("2 (removed)")
   })
 })
 

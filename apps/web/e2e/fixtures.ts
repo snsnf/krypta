@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 import { test as base, request } from "@playwright/test"
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import sodium from "libsodium-wrappers-sumo"
 import {
   deriveAuthVerifier,
@@ -395,6 +395,16 @@ export async function acknowledgeRecoveryCode(page: Page): Promise<string> {
   await page.getByRole("checkbox").click()
   await page.getByRole("button", { name: "Continue" }).click()
   return recoveryCode.trim()
+}
+
+/**
+ * Picks an option in a dropdown by its visible label. The app's dropdowns are
+ * Base UI selects, a button and a list rather than a native select, so
+ * `selectOption` does not reach them.
+ */
+export async function choose(trigger: Locator, label: string) {
+  await trigger.click()
+  await trigger.page().getByRole("option", { name: label, exact: true }).click()
 }
 
 /**

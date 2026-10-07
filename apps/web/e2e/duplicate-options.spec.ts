@@ -1,4 +1,11 @@
-import { expect, shareLinkFor, test, unlock, startBlankForm } from "./fixtures"
+import {
+  expect,
+  shareLinkFor,
+  test,
+  unlock,
+  startBlankForm,
+  choose,
+} from "./fixtures"
 
 /*
  * Two options can end up with the same text while a creator is typing, and
@@ -29,9 +36,10 @@ test("duplicate option text is one choice, and the builder says so", async ({
 
   await page.getByLabel("Form title").fill("Duplicate options")
   await page.getByLabel("Question label").fill("Pick a number")
-  await page
-    .getByRole("combobox", { name: "Question type" })
-    .selectOption("multiple_choice")
+  await choose(
+    page.getByRole("combobox", { name: "Question type" }),
+    "Multiple choice"
+  )
   await page.getByRole("textbox", { name: "Option 1" }).fill("2")
   await page.getByRole("button", { name: "+ Add option" }).click()
   await page.getByRole("textbox", { name: "Option 2" }).fill("2")
