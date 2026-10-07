@@ -5,6 +5,7 @@ vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
 vi.mock("@/lib/form-language", async () => vi.importActual("../lib/form-language"))
 vi.mock("@/lib/app-format", async () => vi.importActual("../lib/app-format"))
 vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
+vi.mock("@/lib/text-direction", async () => vi.importActual("../lib/text-direction"))
 vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
 )

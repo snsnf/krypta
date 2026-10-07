@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
 vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
+vi.mock("@/lib/text-direction", async () => vi.importActual("../lib/text-direction"))
 vi.mock("@/components/ui/button", () => ({
   Button: (props: React.ComponentProps<"button">) => <button {...props} />,
 }))

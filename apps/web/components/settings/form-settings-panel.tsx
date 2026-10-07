@@ -11,6 +11,7 @@ import {
   localDateTimeToUtcIso,
   utcIsoToLocalDateTime,
 } from "@/lib/form-close-date"
+import { autoDir } from "@/lib/text-direction"
 
 interface FormSettingsPanelProps {
   settings: FormSettings
@@ -290,7 +291,7 @@ export function FormSettingsPanel({
             description={t("formSettings.confirmationBody")}
           >
             <Textarea
-              dir="auto"
+              dir={autoDir(confirmationMessageInput)}
               aria-label={t("formSettings.confirmation")}
               placeholder={t("formSettings.confirmationPlaceholder")}
               value={confirmationMessageInput}

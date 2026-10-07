@@ -52,6 +52,7 @@ import { AppHeader } from "@/components/app-header"
 import { WorkspaceUnavailable } from "@/components/workspace-unavailable"
 import { FORMS_LIST_UNREACHABLE } from "@/lib/form-load-failure"
 import { FullPageSpinner } from "@/components/spinner"
+import { autoDir } from "@/lib/text-direction"
 
 interface DashboardLoadResult {
   activeForms: DashboardFormListItem[]
@@ -626,7 +627,7 @@ export default function DashboardPage() {
               {t("dashboard.titleLabel")}
               <Input
                 autoFocus
-                dir="auto"
+                dir={autoDir(renameTitle)}
                 value={renameTitle}
                 onChange={(event) => setRenameTitle(event.target.value)}
                 disabled={renamePending}

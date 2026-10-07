@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
 vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
+vi.mock("@/lib/text-direction", async () => vi.importActual("../lib/text-direction"))
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
 vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
@@ -85,6 +86,32 @@ const questions: Question[] = [
   { id: "a", type: "short_text", label: "First" },
   { id: "b", type: "short_text", label: "Second" },
 ]
+
+describe("FormBuilder text direction", () => {
+  function render(label: string) {
+    return renderToStaticMarkup(
+      <FormBuilder
+        eyebrowLabel="Editing form"
+        title="A form"
+        onTitleChange={() => undefined}
+        questions={[{ id: "q1", type: "short_text", label }]}
+        onQuestionsChange={() => undefined}
+        theme={DEFAULT_FORM_THEME}
+        onThemeChange={() => undefined}
+      />
+    )
+  }
+  const questionInput = (markup: string) =>
+    markup.match(/<input[^>]*aria-label="Question label"[^>]*>/)?.[0] ?? ""
+
+  it("leaves an empty question field to the page's direction, so an Arabic placeholder sits right", () => {
+    expect(questionInput(render(""))).not.toContain("dir=")
+  })
+
+  it("lets a typed question set its own direction", () => {
+    expect(questionInput(render("سؤال"))).toContain('dir="auto"')
+  })
+})
 
 describe("FormBuilder section breaks", () => {
   it("shows an add-section-break affordance between questions in Classic layout", () => {

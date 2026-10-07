@@ -49,6 +49,7 @@ import { distinctOptions, hasDuplicateOptions } from "@/lib/question-options"
 import { conditionValues, isRangeOperator } from "@/lib/form-visibility"
 import { RatingSettingsEditor } from "@/components/rating-settings"
 import { useAppT } from "@/lib/app-i18n"
+import { autoDir } from "@/lib/text-direction"
 
 const QUESTION_TYPES: Question["type"][] = [
   "short_text",
@@ -244,7 +245,7 @@ export function FormBuilder({
                           })}
                         </p>
                         <input
-                          dir="auto"
+                          dir={autoDir(q.sectionTitle)}
                           type="text"
                           value={q.sectionTitle ?? ""}
                           onChange={(e) =>
@@ -315,7 +316,7 @@ export function FormBuilder({
               <div className="flex-1 p-4 pt-7">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
                   <input
-                    dir="auto"
+                    dir={autoDir(q.label)}
                     placeholder={t("builder.questionPlaceholder")}
                     aria-label={t("builder.questionLabel")}
                     value={q.label}
@@ -400,7 +401,7 @@ export function FormBuilder({
                           className="shrink-0 text-muted-foreground/50"
                         />
                         <input
-                          dir="auto"
+                          dir={autoDir(opt)}
                           placeholder={t("builder.option", { number: i + 1 })}
                           aria-label={t("builder.option", { number: i + 1 })}
                           value={opt}
