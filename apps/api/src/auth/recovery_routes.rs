@@ -101,14 +101,18 @@ pub async fn recover_start(
     // A suspended or deleting account is treated exactly like an absent one.
     // Recovery must not become a way to learn that an address is in either
     // state, and must not resurrect an account an operator has stopped.
-    let user_id = sqlx::query_scalar!(
-        "SELECT id FROM users \
+    //
+    // The account's mail language comes back in the same read, so a real
+    // account and a decoy do the same database work.
+    let account = sqlx::query!(
+        "SELECT id, language FROM users \
          WHERE email = $1 AND suspended_at IS NULL AND deletion_started_at IS NULL",
         email,
     )
     .fetch_optional(&state.db)
     .await
     .map_err(|error| ApiError::Internal(error.into()))?;
+    let user_id = account.as_ref().map(|account| account.id);
     let decoy = user_id.is_none();
 
     let code = crate::email_verify::generate_code();
@@ -126,10 +130,9 @@ pub async fn recover_start(
 
     // The account's own language when it has one; the browser's otherwise, so a
     // decoy and a real mail look the same to the person who asked.
-    let lang = if decoy {
-        mail::Language::from_code(body.language.as_deref())
-    } else {
-        mail::language_for_email(&state.db, &email).await
+    let lang = match &account {
+        Some(account) => mail::Language::from_code(Some(&account.language)),
+        None => mail::Language::from_code(body.language.as_deref()),
     };
     let mail = if decoy {
         mail::no_account_mail(&email, lang)
