@@ -146,7 +146,7 @@ export function TwoFactorPanel({
               })
             } catch {
               toast.add({
-                title: t("account.twoFactor.copyFailed"),
+                title: t("common.copyFailed"),
                 description: t("account.twoFactor.copyFailedBody"),
                 type: "error",
               })
@@ -211,7 +211,7 @@ export function TwoFactorPanel({
           required
           type="password"
           autoComplete="current-password"
-          placeholder={t("account.twoFactor.passwordPlaceholder")}
+          placeholder={t("common.yourPassword")}
           aria-label={t("account.twoFactor.passwordLabel")}
           className="max-w-72"
           value={password}
@@ -219,9 +219,7 @@ export function TwoFactorPanel({
         />
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={busy}>
-            {busy
-              ? t("account.twoFactor.verifying")
-              : t("account.twoFactor.turnOn")}
+            {busy ? t("common.verifying") : t("account.twoFactor.turnOn")}
           </Button>
           <Button
             type="button"

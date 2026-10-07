@@ -21,6 +21,7 @@ import {
 import { distinctOptions } from "@/lib/question-options"
 import { useFormLanguage, useFormT } from "@/lib/form-i18n"
 import { usesNumericShortcuts } from "@/lib/form-language"
+import { appFormatters } from "@/lib/app-format"
 
 const TEXTAREA_CLASSES =
   "w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -525,12 +526,6 @@ function OtherChoiceRow({
   )
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 function FileUploadField({
   question,
   density = "comfortable",
@@ -549,6 +544,7 @@ function FileUploadField({
 >) {
   const [dragging, setDragging] = useState(false)
   const t = useFormT()
+  const language = useFormLanguage()
   const uploaded =
     value && typeof value === "object" && !Array.isArray(value)
       ? (value as FileAnswer)
@@ -621,7 +617,8 @@ function FileUploadField({
               {uploaded.filename}
             </p>
             <p className="form-theme-text text-xs text-muted-foreground">
-              {formatBytes(uploaded.size)} · {t("chooseDifferentFile")}
+              {appFormatters(language).bytes(uploaded.size)} ·{" "}
+              {t("chooseDifferentFile")}
             </p>
           </div>
         ) : (

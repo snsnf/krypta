@@ -4,6 +4,7 @@ import { useDirection } from "@base-ui/react/direction-provider"
 
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
 vi.mock("@/lib/form-language", async () => vi.importActual("../lib/form-language"))
+vi.mock("@/lib/app-format", async () => vi.importActual("../lib/app-format"))
 
 import { AppLocaleProvider } from "./app-locale-provider"
 import { useAppLanguage } from "../lib/app-i18n"

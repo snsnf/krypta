@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react"
 import type { FormTheme, FormThemePreset, FormTypography } from "@krypta/crypto"
 import { normalizeFormLanguage } from "./form-language"
+import { translateKey, type AppTranslator } from "./app-translator"
 
 export const FORM_THEME_PRESETS = {
   forest: { accentColor: "#356343", backgroundColor: "#e8f1e9" },
@@ -91,24 +92,21 @@ export function getAccentForeground(accent: string): string {
 const FONT_ID = /^[a-z0-9-]{1,100}$/
 const FONT_VARIANT = /^(?:regular|italic|[1-9]00(?:italic)?)$/
 
-const WEIGHT_NAMES: Record<number, string> = {
-  100: "Thin",
-  200: "Extra Light",
-  300: "Light",
-  400: "Regular",
-  500: "Medium",
-  600: "Semibold",
-  700: "Bold",
-  800: "Extra Bold",
-  900: "Black",
-}
+const NAMED_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900]
 
-/** A catalogue variant as a person reads it: "700italic" is "Bold Italic". */
-export function fontVariantLabel(variant: string): string {
+/**
+ * A catalogue variant as a person reads it, in the app's language: "700italic"
+ * is "Bold Italic". A weight with no name is shown as its number.
+ */
+export function fontVariantLabel(variant: string, t: AppTranslator): string {
   const { weight, italic } = parseFontVariant(variant)
-  const name = WEIGHT_NAMES[weight] ?? String(weight)
+  const name = NAMED_WEIGHTS.includes(weight)
+    ? translateKey(t, `appearance.weights.${weight}`)
+    : String(weight)
   if (!italic) return name
-  return weight === 400 ? "Italic" : `${name} Italic`
+  return weight === 400
+    ? t("appearance.italic")
+    : t("appearance.weightItalic", { name })
 }
 
 /** The weight and style a catalogue variant name stands for. */

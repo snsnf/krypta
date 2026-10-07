@@ -41,7 +41,7 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
       toast.add({ title: t("auth.recoveryCard.copied"), type: "success" })
     } catch {
       toast.add({
-        title: t("auth.recoveryCard.copyFailed"),
+        title: t("common.copyFailed"),
         description: t("auth.recoveryCard.copyFailedHint"),
         type: "error",
       })
@@ -122,9 +122,7 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
           checked={acknowledged}
           onCheckedChange={(checked) => setAcknowledged(checked === true)}
         />
-        <span>
-          {t("auth.recoveryCard.acknowledge")}
-        </span>
+        <span>{t("auth.recoveryCard.acknowledge")}</span>
       </label>
 
       <Button type="button" disabled={!acknowledged} onClick={onConfirm}>
@@ -133,7 +131,7 @@ export function RecoveryCodeCard({ code, onConfirm }: RecoveryCodeCardProps) {
           size={16}
           data-icon="inline-start"
         />
-        {t("auth.recoveryCard.continue")}
+        {t("common.continue")}
       </Button>
     </div>
   )

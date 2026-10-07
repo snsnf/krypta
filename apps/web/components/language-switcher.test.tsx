@@ -9,6 +9,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: () => undefined
 vi.mock("@/lib/app-i18n", async () => vi.importActual("../lib/app-i18n"))
 vi.mock("@/lib/app-locale", async () => vi.importActual("../lib/app-locale"))
 vi.mock("@/lib/form-language", async () => vi.importActual("../lib/form-language"))
+vi.mock("@/lib/app-format", async () => vi.importActual("../lib/app-format"))
 vi.mock("@/lib/utils", () => ({
   cn: (...values: unknown[]) => values.filter(Boolean).join(" "),
 }))

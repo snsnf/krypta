@@ -7,6 +7,7 @@ import {
   getFormVariantAttributes,
   fontVariantLabel,
 } from "./form-theme"
+import { appTranslator } from "./app-translator"
 
 describe("form theme", () => {
   test("exports the Forest default and all six presets", async () => {
@@ -290,11 +291,16 @@ describe("font variants", () => {
     expect(getFormVariantAttributes(DEFAULT_FORM_THEME)).toEqual({})
   })
 
-  test("names variants the way a person reads them", () => {
-    expect(fontVariantLabel("regular")).toBe("Regular")
-    expect(fontVariantLabel("italic")).toBe("Italic")
-    expect(fontVariantLabel("700")).toBe("Bold")
-    expect(fontVariantLabel("300italic")).toBe("Light Italic")
+  test("names variants the way a person reads them, in either language", () => {
+    const en = appTranslator("en")
+    expect(fontVariantLabel("regular", en)).toBe("Regular")
+    expect(fontVariantLabel("italic", en)).toBe("Italic")
+    expect(fontVariantLabel("700", en)).toBe("Bold")
+    expect(fontVariantLabel("300italic", en)).toBe("Light Italic")
+    expect(fontVariantLabel("950", en)).toBe("950")
+    const ar = appTranslator("ar")
+    expect(fontVariantLabel("700", ar)).toBe("عريض")
+    expect(fontVariantLabel("700italic", ar)).toBe("عريض مائل")
   })
 })
 

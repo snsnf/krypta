@@ -33,7 +33,6 @@ vi.mock("@/components/ui/switch", () => ({
 vi.mock("@/components/form-preview", () => ({ FormPreview: () => null }))
 vi.mock("@/components/theme-toggle", () => ({
   ColorModeSwitch: () => null,
-  FORM_COLOR_MODE_LABELS: { light: "Light", system: "System", dark: "Dark" },
   revealColorChange: (_x: number, _y: number, apply: () => void) => apply(),
 }))
 vi.mock("@/hooks/use-prefers-dark", () => ({ usePrefersDark: () => false }))

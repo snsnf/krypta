@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
 vi.mock("@/lib/form-language", async () => vi.importActual("../lib/form-language"))
+vi.mock("@/lib/app-format", async () => vi.importActual("../lib/app-format"))
 vi.mock("@/lib/form-i18n", async () => vi.importActual("../lib/form-i18n"))
 vi.mock("@/lib/question-options", async () =>
   vi.importActual("../lib/question-options")
@@ -252,7 +253,7 @@ describe("FormQuestionField", () => {
     )
     expect(markup).toContain("Uploaded: ")
     expect(markup).toContain("notes.pdf")
-    expect(markup).toContain("2 KB")
+    expect(markup).toContain("2.0 KB")
   })
 })
 

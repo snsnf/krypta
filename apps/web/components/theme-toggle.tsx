@@ -177,13 +177,6 @@ export function ColorModeSwitch({
   )
 }
 
-/** A form's own colour mode, in the builder and on the public form. */
-export const FORM_COLOR_MODE_LABELS: Record<ColorModeChoice, string> = {
-  light: "Light",
-  system: "System",
-  dark: "Dark",
-}
-
 /** The site theme control's accessible names, in the app's language. */
 export function siteThemeLabels(t: AppTranslator): {
   label: string
