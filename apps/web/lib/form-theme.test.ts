@@ -224,11 +224,14 @@ describe("form theme", () => {
         },
       })
     ).toMatchObject({
-      "--form-header-font": "'Roboto', var(--font-heading)",
+      "--form-header-font":
+        "'Roboto', 'IBM Plex Sans Arabic', var(--font-heading)",
       "--form-header-size": "30px",
-      "--form-question-font": "'Noto Sans Arabic', var(--font-heading)",
+      "--form-question-font":
+        "'Noto Sans Arabic', 'IBM Plex Sans Arabic', var(--font-heading)",
       "--form-question-size": "16px",
-      "--form-text-font": "'Fraunces', var(--font-heading)",
+      "--form-text-font":
+        "'Fraunces', 'IBM Plex Sans Arabic', var(--font-heading)",
       "--form-text-size": "18px",
     })
     expect(getFormThemeStyle(undefined)).toMatchObject({
@@ -305,16 +308,15 @@ describe("font variants", () => {
 })
 
 describe("Arabic font fallback", () => {
-  test("adds the self-hosted Arabic font behind every role's font for an Arabic form", () => {
-    const style = getFormThemeStyle({ language: "ar" })
-    for (const role of ["header", "question", "text"] as const) {
-      const stack = style[`--form-${role}-font`]
-      expect(stack).toMatch(/'IBM Plex Sans Arabic', var\(--font-heading\)$/)
+  test("adds the self-hosted Arabic font behind every role's font, in any form language", () => {
+    // An English form can still hold Arabic questions, and the builder labels
+    // its fields in the app's language.
+    for (const theme of [{ language: "ar" as const }, {}]) {
+      const style = getFormThemeStyle(theme)
+      for (const role of ["header", "question", "text"] as const) {
+        const stack = style[`--form-${role}-font`]
+        expect(stack).toMatch(/'IBM Plex Sans Arabic', var\(--font-heading\)$/)
+      }
     }
-  })
-
-  test("leaves an English form's font stacks as they were", () => {
-    const style = getFormThemeStyle({})
-    expect(style["--form-text-font"]).not.toContain("IBM Plex Sans Arabic")
   })
 })
