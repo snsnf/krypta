@@ -263,14 +263,16 @@ type FormThemeStyle = CSSProperties & {
 }
 
 /*
- * An Arabic form puts IBM Plex Sans Arabic (declared in globals.css) behind the
+ * Every form puts IBM Plex Sans Arabic (declared in globals.css) behind the
  * chosen font: the creator's font still draws any Latin text, and Arabic
- * letters, which the default fonts do not have, get a proper face instead of
- * whatever the device falls back to.
+ * letters, which the catalogue fonts mostly lack, get a proper face instead of
+ * whatever the device falls back to. Not only Arabic forms carry Arabic: an
+ * English form can ask its questions in Arabic, and the builder labels its
+ * fields in the app's language. The face is limited to Arabic code points, so
+ * a form with none never downloads it.
  */
-function toFontStack(font: string, language: FormTheme["language"]): string {
-  const arabic = language === "ar" ? " 'IBM Plex Sans Arabic'," : ""
-  return `'${font.replaceAll("'", "")}',${arabic} var(--font-heading)`
+function toFontStack(font: string): string {
+  return `'${font.replaceAll("'", "")}', 'IBM Plex Sans Arabic', var(--font-heading)`
 }
 
 type TypographyVariantProperties = Partial<
@@ -358,17 +360,11 @@ export function getFormThemeStyle(
     "--form-accent": accent,
     "--form-accent-foreground": accentForeground,
     "--form-page-background": pageBackground,
-    "--form-header-font": toFontStack(
-      theme.typography.header.font,
-      theme.language
-    ),
+    "--form-header-font": toFontStack(theme.typography.header.font),
     "--form-header-size": `${theme.typography.header.size}px`,
-    "--form-question-font": toFontStack(
-      theme.typography.question.font,
-      theme.language
-    ),
+    "--form-question-font": toFontStack(theme.typography.question.font),
     "--form-question-size": `${theme.typography.question.size}px`,
-    "--form-text-font": toFontStack(theme.typography.text.font, theme.language),
+    "--form-text-font": toFontStack(theme.typography.text.font),
     "--form-text-size": `${theme.typography.text.size}px`,
     ...variantProperties(theme.typography),
     "--background": pageBackground,

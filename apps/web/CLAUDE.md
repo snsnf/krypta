@@ -447,8 +447,11 @@ language a form is in. `normalizeFormTheme` keeps it only when it is a
 supported non-English value, so an English form serialises exactly as it did
 before languages existed (the starter templates' padding budget depends on
 that). `FormThemeSurface` sets `dir` and `lang`, provides
-`FormLanguageContext`, and for Arabic loads the self-hosted IBM Plex Sans Arabic (declared in `globals.css`, Arabic subset only)
-that `toFontStack` puts behind every chosen font.
+`FormLanguageContext`. `toFontStack` puts the self-hosted IBM Plex Sans
+Arabic (declared in `globals.css`, Arabic subset only) behind every chosen
+font in every form, not only Arabic ones, since an English form can hold
+Arabic questions and the builder labels fields in the app's language; its
+`unicode-range` means a form with no Arabic never downloads it.
 
 The app language is resolved on the server by `getAppLanguage()` in
 `lib/app-locale-server.ts`: the `krypta-locale` cookie, then `Accept-Language`
