@@ -78,7 +78,9 @@ apps/{web,api}
 packages/crypto
 infra/docker/{README.md, docker-compose.dev.yml, docker-compose.yml, docker-compose.prod.yml, docker-compose.dokploy.yml, traefik/traefik.yml, backup.sh, garage.toml.example, .env.prod.example}
 ```
-(`packages/{ui,shared,sdk,types}` remain planned, not yet created. There is no
+(`packages/crypto` is the only shared package, and no others are planned:
+`apps/web` is the one TypeScript consumer, and the API is Rust, so a shared
+UI, types or SDK package would have nothing to share with. There is no
 `infra/nginx` and there will not be: Traefik alone fronts the stack, and nginx
 would add a second certificate pipeline for nothing.)
 
