@@ -517,6 +517,14 @@ export default async function LandingPage() {
                 </Link>
               </>
             )}
+            <a
+              href="https://github.com/snsnf/krypta"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground transition-opacity duration-150 ease-out hover:opacity-70"
+            >
+              {t("landing.footer.github")}
+            </a>
             <span className="font-mono text-xs tracking-wide text-muted-foreground">
               {t("landing.footer.tagline")}
             </span>
