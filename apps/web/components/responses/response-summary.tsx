@@ -369,7 +369,7 @@ function QuestionSummaryCard({
 }) {
   return (
     <div className={CARD_CLASSNAME}>
-      <h3 dir="auto" className="font-medium">
+      <h3 dir="auto" className="font-medium whitespace-pre-line">
         {summary.label}
       </h3>
       <AnsweredSkippedLine

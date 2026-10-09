@@ -332,7 +332,13 @@ export function FormBuilder({
               </button>
               <div className="flex-1 p-4 pt-7">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
-                  <input
+                  {/*
+                   * A textarea so a long question can be broken over lines;
+                   * every place that shows it as a heading keeps the breaks
+                   * with whitespace-pre-line.
+                   */}
+                  <textarea
+                    rows={1}
                     dir={autoDir(q.label)}
                     placeholder={t("builder.questionPlaceholder")}
                     aria-label={t("builder.questionLabel")}
@@ -342,7 +348,7 @@ export function FormBuilder({
                     }
                     className={cn(
                       UNDERLINE_INPUT_CLASSES,
-                      "form-theme-question flex-1"
+                      "form-theme-question field-sizing-content flex-1 resize-none"
                     )}
                   />
                   <Select

@@ -320,7 +320,7 @@ export function FocusFormRenderer({
                   <label
                     htmlFor={question.id}
                     dir="auto"
-                    className="form-theme-header block font-medium"
+                    className="form-theme-header block font-medium whitespace-pre-line"
                   >
                     {question.label}
                     {question.required && (
