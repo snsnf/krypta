@@ -277,25 +277,27 @@ export function FormBuilder({
                           )}
                         />
                       </div>
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => toggleSectionBreak(q.id)}
                         aria-label={t("builder.removeSection")}
-                        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground"
+                        className="text-muted-foreground"
                       >
                         <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex justify-center">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="xs"
                       onClick={() => toggleSectionBreak(q.id)}
-                      className="text-xs text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+                      className="font-normal text-muted-foreground"
                     >
                       {t("builder.addSection")}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -452,16 +454,17 @@ export function FormBuilder({
                             "form-theme-text flex-1"
                           )}
                         />
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
                           onClick={() => removeOption(q.id, i)}
                           aria-label={t("builder.removeOption", {
                             number: i + 1,
                           })}
-                          className="shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/option:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                          className="text-muted-foreground opacity-0 group-hover/option:opacity-100 hover:text-destructive focus-visible:opacity-100"
                         >
                           <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                        </button>
+                        </Button>
                       </div>
                     ))}
                     {/*
@@ -671,16 +674,17 @@ export function FormBuilder({
                             />
                             <ConditionItems items={valueItems} />
                           </Select>
-                          <button
-                            type="button"
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={() =>
                               updateQuestion(q.id, { condition: undefined })
                             }
                             aria-label={t("builder.removeCondition")}
-                            className="text-muted-foreground transition-all duration-150 ease-out hover:text-destructive active:scale-[0.97] motion-reduce:active:scale-100"
+                            className="text-muted-foreground hover:text-destructive"
                           >
                             <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                          </button>
+                          </Button>
                         </div>
                       )}
                       {(ignored || staleValue) && (
@@ -711,17 +715,22 @@ export function FormBuilder({
                               on screen in that case. */}
                           {sources.length === 0 && (
                             <AlertAction>
-                              <button
-                                type="button"
+                              <Button
+                                variant="ghost"
+                                size="xs"
                                 onClick={() =>
                                   updateQuestion(q.id, { condition: undefined })
                                 }
                                 aria-label={t("builder.removeCondition")}
-                                className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-destructive/70 transition-all duration-150 ease-out hover:bg-destructive/10 hover:text-destructive active:scale-[0.97] motion-reduce:active:scale-100"
+                                className="text-destructive/70 hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20"
                               >
-                                <HugeiconsIcon icon={Cancel01Icon} size={13} />
+                                <HugeiconsIcon
+                                  icon={Cancel01Icon}
+                                  size={13}
+                                  data-icon="inline-start"
+                                />
                                 {t("common.remove")}
-                              </button>
+                              </Button>
                             </AlertAction>
                           )}
                         </Alert>
@@ -770,22 +779,24 @@ export function FormBuilder({
                     />
                   </label>
                   <div className="h-4 w-px bg-border" />
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => duplicateQuestionById(q.id)}
                     aria-label={t("builder.duplicate")}
-                    className="text-muted-foreground transition-all duration-150 ease-out hover:text-foreground active:scale-[0.97] motion-reduce:active:scale-100"
+                    className="text-muted-foreground"
                   >
                     <HugeiconsIcon icon={Copy01Icon} size={16} />
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => removeQuestion(q.id)}
                     aria-label={t("builder.delete")}
-                    className="text-muted-foreground transition-all duration-150 ease-out hover:text-destructive active:scale-[0.97] motion-reduce:active:scale-100"
+                    className="text-muted-foreground hover:text-destructive"
                   >
                     <HugeiconsIcon icon={Delete02Icon} size={16} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

@@ -339,22 +339,22 @@ function SignupPageContent() {
             {loading ? t("common.verifying") : t("common.verify")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            <button
-              type="button"
+            <Button
+              variant="link"
               onClick={handleResend}
               disabled={resendControl.disabled}
-              className="text-foreground underline underline-offset-4 hover:no-underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+              className="h-auto p-0 font-normal text-foreground underline hover:no-underline disabled:text-muted-foreground disabled:no-underline disabled:opacity-100"
             >
               {resendControl.label}
-            </button>
+            </Button>
             {" · "}
-            <button
-              type="button"
+            <Button
+              variant="link"
               onClick={startOver}
-              className="text-foreground underline underline-offset-4 hover:no-underline"
+              className="h-auto p-0 font-normal text-foreground underline hover:no-underline"
             >
               {t("auth.signup.differentAddress")}
-            </button>
+            </Button>
           </p>
         </form>
       </AuthShell>

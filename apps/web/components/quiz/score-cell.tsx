@@ -3,6 +3,7 @@
 import type { Question } from "@krypta/crypto"
 import type { AnswerValue } from "@/lib/form-answers"
 import type { AnswerKey } from "@/lib/quiz"
+import { Button } from "@/components/ui/button"
 import { useAppT } from "@/lib/app-i18n"
 import { scoreResponse } from "@/lib/quiz-score"
 
@@ -25,14 +26,14 @@ export function ScoreCell({
   const score = scoreResponse(questions, answerKey, answers, marks)
   return (
     <td className="border-b border-border px-3 py-2.5 whitespace-nowrap">
-      <button
-        type="button"
+      <Button
+        variant="link"
         aria-label={t("quiz.scoreFor", { position })}
         onClick={onOpen}
-        className="text-primary tabular-nums underline underline-offset-4 transition-opacity duration-150 ease-out hover:opacity-70"
+        className="h-auto p-0 font-normal tabular-nums underline"
       >
         {score.earned} / {score.possible}
-      </button>
+      </Button>
       {score.pending > 0 && (
         <span className="ms-2 text-xs text-muted-foreground">
           {t("quiz.toGrade", { count: score.pending })}

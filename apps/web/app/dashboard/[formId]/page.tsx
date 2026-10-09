@@ -1072,14 +1072,14 @@ export default function FormDetailPage() {
                                     >
                                       {isFileAnswer(r.answers[q.id]) ? (
                                         <>
-                                          <button
-                                            type="button"
+                                          <Button
+                                            variant="link"
                                             onClick={() =>
                                               downloadAttachment(
                                                 r.answers[q.id] as FileAnswer
                                               )
                                             }
-                                            className="inline-flex items-center gap-1 text-primary underline underline-offset-4 transition-opacity duration-150 ease-out hover:opacity-70"
+                                            className="h-auto gap-1 p-0 font-normal whitespace-normal underline"
                                           >
                                             <HugeiconsIcon
                                               icon={Download04Icon}
@@ -1089,7 +1089,7 @@ export default function FormDetailPage() {
                                               (r.answers[q.id] as FileAnswer)
                                                 .filename
                                             }
-                                          </button>
+                                          </Button>
                                           {downloadErrors[
                                             (r.answers[q.id] as FileAnswer)
                                               .attachmentId

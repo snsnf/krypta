@@ -150,15 +150,20 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
                 {t("header.admin")}
               </Link>
             )}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleLogout}
               aria-label={t("header.logOut")}
-              className="flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+              className="text-sm font-normal text-muted-foreground"
             >
-              <HugeiconsIcon icon={Logout03Icon} size={14} />
+              <HugeiconsIcon
+                icon={Logout03Icon}
+                size={14}
+                data-icon="inline-start"
+              />
               {t("header.logOut")}
-            </button>
+            </Button>
           </div>
           <div className="sm:hidden">
             <DropdownMenu>

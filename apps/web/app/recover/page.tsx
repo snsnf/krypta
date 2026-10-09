@@ -259,13 +259,13 @@ export default function RecoverPage() {
             {loading ? t("common.verifying") : t("common.verify")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            <button
-              type="button"
+            <Button
+              variant="link"
               onClick={startOver}
-              className="text-foreground underline underline-offset-4 hover:no-underline"
+              className="h-auto p-0 font-normal text-foreground underline hover:no-underline"
             >
               {t("auth.recover.startOver")}
-            </button>
+            </Button>
           </p>
         </form>
       </AuthShell>
