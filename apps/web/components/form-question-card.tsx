@@ -36,7 +36,7 @@ export function FormQuestionCard({
       <label
         htmlFor={question.id}
         dir="auto"
-        className="form-theme-question mb-2.5 block font-medium"
+        className="form-theme-question mb-2.5 block font-medium whitespace-pre-line"
       >
         {question.label}
         {question.required && (

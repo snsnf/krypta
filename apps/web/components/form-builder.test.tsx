@@ -104,7 +104,7 @@ describe("FormBuilder text direction", () => {
     )
   }
   const questionInput = (markup: string) =>
-    markup.match(/<input[^>]*aria-label="Question label"[^>]*>/)?.[0] ?? ""
+    markup.match(/<textarea[^>]*aria-label="Question label"[^>]*>/)?.[0] ?? ""
 
   it("leaves an empty question field to the page's direction, so an Arabic placeholder sits right", () => {
     expect(questionInput(render(""))).not.toContain("dir=")

@@ -120,7 +120,7 @@ export function GradeResponseDialog({
                 className="rounded-lg border border-border p-3"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium whitespace-pre-line">
                     {question.label || t("quiz.untitled")}
                   </p>
                   <span
