@@ -125,7 +125,12 @@ describe("reconciling the key with the questions", () => {
 
   test("accepted answers belong to short text and a value to number", () => {
     const next = reconcileAnswerKey(
-      [choice, boxes, { ...text, type: "number" }, { ...num, type: "short_text" }],
+      [
+        choice,
+        boxes,
+        { ...text, type: "number" },
+        { ...num, type: "short_text" },
+      ],
       key
     )
     expect(next.questions.q3).toEqual({ points: 1 })
@@ -157,7 +162,19 @@ describe("marks", () => {
 
   test("removing a response's marks", () => {
     const marked = setMark(EMPTY_GRADES, "r1", "q1", false)
-    expect(removeResponseMarks(marked, "r1").responses).toEqual({})
-    expect(removeResponseMarks(marked, "r2")).toBe(marked)
+    expect(removeResponseMarks(marked, ["r1"]).responses).toEqual({})
+    expect(removeResponseMarks(marked, ["r2"])).toBe(marked)
+  })
+
+  test("removing several responses' marks at once", () => {
+    const marked = setMark(
+      setMark(setMark(EMPTY_GRADES, "r1", "q1", true), "r2", "q1", false),
+      "r3",
+      "q1",
+      true
+    )
+    expect(removeResponseMarks(marked, ["r1", "r3", "r9"]).responses).toEqual({
+      r2: { q1: false },
+    })
   })
 })

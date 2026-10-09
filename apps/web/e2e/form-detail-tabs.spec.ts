@@ -288,6 +288,64 @@ test("deleting a response from the Individual view removes it from the table", a
   await expect(page.getByText("Ada")).toHaveCount(0)
 })
 
+test("selecting several responses deletes exactly those, and the deletion survives a reload", async ({
+  page,
+  sharedAccount,
+}) => {
+  await page.context().addCookies(sharedAccount.sessionCookies)
+  await page.goto("/unlock")
+  await unlock(page, sharedAccount.password)
+  await page.getByRole("button", { name: /new form/i }).click()
+  await page.waitForURL(/\/dashboard\/new/)
+  await startBlankForm(page)
+  await page
+    .getByRole("textbox", { name: "Form title" })
+    .fill("Bulk delete form")
+  await page.getByRole("textbox", { name: "Question label" }).fill("Your name")
+  await page.click('button:has-text("Publish form")')
+  await page.waitForURL(/\/dashboard\/.+\?created=1/)
+
+  const shareLink = shareLinkFor(page)
+  for (const name of ["Ada", "Grace", "Linus"]) {
+    const respondent = await page.context().newPage()
+    await respondent.goto(shareLink)
+    await respondent.getByRole("textbox").first().fill(name)
+    await respondent.getByRole("button", { name: "Submit" }).click()
+    await expect(respondent.getByText("Thanks!")).toBeVisible()
+    await respondent.close()
+  }
+
+  await page.reload()
+  await page.getByRole("tab", { name: "Responses" }).click()
+  await page.getByRole("button", { name: "Individual" }).click()
+  await expect(page.getByText("Grace")).toBeVisible()
+
+  // By row content, not position, so the test does not depend on the order
+  // the table lists responses in.
+  for (const name of ["Ada", "Linus"]) {
+    await page
+      .getByRole("row")
+      .filter({ hasText: name })
+      .getByRole("checkbox")
+      .click()
+  }
+  await expect(page.getByText("2 responses selected")).toBeVisible()
+
+  await page.getByRole("button", { name: "Delete selected" }).click()
+  await page.getByRole("button", { name: "Delete 2 responses" }).click()
+
+  await expect(page.getByText("Ada")).toHaveCount(0)
+  await expect(page.getByText("Linus")).toHaveCount(0)
+  await expect(page.getByText("Grace")).toBeVisible()
+
+  await page.reload()
+  await page.getByRole("tab", { name: "Responses" }).click()
+  await page.getByRole("button", { name: "Individual" }).click()
+  await expect(page.getByText("Grace")).toBeVisible()
+  await expect(page.getByText("Ada")).toHaveCount(0)
+  await expect(page.getByText("Linus")).toHaveCount(0)
+})
+
 test("a draft has every tab, and settings chosen before publishing stick", async ({
   page,
   sharedAccount,

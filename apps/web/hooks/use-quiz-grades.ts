@@ -138,7 +138,7 @@ export function useQuizGrades(
     // Ref-only reset: mutating a ref triggers no render, so unlike a state
     // setter it carries no restriction on being synchronous here. This runs
     // unconditionally, before the `active`/key check, because a response
-    // delete's `removeResponse` fires regardless of whether the form is a
+    // delete's `removeResponses` fires regardless of whether the form is a
     // quiz: without a reset here, deleting a response right after
     // navigating away from a quiz form could still PUT that quiz's grades
     // ciphertext at the new form's URL.
@@ -200,10 +200,10 @@ export function useQuizGrades(
       const { formId: stateFormId, formPrivateKey } = state
       const previous = state.grades
       const next = update(previous)
-      // `force` exists for `removeResponse`: `removeResponseMarks` returns
-      // the same object both when a response had no marks and when it did,
-      // so skipping the save on an unchanged object would leave the server
-      // showing the deleted response as still graded. An ordinary mark
+      // `force` exists for `removeResponses`: `removeResponseMarks` returns
+      // the same object when none of the responses had marks, so skipping
+      // the save on an unchanged object would leave the server showing a
+      // deleted response as still graded. An ordinary mark
       // click still gets the short-circuit, since it never forces.
       if (next === previous && !force) return
       state.grades = next
@@ -273,11 +273,12 @@ export function useQuizGrades(
     dismissConflict: () => setConflict(false),
     setMark: (responseId: string, questionId: string, mark: boolean | null) =>
       write((current) => withMark(current, responseId, questionId, mark)),
-    // Forced: `removeResponseMarks` returns the same object when the
-    // response had no marks, but the server still needs to see this save so
-    // a deleted response never looks graded because its marks happened to
-    // be empty. See the comment on `write`'s `force` parameter.
-    removeResponse: (responseId: string) =>
-      write((current) => removeResponseMarks(current, responseId), true),
+    // Forced: `removeResponseMarks` returns the same object when no
+    // response had marks, but the server still needs to see this save so a
+    // deleted response never looks graded because its marks happened to be
+    // empty. See the comment on `write`'s `force` parameter. One save for
+    // the whole set, so a bulk delete is one grades write, not one per row.
+    removeResponses: (responseIds: readonly string[]) =>
+      write((current) => removeResponseMarks(current, responseIds), true),
   }
 }
