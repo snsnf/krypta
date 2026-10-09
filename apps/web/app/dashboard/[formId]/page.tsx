@@ -46,6 +46,7 @@ import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { filterResponses, searchTerms } from "@/lib/response-search"
 import { AppHeader } from "@/components/app-header"
 import { FullPageSpinner } from "@/components/spinner"
@@ -95,6 +96,21 @@ import {
   type FileAnswer,
 } from "@/lib/form-answers"
 import { attachmentIdsOf } from "@/lib/response-payload"
+import { deleteResponsesInTurn } from "@/lib/response-deletion"
+
+interface ResponseRow {
+  id: string
+  answers: Record<string, AnswerValue>
+}
+
+function withoutIds(
+  ids: ReadonlySet<string>,
+  remove: Iterable<string>
+): Set<string> {
+  const next = new Set(ids)
+  for (const id of remove) next.delete(id)
+  return next
+}
 
 interface FormLoadIdentity {
   formId: string
@@ -138,9 +154,14 @@ export default function FormDetailPage() {
   const [loadIdentity, setLoadIdentity] = useState<FormLoadIdentity | null>(
     null
   )
-  const [responses, setResponses] = useState<
-    { id: string; answers: Record<string, AnswerValue> }[]
-  >([])
+  const [responses, setResponses] = useState<ResponseRow[]>([])
+  // Ids, not rows, so a row deleted or reloaded underneath the selection
+  // simply stops matching. What a bulk action acts on is always the
+  // intersection with the rows on screen; see `selectedMatches`.
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  const [deletingResponses, setDeletingResponses] = useState(false)
   const [responseView, setResponseView] = useState<"summary" | "individual">(
     "summary"
   )
@@ -153,10 +174,7 @@ export default function FormDetailPage() {
   const [downloadErrors, setDownloadErrors] = useState<Record<string, string>>(
     {}
   )
-  const [deleteTarget, setDeleteTarget] = useState<{
-    id: string
-    answers: Record<string, AnswerValue>
-  } | null>(null)
+  const [deleteTargets, setDeleteTargets] = useState<ResponseRow[] | null>(null)
   const [unreadableResponses, setUnreadableResponses] = useState(0)
   const quiz = useQuizGrades(
     formId,
@@ -533,37 +551,35 @@ export default function FormDetailPage() {
     }
   }
 
-  async function handleDeleteResponse(response: {
-    id: string
-    answers: Record<string, AnswerValue>
-  }) {
-    // The server cannot see which attachments this response referenced,
-    // because that link lives inside the ciphertext it has no key for. So send them.
-    const attachmentIds = attachmentIdsOf(response.answers)
-
+  // Rows leave the table at once and only the failures come back.
+  async function handleDeleteResponses(targets: ResponseRow[]) {
     const previous = responses
-    setResponses((current) => current.filter((r) => r.id !== response.id))
-    try {
-      await apiFetch(`/forms/${formId}/responses/${response.id}`, {
-        method: "DELETE",
-        body: JSON.stringify({ attachment_ids: attachmentIds }),
-      })
-      void quiz.removeResponse(response.id)
-    } catch (error) {
-      // The endpoint isn't idempotent: a retry after the delete already
-      // committed gets a 404 because the row is genuinely gone. That is the
-      // outcome the user asked for, not a failure to roll back. An
-      // attachment id the server rejects (e.g. belonging to another form) is
-      // a distinct case and comes back as `bad_request`, not `not_found`, so
-      // `not_found` here means only "already gone" and must not be broadened
-      // back into swallowing a real rejection.
-      if (error instanceof ApiClientError && error.code === "not_found") {
-        void quiz.removeResponse(response.id)
-        return
-      }
-      setResponses(previous)
+    const targetIds = new Set(targets.map((r) => r.id))
+    setResponses((current) => current.filter((r) => !targetIds.has(r.id)))
+    setSelectedIds((current) => withoutIds(current, targetIds))
+    setDeletingResponses(true)
+
+    const { deleted, failed } = await deleteResponsesInTurn(
+      targets,
+      (response) =>
+        apiFetch(`/forms/${formId}/responses/${response.id}`, {
+          method: "DELETE",
+          // The server cannot see which attachments a response referenced,
+          // because that link lives inside the ciphertext it has no key for.
+          // So send them.
+          body: JSON.stringify({
+            attachment_ids: attachmentIdsOf(response.answers),
+          }),
+        })
+    )
+
+    setDeletingResponses(false)
+    if (deleted.length > 0) void quiz.removeResponses(deleted)
+    if (failed > 0) {
+      const gone = new Set(deleted)
+      setResponses(previous.filter((r) => !gone.has(r.id)))
       toast.add({
-        title: t("formPage.deleteResponseFailed"),
+        title: t("formPage.deleteResponseFailed", { count: failed }),
         description: t("common.genericError"),
         type: "error",
       })
@@ -618,6 +634,26 @@ export default function FormDetailPage() {
   // cannot.
   const responseMatches = filterResponses(questions, responses, responseQuery)
   const responseSearchActive = searchTerms(responseQuery).length > 0
+  // Only the selected rows still on screen: a search that hides a selected
+  // row takes it out of the next bulk action too, so the action never
+  // reaches a row the owner cannot currently see.
+  const selectedMatches = responseMatches.filter((m) =>
+    selectedIds.has(m.response.id)
+  )
+  const allMatchesSelected =
+    responseMatches.length > 0 &&
+    selectedMatches.length === responseMatches.length
+
+  const deleteTargetCount = deleteTargets?.length ?? 0
+  const deleteTargetsHaveFiles =
+    deleteTargets?.some((r) => Object.values(r.answers).some(isFileAnswer)) ??
+    false
+
+  function toggleSelected(id: string, selected: boolean) {
+    setSelectedIds((current) =>
+      selected ? new Set(current).add(id) : withoutIds(current, [id])
+    )
+  }
 
   const quizOn = answerKey?.enabled === true
   const gradingTarget =
@@ -1010,134 +1046,211 @@ export default function FormDetailPage() {
                       />
                     </>
                   ) : (
-                    <div className="overflow-hidden rounded-lg border border-border">
-                      <div className="max-h-[28rem] overflow-auto overscroll-contain">
-                        <table className="w-full border-collapse text-sm">
-                          <thead className="sticky top-0 z-10 bg-background/85 backdrop-blur-sm">
-                            <tr>
-                              <th className="w-10 border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                #
-                              </th>
-                              {quizOn && (
-                                <th className="border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                  {t("formPage.score")}
-                                </th>
-                              )}
-                              {questions.map((q) => (
-                                <th
-                                  key={q.id}
-                                  dir="auto"
-                                  className="border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
-                                  {q.label}
-                                </th>
-                              ))}
-                              {canEdit && (
-                                <th className="w-10 border-b border-border px-3 py-2.5">
-                                  <span className="sr-only">
-                                    {t("formPage.actions")}
-                                  </span>
-                                </th>
-                              )}
-                            </tr>
-                          </thead>
-                          <tbody className="[&>tr:last-child>td]:border-0">
-                            {responseMatches.map(
-                              ({ response: r, position }, i) => (
-                                <tr
-                                  key={r.id}
-                                  className="animate-list-item-in transition-colors duration-150 ease-out hover:bg-muted/40"
-                                  style={{
-                                    animationDelay: `${Math.min(i, 10) * 40}ms`,
-                                  }}
-                                >
-                                  <td className="border-b border-border px-3 py-2.5 font-mono text-xs text-muted-foreground">
-                                    {position}
-                                  </td>
-                                  {quizOn && answerKey && (
-                                    <ScoreCell
-                                      position={position}
-                                      questions={questions}
-                                      answerKey={answerKey}
-                                      answers={r.answers}
-                                      marks={marksFor(quiz.grades, r.id)}
-                                      onOpen={() => setGradingId(r.id)}
-                                    />
-                                  )}
-                                  {questions.map((q) => (
-                                    <td
-                                      key={q.id}
-                                      dir="auto"
-                                      className="border-b border-border px-3 py-2.5"
-                                    >
-                                      {isFileAnswer(r.answers[q.id]) ? (
-                                        <>
-                                          <Button
-                                            variant="link"
-                                            onClick={() =>
-                                              downloadAttachment(
-                                                r.answers[q.id] as FileAnswer
-                                              )
-                                            }
-                                            className="h-auto gap-1 p-0 font-normal whitespace-normal underline"
-                                          >
-                                            <HugeiconsIcon
-                                              icon={Download04Icon}
-                                              size={13}
-                                            />
-                                            {
-                                              (r.answers[q.id] as FileAnswer)
-                                                .filename
-                                            }
-                                          </Button>
-                                          {downloadErrors[
-                                            (r.answers[q.id] as FileAnswer)
-                                              .attachmentId
-                                          ] && (
-                                            <p className="mt-1 text-xs text-destructive">
-                                              {
-                                                downloadErrors[
-                                                  (
-                                                    r.answers[
-                                                      q.id
-                                                    ] as FileAnswer
-                                                  ).attachmentId
-                                                ]
-                                              }
-                                            </p>
-                                          )}
-                                        </>
-                                      ) : (
-                                        formatAnswer(r.answers[q.id])
-                                      )}
-                                    </td>
-                                  ))}
-                                  {canEdit && (
-                                    <td className="border-b border-border px-3 py-2.5 text-end">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        aria-label={t(
-                                          "formPage.deleteResponseAria",
-                                          { position }
-                                        )}
-                                        onClick={() => setDeleteTarget(r)}
-                                      >
-                                        <HugeiconsIcon
-                                          icon={Delete02Icon}
-                                          size={14}
-                                        />
-                                      </Button>
-                                    </td>
-                                  )}
-                                </tr>
+                    <>
+                      {canEdit && selectedMatches.length > 0 && (
+                        <div className="mb-3 flex items-center gap-2 rounded-lg border border-border px-3 py-2 motion-safe:animate-in motion-safe:duration-150 motion-safe:fade-in">
+                          <p className="text-sm">
+                            {t("formPage.selectedCount", {
+                              count: selectedMatches.length,
+                            })}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ms-auto"
+                            onClick={() => setSelectedIds(new Set())}
+                          >
+                            {t("formPage.clearSelection")}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingResponses}
+                            onClick={() =>
+                              setDeleteTargets(
+                                selectedMatches.map((m) => m.response)
                               )
-                            )}
-                          </tbody>
-                        </table>
+                            }
+                          >
+                            <HugeiconsIcon
+                              icon={Delete02Icon}
+                              size={14}
+                              data-icon="inline-start"
+                            />
+                            {t("formPage.deleteSelected")}
+                          </Button>
+                        </div>
+                      )}
+                      <div className="overflow-hidden rounded-lg border border-border">
+                        <div className="max-h-[28rem] overflow-auto overscroll-contain">
+                          <table className="w-full border-collapse text-sm">
+                            <thead className="sticky top-0 z-10 bg-background/85 backdrop-blur-sm">
+                              <tr>
+                                {canEdit && (
+                                  <th className="w-10 border-b border-border px-3 py-2.5">
+                                    <Checkbox
+                                      aria-label={t(
+                                        "formPage.selectAllResponses"
+                                      )}
+                                      checked={allMatchesSelected}
+                                      indeterminate={
+                                        selectedMatches.length > 0 &&
+                                        !allMatchesSelected
+                                      }
+                                      onCheckedChange={(checked) =>
+                                        setSelectedIds(
+                                          checked
+                                            ? new Set(
+                                                responseMatches.map(
+                                                  (m) => m.response.id
+                                                )
+                                              )
+                                            : new Set()
+                                        )
+                                      }
+                                    />
+                                  </th>
+                                )}
+                                <th className="w-10 border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                                  #
+                                </th>
+                                {quizOn && (
+                                  <th className="border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                                    {t("formPage.score")}
+                                  </th>
+                                )}
+                                {questions.map((q) => (
+                                  <th
+                                    key={q.id}
+                                    dir="auto"
+                                    className="border-b border-border px-3 py-2.5 text-start text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                  >
+                                    {q.label}
+                                  </th>
+                                ))}
+                                {canEdit && (
+                                  <th className="w-10 border-b border-border px-3 py-2.5">
+                                    <span className="sr-only">
+                                      {t("formPage.actions")}
+                                    </span>
+                                  </th>
+                                )}
+                              </tr>
+                            </thead>
+                            <tbody className="[&>tr:last-child>td]:border-0">
+                              {responseMatches.map(
+                                ({ response: r, position }, i) => (
+                                  <tr
+                                    key={r.id}
+                                    className="animate-list-item-in transition-colors duration-150 ease-out hover:bg-muted/40"
+                                    style={{
+                                      animationDelay: `${Math.min(i, 10) * 40}ms`,
+                                    }}
+                                  >
+                                    {canEdit && (
+                                      <td className="border-b border-border px-3 py-2.5">
+                                        <Checkbox
+                                          aria-label={t(
+                                            "formPage.selectResponse",
+                                            { position }
+                                          )}
+                                          checked={selectedIds.has(r.id)}
+                                          onCheckedChange={(checked) =>
+                                            toggleSelected(r.id, checked)
+                                          }
+                                        />
+                                      </td>
+                                    )}
+                                    <td className="border-b border-border px-3 py-2.5 font-mono text-xs text-muted-foreground">
+                                      {position}
+                                    </td>
+                                    {quizOn && answerKey && (
+                                      <ScoreCell
+                                        position={position}
+                                        questions={questions}
+                                        answerKey={answerKey}
+                                        answers={r.answers}
+                                        marks={marksFor(quiz.grades, r.id)}
+                                        onOpen={() => setGradingId(r.id)}
+                                      />
+                                    )}
+                                    {questions.map((q) => (
+                                      <td
+                                        key={q.id}
+                                        dir="auto"
+                                        className="border-b border-border px-3 py-2.5"
+                                      >
+                                        {isFileAnswer(r.answers[q.id]) ? (
+                                          <>
+                                            <Button
+                                              variant="link"
+                                              onClick={() =>
+                                                downloadAttachment(
+                                                  r.answers[q.id] as FileAnswer
+                                                )
+                                              }
+                                              className="h-auto gap-1 p-0 font-normal whitespace-normal underline"
+                                            >
+                                              <HugeiconsIcon
+                                                icon={Download04Icon}
+                                                size={13}
+                                              />
+                                              {
+                                                (r.answers[q.id] as FileAnswer)
+                                                  .filename
+                                              }
+                                            </Button>
+                                            {downloadErrors[
+                                              (r.answers[q.id] as FileAnswer)
+                                                .attachmentId
+                                            ] && (
+                                              <p className="mt-1 text-xs text-destructive">
+                                                {
+                                                  downloadErrors[
+                                                    (
+                                                      r.answers[
+                                                        q.id
+                                                      ] as FileAnswer
+                                                    ).attachmentId
+                                                  ]
+                                                }
+                                              </p>
+                                            )}
+                                          </>
+                                        ) : (
+                                          formatAnswer(r.answers[q.id])
+                                        )}
+                                      </td>
+                                    ))}
+                                    {canEdit && (
+                                      <td className="border-b border-border px-3 py-2.5 text-end">
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon-sm"
+                                          aria-label={t(
+                                            "formPage.deleteResponseAria",
+                                            { position }
+                                          )}
+                                          onClick={() => setDeleteTargets([r])}
+                                        >
+                                          <HugeiconsIcon
+                                            icon={Delete02Icon}
+                                            size={14}
+                                          />
+                                        </Button>
+                                      </td>
+                                    )}
+                                  </tr>
+                                )
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </>
               )}
@@ -1160,23 +1273,27 @@ export default function FormDetailPage() {
               />
             )}
             <Dialog
-              open={deleteTarget !== null}
+              open={deleteTargets !== null}
               onOpenChange={(open) => {
-                if (!open) setDeleteTarget(null)
+                if (!open) setDeleteTargets(null)
               }}
             >
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{t("formPage.deleteTitle")}</DialogTitle>
+                  <DialogTitle>
+                    {t("formPage.deleteTitle", { count: deleteTargetCount })}
+                  </DialogTitle>
                   <DialogDescription>
                     {[
-                      t("formPage.deleteBody"),
-                      deleteTarget !== null &&
-                        Object.values(deleteTarget.answers).some(
-                          isFileAnswer
-                        ) &&
-                        t("formPage.deleteFiles"),
-                      maxResponses !== null && t("formPage.deleteLimit"),
+                      t("formPage.deleteBody", { count: deleteTargetCount }),
+                      deleteTargetsHaveFiles &&
+                        t("formPage.deleteFiles", {
+                          count: deleteTargetCount,
+                        }),
+                      maxResponses !== null &&
+                        t("formPage.deleteLimit", {
+                          count: deleteTargetCount,
+                        }),
                     ]
                       .filter(Boolean)
                       .join(" ")}
@@ -1190,13 +1307,13 @@ export default function FormDetailPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      if (deleteTarget !== null) {
-                        void handleDeleteResponse(deleteTarget)
+                      if (deleteTargets !== null) {
+                        void handleDeleteResponses(deleteTargets)
                       }
-                      setDeleteTarget(null)
+                      setDeleteTargets(null)
                     }}
                   >
-                    {t("formPage.deleteConfirm")}
+                    {t("formPage.deleteConfirm", { count: deleteTargetCount })}
                   </Button>
                 </DialogFooter>
               </DialogContent>

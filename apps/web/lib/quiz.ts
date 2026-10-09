@@ -244,13 +244,14 @@ export function setMark(
   return { responses }
 }
 
-/** Forgets a deleted response's marks. Same object if it had none. */
+/** Forgets deleted responses' marks. Same object if none of them had any. */
 export function removeResponseMarks(
   grades: Grades,
-  responseId: string
+  responseIds: readonly string[]
 ): Grades {
-  if (!Object.hasOwn(grades.responses, responseId)) return grades
+  const marked = responseIds.filter((id) => Object.hasOwn(grades.responses, id))
+  if (marked.length === 0) return grades
   const responses = { ...grades.responses }
-  delete responses[responseId]
+  for (const id of marked) delete responses[id]
   return { responses }
 }
