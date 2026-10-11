@@ -638,12 +638,11 @@ sharedAccountTest(
     // The mouse works in viewport coordinates and does not scroll, so the
     // first card is centred first: the page can sit scrolled with its handle
     // above the top edge, where the press would land on nothing.
-    await page
-      .getByRole("button", { name: "Reorder question 1" })
+    const firstHandle = page.getByRole("button", { name: "Reorder question 1" })
+    await firstHandle
       .locator("..")
       .evaluate((card) => card.scrollIntoView({ block: "center" }))
     await waitForAnimations(page)
-    const firstHandle = page.getByRole("button", { name: "Reorder question 1" })
     const secondCard = page.getByRole("button", { name: "Reorder question 2" }).locator("..")
     const firstBox = await firstHandle.boundingBox()
     const secondBox = await secondCard.boundingBox()
