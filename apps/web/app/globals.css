@@ -340,6 +340,19 @@
     line-height: 1.5;
   }
   /*
+   * Focus shows one question as the page's heading: it keeps the header's
+   * size, but it is still a question, so it takes the question's font and
+   * variant. With the header font, a creator's question font never reached a
+   * Focus form at all.
+   */
+  .form-theme-focus-question {
+    font-family: var(--form-question-font);
+    font-size: var(--form-header-size) !important;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  /*
    * A chosen font variant applies only under the attribute the surface sets
    * for that role, so a role with no choice keeps the weight each element
    * already has (headers medium, most text regular). !important because the
@@ -349,7 +362,8 @@
     font-weight: var(--form-header-weight) !important;
     font-style: var(--form-header-style) !important;
   }
-  [data-question-variant] .form-theme-question {
+  [data-question-variant] .form-theme-question,
+  [data-question-variant] .form-theme-focus-question {
     font-weight: var(--form-question-weight) !important;
     font-style: var(--form-question-style) !important;
   }
