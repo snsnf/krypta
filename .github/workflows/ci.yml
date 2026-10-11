@@ -16,6 +16,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job only reads the code and uploads artifacts, so the token is read
+# only. Without this it takes the repository default, which can be write, and
+# the third-party actions below would run holding it.
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 
