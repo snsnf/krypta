@@ -304,17 +304,18 @@ German court has ruled that exact embedding unlawful without consent.
 Both are gone. `apps/web/fonts/families.json` names Fontsource packages (the
 Google Fonts collection republished on npm, same files, open licenses), and
 `apps/web/scripts/build-fonts.ts` turns the installed ones into
-`lib/font-catalog.json`, one stylesheet per family under `public/fonts/`, and
-the woff2 files behind it. It runs before `dev` and `build`; the catalogue is
-committed and `scripts/ci.sh` fails if it drifts from the list. The CSP
-therefore lists no font host at all, and `e2e/form-appearance.spec.ts` aborts
-any request to Google so a regression fails loudly.
+`public/fonts/`: the catalogue (`catalog.json`), one stylesheet per family,
+and the woff2 files behind it. It runs before `dev` and `build`, and
+`scripts/ci.sh` runs it too, since it fails on a listed family whose package
+is missing. The CSP therefore lists no font host at all, and
+`e2e/form-appearance.spec.ts` aborts any request to Google so a regression
+fails loudly.
 
-The browser reads that list as the static `public/fonts/catalog.json`, which
-the same script writes, never through a route. It used to be a route at
-`/api/fonts`, which worked in development and 404'd in production, where the
-proxy sends every `/api` path to the Rust API. A file under `/fonts/` also
-moves with the fonts if they ever leave the image.
+The browser fetches the catalogue as that static file, never through a route.
+It used to be a route at `/api/fonts`, which worked in development and 404'd
+in production, where the proxy sends every `/api` path to the Rust API. Being
+written in the same run as the files, it cannot list a font the build does
+not ship, and it moves with the fonts if they ever leave the image.
 
 Three things a future edit would break by accident:
 

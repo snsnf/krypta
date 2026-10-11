@@ -1,4 +1,4 @@
-/** One family served from this origin, as listed in lib/font-catalog.json. */
+/** One family served from this origin, as listed in /fonts/catalog.json. */
 export interface FontCatalogEntry {
   /** Fontsource id, also the path segment under /fonts/. */
   id: string

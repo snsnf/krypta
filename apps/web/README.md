@@ -38,8 +38,8 @@ The web app runs on `http://localhost:3000` and expects the API on
 Every font a form can use is served from this origin. `fonts/families.json`
 lists the Fontsource packages to bundle, and `scripts/build-fonts.ts` (run
 automatically before `dev` and `build`, or by hand with `bun run fonts:build`)
-turns them into `lib/font-catalog.json`, one stylesheet per family under
-`public/fonts/`, and the woff2 files behind it. Nothing is fetched from Google
+turns them into `public/fonts/`: the catalogue the font picker reads
+(`catalog.json`), one stylesheet per family, and the woff2 files behind it. Nothing is fetched from Google
 at any point, so a respondent's browser contacts no third party to render a
 form. To add a family, add its Fontsource id to the list and the matching
 package to `package.json`, then rebuild.
