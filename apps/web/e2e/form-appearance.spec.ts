@@ -17,7 +17,7 @@ async function blockExternalGoogleFontRequests(page: Page) {
 }
 
 async function mockFontCatalog(page: Page) {
-  await page.route("**/api/fonts", (route) =>
+  await page.route("**/fonts/catalog.json", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -175,7 +175,7 @@ test("a font failure stays inline, and an unsaved form cannot take an image", as
   page,
   sharedAccount,
 }) => {
-  await page.route("**/api/fonts", (route) =>
+  await page.route("**/fonts/catalog.json", (route) =>
     route.fulfill({ status: 503, contentType: "application/json", body: "{}" })
   )
   await loginAndOpenNewForm(page, sharedAccount, false)

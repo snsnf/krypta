@@ -310,6 +310,12 @@ committed and `scripts/ci.sh` fails if it drifts from the list. The CSP
 therefore lists no font host at all, and `e2e/form-appearance.spec.ts` aborts
 any request to Google so a regression fails loudly.
 
+The browser reads that list as the static `public/fonts/catalog.json`, which
+the same script writes, never through a route. It used to be a route at
+`/api/fonts`, which worked in development and 404'd in production, where the
+proxy sends every `/api` path to the Rust API. A file under `/fonts/` also
+moves with the fonts if they ever leave the image.
+
 Three things a future edit would break by accident:
 
 - **Variable packages name the face "Family Variable".** Themes store the
