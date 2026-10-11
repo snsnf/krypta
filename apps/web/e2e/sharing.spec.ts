@@ -56,7 +56,7 @@ async function invite(page: Page, email: string, role: "editor" | "viewer") {
   const dialog = await openSharing(page)
   await dialog.getByLabel("Email address").fill(email)
   await choose(
-    dialog.getByRole("combobox", { name: "Role" }),
+    dialog.getByRole("combobox", { name: "Role", exact: true }),
     role === "editor" ? "Editor" : "Viewer"
   )
   await dialog.getByRole("button", { name: "Invite" }).click()

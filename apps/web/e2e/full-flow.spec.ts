@@ -477,18 +477,19 @@ sharedAccountTest(
     await page.getByRole("button", { name: "Individual" }).click()
     await expect(page.getByRole("table")).toBeVisible()
 
+    // The first two cells are the selection checkbox and the row number.
     const yesRow = page.getByRole("row").filter({ hasText: "Yes" })
-    await expect(yesRow.locator("td").nth(1)).toHaveText("Yes")
-    await expect(yesRow.locator("td").nth(2)).toHaveText("221B Baker Street", {
+    await expect(yesRow.locator("td").nth(2)).toHaveText("Yes")
+    await expect(yesRow.locator("td").nth(3)).toHaveText("221B Baker Street", {
       timeout: 10_000,
     })
 
     const noRow = page.getByRole("row").filter({ hasText: "No" })
-    await expect(noRow.locator("td").nth(1)).toHaveText("No")
+    await expect(noRow.locator("td").nth(2)).toHaveText("No")
     // Proves the submit-time filter ran: this respondent DID type an Address
     // before flipping the source, and the cell is empty rather than carrying
     // that stale "742 Evergreen Terrace".
-    await expect(noRow.locator("td").nth(2)).toHaveText("")
+    await expect(noRow.locator("td").nth(3)).toHaveText("")
   }
 )
 
@@ -634,6 +635,13 @@ sharedAccountTest(
     // mid-slide, lower than it settles, which overshot by luck on a fast
     // machine and fell short on a slow one. Measuring once the animations have
     // finished and aiming at the card makes the drag land the same way on both.
+    // The mouse works in viewport coordinates and does not scroll, so the
+    // first card is centred first: the page can sit scrolled with its handle
+    // above the top edge, where the press would land on nothing.
+    await page
+      .getByRole("button", { name: "Reorder question 1" })
+      .locator("..")
+      .evaluate((card) => card.scrollIntoView({ block: "center" }))
     await waitForAnimations(page)
     const firstHandle = page.getByRole("button", { name: "Reorder question 1" })
     const secondCard = page.getByRole("button", { name: "Reorder question 2" }).locator("..")
