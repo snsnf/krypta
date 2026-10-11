@@ -1,0 +1,8 @@
+name: krypta
+
+# The API's integration tests log in with fixed dummy passwords and talk to
+# the API over http://localhost on purpose, which CodeQL reports as hard-coded
+# credentials and cleartext transmission. None of it ships, so it is left out
+# rather than dismissed one alert at a time.
+paths-ignore:
+  - apps/api/tests
