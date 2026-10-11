@@ -401,10 +401,18 @@ export async function acknowledgeRecoveryCode(page: Page): Promise<string> {
  * Picks an option in a dropdown by its visible label. The app's dropdowns are
  * Base UI selects, a button and a list rather than a native select, so
  * `selectOption` does not reach them.
+ *
+ * A list stays mounted, hidden, after it closes, so a page with two selects
+ * offering the same label ("18px" for two text sizes) has a hidden option of
+ * that name too. The option is taken from the open list only.
  */
 export async function choose(trigger: Locator, label: string) {
   await trigger.click()
-  await trigger.page().getByRole("option", { name: label, exact: true }).click()
+  await trigger
+    .page()
+    .locator('[data-slot="select-content"][data-open]')
+    .getByRole("option", { name: label, exact: true })
+    .click()
 }
 
 /**
