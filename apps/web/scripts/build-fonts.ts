@@ -6,13 +6,11 @@
 // so the catalogue and the files are static output of this script, generated
 // before `next build` and `next dev` (the prebuild and predev scripts).
 //
-// Outputs:
-//   lib/font-catalog.json   committed; the picker's list and the source of ids
-//   public/fonts/catalog.json  generated, git-ignored; the same list, which
-//                              the browser fetches (a static file rather than
-//                              a route, so it travels with the files below)
-//   public/fonts/<id>.css   generated, git-ignored; @font-face rules
-//   public/fonts/<id>/      generated, git-ignored; the woff2 files
+// Outputs, all generated and git-ignored:
+//   public/fonts/catalog.json  the list the browser fetches, written in the
+//                              same run as the files, so the two cannot drift
+//   public/fonts/<id>.css      @font-face rules
+//   public/fonts/<id>/         the woff2 files
 //   public/fonts/LICENSES.txt  every family's license and attribution
 //
 // Adding a family: add its Fontsource id to fonts/families.json and the
@@ -174,9 +172,10 @@ for (const id of ids) {
 }
 
 catalog.sort((a, b) => a.family.localeCompare(b.family))
-const catalogJson = JSON.stringify({ fonts: catalog }, null, 2) + "\n"
-writeFileSync(join(root, "lib", "font-catalog.json"), catalogJson)
-writeFileSync(join(outDir, "catalog.json"), catalogJson)
+writeFileSync(
+  join(outDir, "catalog.json"),
+  JSON.stringify({ fonts: catalog }, null, 2) + "\n"
+)
 writeFileSync(
   join(outDir, "LICENSES.txt"),
   "Fonts served from this site, their licenses and attributions.\nBuilt from Fontsource packages of the Google Fonts collection.\n\n" +
