@@ -75,12 +75,17 @@ jobs:
         run: docker compose -f infra/docker/docker-compose.dev.yml up -d --wait postgres redis
       - run: ./scripts/ci.sh images
 
+  # The Rust suites and Playwright share nothing but the stack, so each half
+  # gets its own runner and stack, and the run takes as long as the slower one
+  # instead of both back to back.
   integration:
-    name: Integration and e2e
+    name: Integration (${{ matrix.suite }})
     runs-on: ubuntu-24.04
-    # The long one: every Rust integration suite single-threaded plus
-    # Playwright at one worker.
-    timeout-minutes: 60
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [api, e2e]
     env:
       # The API compiles here before its database is migrated, so SQLx must
       # read the committed .sqlx metadata rather than query the empty database.
@@ -101,6 +106,7 @@ jobs:
       # number. The failure reads "Executable doesn't exist", which sounds
       # like a missing install rather than the wrong one.
       - name: Install the Playwright browser
+        if: matrix.suite == 'e2e'
         working-directory: apps/web
         run: bunx playwright install --with-deps chromium
 
@@ -144,6 +150,7 @@ jobs:
       # reports each route it compiles and how long it took. The file is
       # uploaded below whenever the job fails.
       - name: Start the web app
+        if: matrix.suite == 'e2e'
         working-directory: apps/web
         run: |
           bun run dev >/tmp/krypta-web.log 2>&1 &
@@ -155,10 +162,10 @@ jobs:
           tail -n 40 /tmp/krypta-web.log >&2
           exit 1
 
-      - run: ./scripts/ci.sh integration
+      - run: ./scripts/ci.sh integration-${{ matrix.suite }}
 
       - name: Upload Playwright artifacts
-        if: failure()
+        if: failure() && matrix.suite == 'e2e'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: playwright-report
@@ -176,7 +183,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: server-logs
+          name: server-logs-${{ matrix.suite }}
           path: /tmp/krypta-*.log
           if-no-files-found: ignore
           retention-days: 7

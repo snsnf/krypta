@@ -6,13 +6,15 @@
 #   scripts/ci.sh prepare       start the dev stack, bootstrap Garage, write apps/api/.env
 #   scripts/ci.sh static        fmt, lint, types, unit tests, dependency audits
 #   scripts/ci.sh integration   every API integration suite and Playwright e2e
+#   scripts/ci.sh integration-api / integration-e2e   either half on its own
 #   scripts/ci.sh images        build both Docker images and boot each one
 #   scripts/ci.sh version vX.Y.Z  every manifest and lockfile names that release
 #   scripts/ci.sh               static and integration
 #
 # `static` needs `prepare` to have run: its unit tests open real Postgres,
 # Redis and S3 connections, and the S3 credentials live in apps/api/.env.
-# `integration` needs `prepare` to have run, plus the API and web dev servers;
+# `integration` needs `prepare` to have run, plus the API and web dev servers
+# (the API half needs only the API);
 # `images` needs Docker and the dev stack's Postgres and
 # Redis; it is not part of the default run because a Rust image build takes
 # minutes, so it is its own job in the workflow and its own command locally.
@@ -398,9 +400,10 @@ billing_suite() {
   return $status
 }
 
-integration_checks() {
+# The two halves share nothing but the stack, so CI runs them as parallel jobs
+# on separate runners; `integration` runs both, one after the other.
+api_integration_checks() {
   require_service "http://localhost:8080/health" "api" || return
-  require_service "http://localhost:3000/" "web" || return
   require_service "http://localhost:8025/api/v1/messages" "mailpit" || return
   require_suite_env || return
 
@@ -450,6 +453,14 @@ integration_checks() {
   run "rust: notifications integration" bash -c "cd '$API' && cargo test --test notifications_test -- --test-threads=1"
   clear_rate_limits
   run "rust: billing integration" billing_suite
+}
+
+e2e_checks() {
+  require_service "http://localhost:8080/health" "api" || return
+  require_service "http://localhost:3000/" "web" || return
+  require_service "http://localhost:8025/api/v1/messages" "mailpit" || return
+  require_suite_env || return
+
   clear_rate_limits
   run "web: e2e" bash -c "cd '$WEB' && bunx playwright test --reporter=line --workers=1"
 }
@@ -531,11 +542,13 @@ image_checks() {
 case "${1:-all}" in
   prepare) prepare_stack ;;
   static) static_checks ;;
-  integration) integration_checks ;;
+  integration) api_integration_checks; e2e_checks ;;
+  integration-api) api_integration_checks ;;
+  integration-e2e) e2e_checks ;;
   images) image_checks ;;
   version) run "versions: every manifest records ${2:-the same version}" check_versions "${2:-}" ;;
-  all) static_checks; integration_checks ;;
-  *) echo "usage: $0 [prepare|static|integration|images|version [vX.Y.Z]|all]" >&2; exit 2 ;;
+  all) static_checks; api_integration_checks; e2e_checks ;;
+  *) echo "usage: $0 [prepare|static|integration|integration-api|integration-e2e|images|version [vX.Y.Z]|all]" >&2; exit 2 ;;
 esac
 
 printf '\n'
