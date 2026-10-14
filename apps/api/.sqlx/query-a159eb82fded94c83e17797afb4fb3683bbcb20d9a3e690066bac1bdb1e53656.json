@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT accepting_responses, closes_at, max_responses\n         FROM forms WHERE id = $1 FOR UPDATE",
+  "query": "SELECT accepting_responses, closes_at, max_responses, header_attachment_id\n         FROM forms WHERE id = $1 FOR UPDATE",
   "describe": {
     "columns": [
       {
@@ -17,6 +17,11 @@
         "ordinal": 2,
         "name": "max_responses",
         "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "header_attachment_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
@@ -27,8 +32,9 @@
     "nullable": [
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "07904d5d215fdc2914856ba974919080ee79ad019c8ec46131f4864991b51df6"
+  "hash": "a159eb82fded94c83e17797afb4fb3683bbcb20d9a3e690066bac1bdb1e53656"
 }

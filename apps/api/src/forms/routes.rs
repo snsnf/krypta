@@ -383,7 +383,7 @@ pub async fn update_form(
     // here let an Editor removed mid-request still write, because the
     // UPDATE below carries no membership clause of its own.
     let current = sqlx::query!(
-        "SELECT accepting_responses, closes_at, max_responses
+        "SELECT accepting_responses, closes_at, max_responses, header_attachment_id
          FROM forms WHERE id = $1 FOR UPDATE",
         id,
     )
@@ -474,7 +474,7 @@ pub async fn update_form(
             answer_key_ciphertext = CASE WHEN $13 THEN $14 ELSE answer_key_ciphertext END,
             version = version + 1
          WHERE id = $9 AND version = $10 AND deletion_started_at IS NULL
-         RETURNING version",
+         RETURNING version, header_attachment_id",
         body.title_ciphertext,
         body.schema_ciphertext,
         body.allow_response_editing,
@@ -504,12 +504,31 @@ pub async fn update_form(
     let row = row.ok_or(ApiError::Conflict)?;
 
     // The header is served to every respondent, so it must never be reclaimed
-    // as an abandoned upload. Claiming an id the subquery above refused is
-    // harmless: it names nothing on this form that an editor did not upload.
-    if let Some(Some(header_id)) = body.header_attachment_id {
-        crate::attachments::cleanup::claim_attachments(&mut transaction, id, &[header_id])
-            .await
-            .map_err(|error| ApiError::Internal(error.into()))?;
+    // as an abandoned upload. Only the id the subquery above actually accepted
+    // is claimed: claiming the requested one let an Editor exempt any upload
+    // on the form from the reaper by naming it here.
+    //
+    // A header the edit replaced or removed is released the same way a deleted
+    // response's files are. A claim is never cleared, and the reaper reclaims
+    // only unclaimed uploads, so without this every header change held one of
+    // the form's twenty attachment slots and its bytes for the life of the
+    // form. The residual: a member who answered their own form while signed in
+    // could make one of that response's files the header, and replacing the
+    // header then releases a file the response still names. The server cannot
+    // tell, because it cannot read responses.
+    if body.header_attachment_id.is_some()
+        && row.header_attachment_id != current.header_attachment_id
+    {
+        if let Some(previous) = current.header_attachment_id {
+            crate::attachments::cleanup::mark_deleted_by_owner(&mut transaction, id, previous)
+                .await
+                .map_err(ApiError::Internal)?;
+        }
+        if let Some(header_id) = row.header_attachment_id {
+            crate::attachments::cleanup::claim_attachments(&mut transaction, id, &[header_id])
+                .await
+                .map_err(|error| ApiError::Internal(error.into()))?;
+        }
     }
 
     transaction
