@@ -321,6 +321,12 @@ request carried a session belonging to a member with edit rights on that
 form, which the dashboard's upload does and a respondent's never can. Both
 reads report only whether an image exists, never the id.
 
+A header is claimed when it is set, so the reaper leaves it alone, and
+`update_form` releases the previous one (to `cleanup_pending`) when an edit
+replaces or clears it. A claim is never cleared, so without that release
+every header change held one of the form's twenty slots for good. Only the
+id the subquery accepted is claimed, never the requested one.
+
 The theme carries no image reference at all. The form row owns it, so there is
 one source of truth rather than two that can disagree, and `FormTheme` no
 longer has a `headerImageUrl`: the URL that field held made every respondent's

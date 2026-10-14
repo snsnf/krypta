@@ -322,6 +322,83 @@ async fn the_header_image_can_only_be_an_editors_own_upload() {
 }
 
 #[tokio::test]
+async fn a_replaced_or_removed_header_stops_holding_its_slot() {
+    let _guard = suite_lock().await;
+    let base =
+        std::env::var("TEST_API_BASE").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    let owner = Client::builder().cookie_store(true).build().unwrap();
+    login_primary(&owner, &base).await;
+    let form_id = create_form(&owner, &base).await;
+    let db = sqlx::PgPool::connect(&std::env::var("DATABASE_URL").unwrap())
+        .await
+        .unwrap();
+
+    async fn upload(client: &Client, base: &str, form_id: &str) -> String {
+        let res = client
+            .post(format!("{base}/api/v1/forms/{form_id}/attachments"))
+            .header("Content-Type", "application/octet-stream")
+            .body(vec![5u8; 128])
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), 200);
+        res.json::<serde_json::Value>().await.unwrap()["data"]["attachment_id"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+    async fn set_header(client: &Client, base: &str, form_id: &str, header: Option<&str>) {
+        let version = current_version(client, base, form_id).await;
+        let res = client
+            .patch(format!("{base}/api/v1/forms/{form_id}"))
+            .json(&json!({ "header_attachment_id": header, "expected_version": version }))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), 200);
+    }
+    async fn live(db: &sqlx::PgPool, id: &str) -> bool {
+        // Live means the reaper has not been told to remove it: still ready.
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS (SELECT 1 FROM attachments
+                            WHERE id = $1::uuid AND upload_state = 'ready')",
+        )
+        .bind(id)
+        .fetch_one(db)
+        .await
+        .unwrap()
+    }
+
+    let first = upload(&owner, &base, &form_id).await;
+    set_header(&owner, &base, &form_id, Some(&first)).await;
+    let second = upload(&owner, &base, &form_id).await;
+    set_header(&owner, &base, &form_id, Some(&second)).await;
+    assert!(
+        !live(&db, &first).await,
+        "a replaced header must be released"
+    );
+    assert!(live(&db, &second).await);
+
+    set_header(&owner, &base, &form_id, None).await;
+    assert!(
+        !live(&db, &second).await,
+        "a removed header must be released"
+    );
+
+    // Naming an upload the header subquery refuses must not claim it, or an
+    // Editor could exempt any respondent upload from the reaper.
+    let respondent = upload(&Client::new(), &base, &form_id).await;
+    set_header(&owner, &base, &form_id, Some(&respondent)).await;
+    let claimed: bool =
+        sqlx::query_scalar("SELECT claimed_at IS NOT NULL FROM attachments WHERE id = $1::uuid")
+            .bind(&respondent)
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert!(!claimed, "a refused header id must stay unclaimed");
+}
+
+#[tokio::test]
 async fn non_owner_cannot_download_attachment() {
     let _guard = suite_lock().await;
     let base =
