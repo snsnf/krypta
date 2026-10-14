@@ -135,6 +135,16 @@ fn validate_invitation_body(body: &InvitationBody) -> Result<(), ApiError> {
     if !ciphertexts_complete || ciphertexts_need_public_key {
         return Err(ApiError::BadRequest("Invalid request".into()));
     }
+    // The server cannot check the tag, only that it is a tag: a 32-byte
+    // BLAKE2b output in the unpadded URL-safe base64 libsodium writes.
+    if let Some(tag) = body.approval_tag.as_deref() {
+        let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(tag)
+            .map_err(|_| ApiError::BadRequest("Invalid request".into()))?;
+        if decoded.len() != 32 {
+            return Err(ApiError::BadRequest("Invalid request".into()));
+        }
+    }
     Ok(())
 }
 
@@ -411,6 +421,7 @@ async fn send_invitation(
                  recipient_sharing_public_key = $4,
                  encrypted_form_data_key = $5,
                  encrypted_form_private_key = $6,
+                 approval_tag = $10,
                  expires_at = now() + interval '7 days',
                  accepted_at = NULL,
                  updated_at = now()
@@ -426,6 +437,7 @@ async fn send_invitation(
             invitation_id,
             form_id,
             email,
+            body.approval_tag,
         )
         .fetch_optional(&mut *transaction)
         .await
@@ -437,9 +449,10 @@ async fn send_invitation(
             "INSERT INTO form_invitations (
                 id, form_id, invited_email, role, status, token_hash,
                 recipient_user_id, recipient_sharing_public_key,
-                encrypted_form_data_key, encrypted_form_private_key, expires_at
+                encrypted_form_data_key, encrypted_form_private_key, approval_tag,
+                expires_at
              ) VALUES (
-                $1, $2, $3, $4, 'sending', $5, $6, $7, $8, $9,
+                $1, $2, $3, $4, 'sending', $5, $6, $7, $8, $9, $10,
                 now() + interval '7 days'
              )
              ON CONFLICT (form_id, invited_email)
@@ -452,6 +465,7 @@ async fn send_invitation(
                 recipient_sharing_public_key = EXCLUDED.recipient_sharing_public_key,
                 encrypted_form_data_key = EXCLUDED.encrypted_form_data_key,
                 encrypted_form_private_key = EXCLUDED.encrypted_form_private_key,
+                approval_tag = EXCLUDED.approval_tag,
                 expires_at = EXCLUDED.expires_at,
                 accepted_at = NULL,
                 updated_at = now()
@@ -465,6 +479,7 @@ async fn send_invitation(
             grant.public_key,
             grant.data_key,
             grant.private_key,
+            body.approval_tag,
         )
         .fetch_one(&mut *transaction)
         .await
@@ -712,7 +727,8 @@ async fn decide_invitation(
     // revoke, resend, expiry, or accept must win cleanly rather than allowing
     // a stale continuation to mutate a changed invitation.
     let invitation = sqlx::query!(
-        "SELECT form_id, role, encrypted_form_data_key, encrypted_form_private_key
+        "SELECT form_id, role, encrypted_form_data_key, encrypted_form_private_key,
+                approval_tag
          FROM form_invitations
          WHERE id = $1 AND form_id = $2
            AND status = 'pending' AND expires_at > now()
@@ -754,8 +770,8 @@ async fn decide_invitation(
         sqlx::query!(
             "INSERT INTO form_members (
                 id, form_id, user_id, role, state, key_scheme,
-                encrypted_form_data_key, encrypted_form_private_key
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+                encrypted_form_data_key, encrypted_form_private_key, approval_tag
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
             Uuid::now_v7(),
             invitation.form_id,
             user_id,
@@ -764,6 +780,7 @@ async fn decide_invitation(
             key_scheme,
             invitation.encrypted_form_data_key,
             invitation.encrypted_form_private_key,
+            invitation.approval_tag,
         )
         .execute(&mut *transaction)
         .await
@@ -861,7 +878,29 @@ mod tests {
             recipient_sharing_public_key: public_key.map(str::to_string),
             encrypted_form_data_key: data_key.map(str::to_string),
             encrypted_form_private_key: private_key.map(str::to_string),
+            approval_tag: None,
         }
+    }
+
+    fn tagged_body(tag: &str) -> InvitationBody {
+        InvitationBody {
+            approval_tag: Some(tag.to_string()),
+            ..grant_body(None, None, None)
+        }
+    }
+
+    #[test]
+    fn an_approval_tag_must_be_a_32_byte_tag() {
+        let tag = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([7_u8; 32]);
+        assert!(validate_invitation_body(&tagged_body(&tag)).is_ok());
+        let short = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([7_u8; 16]);
+        assert!(validate_invitation_body(&tagged_body(&short)).is_err());
+        assert!(validate_invitation_body(&tagged_body("not base64 !")).is_err());
+    }
+
+    #[test]
+    fn an_invitation_without_an_approval_tag_is_still_accepted() {
+        assert!(validate_invitation_body(&grant_body(None, None, None)).is_ok());
     }
 
     #[test]
@@ -917,6 +956,7 @@ mod tests {
             recipient_sharing_public_key: None,
             encrypted_form_data_key: None,
             encrypted_form_private_key: None,
+            approval_tag: None,
         }
     }
 

@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO form_invitations (\n                id, form_id, invited_email, role, status, token_hash,\n                recipient_user_id, recipient_sharing_public_key,\n                encrypted_form_data_key, encrypted_form_private_key, approval_tag,\n                expires_at\n             ) VALUES (\n                $1, $2, $3, $4, 'sending', $5, $6, $7, $8, $9, $10,\n                now() + interval '7 days'\n             )\n             ON CONFLICT (form_id, invited_email)\n               WHERE status IN ('sending', 'pending', 'delivery_failed')\n             DO UPDATE SET\n                role = EXCLUDED.role,\n                status = 'sending',\n                token_hash = EXCLUDED.token_hash,\n                recipient_user_id = EXCLUDED.recipient_user_id,\n                recipient_sharing_public_key = EXCLUDED.recipient_sharing_public_key,\n                encrypted_form_data_key = EXCLUDED.encrypted_form_data_key,\n                encrypted_form_private_key = EXCLUDED.encrypted_form_private_key,\n                approval_tag = EXCLUDED.approval_tag,\n                expires_at = EXCLUDED.expires_at,\n                accepted_at = NULL,\n                updated_at = now()\n             RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        },
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "698d33228c8e2987ccda2ca992998ec4ebb839812a1841093cdf98db37a463ea"
+}

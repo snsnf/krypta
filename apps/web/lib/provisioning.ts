@@ -1,4 +1,8 @@
-import { sealFormGrant, type FormKeyScheme } from "@krypta/crypto"
+import {
+  matchesMemberApprovalTag,
+  sealFormGrant,
+  type FormKeyScheme,
+} from "@krypta/crypto"
 import type { AccountSharingMaterial } from "./account-sharing-key"
 import { apiFetch } from "./api"
 import { openMemberGrant } from "./form-grants"
@@ -10,17 +14,29 @@ interface ProvisioningWireItem {
   owner_key_scheme: FormKeyScheme
   owner_encrypted_form_data_key: string
   owner_encrypted_form_private_key: string
+  member_email: string
+  approval_tag: string | null
 }
 
 interface ProvisioningWireResponse {
   items: ProvisioningWireItem[]
 }
 
-type ProvisioningFailureHandler = () => void
+/**
+ * Why one pending member was not given keys. `unapproved` is not a transient
+ * fault: the member carries no tag this form's owner made, so refreshing will
+ * not help, and the owner has to remove and re-invite them.
+ */
+export type ProvisioningFailure = "failed" | "unapproved"
 
-function reportItemFailure(onItemFailure?: ProvisioningFailureHandler): void {
+type ProvisioningFailureHandler = (reason: ProvisioningFailure) => void
+
+function reportItemFailure(
+  onItemFailure: ProvisioningFailureHandler | undefined,
+  reason: ProvisioningFailure
+): void {
   try {
-    onItemFailure?.()
+    onItemFailure?.(reason)
   } catch {
     // Reporting is best-effort and must not prevent later activations.
   }
@@ -48,6 +64,23 @@ export async function provisionPendingMembers(
         accountKey,
         sharingMaterial
       )
+      // The server builds this list, and anyone able to write its tables could
+      // add a member of their own to it. Keys go only to an address this form's
+      // owner approved, with a tag made under a key the server never holds.
+      // A member without one (invited before tags existed, or never invited
+      // at all) is reported, not served: the owner can remove and re-invite.
+      if (
+        item.approval_tag === null ||
+        !matchesMemberApprovalTag(
+          item.approval_tag,
+          formPrivateKey,
+          item.form_id,
+          item.member_email
+        )
+      ) {
+        reportItemFailure(onItemFailure, "unapproved")
+        continue
+      }
       const sealedGrant = sealFormGrant(
         formDataKey,
         formPrivateKey,
@@ -67,7 +100,7 @@ export async function provisionPendingMembers(
       )
       activated += 1
     } catch {
-      reportItemFailure(onItemFailure)
+      reportItemFailure(onItemFailure, "failed")
     }
   }
 

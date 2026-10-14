@@ -34,7 +34,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
     )
 
     expect(sealFormGrant).toHaveBeenCalledWith(
@@ -52,6 +52,7 @@ describe("sendInvitation", () => {
       recipient_sharing_public_key: "recipient-public-key",
       encrypted_form_data_key: "sealed-data-key",
       encrypted_form_private_key: "sealed-private-key",
+      approval_tag: "approval-tag",
     })
     expect(requests[1]!.init?.body).not.toContain("raw-data-key")
     expect(requests[1]!.init?.body).not.toContain("raw-private-key")
@@ -85,7 +86,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
     )
 
     expect(sealFormGrant).not.toHaveBeenCalled()
@@ -95,6 +96,7 @@ describe("sendInvitation", () => {
       recipient_sharing_public_key: null,
       encrypted_form_data_key: null,
       encrypted_form_private_key: null,
+      approval_tag: "approval-tag",
     })
   })
 
@@ -120,7 +122,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
     )
 
     expect(JSON.parse(requests[1]!.init?.body as string)).toEqual({
@@ -129,6 +131,7 @@ describe("sendInvitation", () => {
       recipient_sharing_public_key: null,
       encrypted_form_data_key: null,
       encrypted_form_private_key: null,
+      approval_tag: "approval-tag",
     })
   })
 
@@ -157,7 +160,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
     )
 
     expect(requests.map(({ path }) => path)).toEqual([
@@ -170,6 +173,33 @@ describe("sendInvitation", () => {
       recipient_sharing_public_key: "latest-public-key",
       encrypted_form_data_key: "latest-sealed-data",
       encrypted_form_private_key: "latest-sealed-private",
+      approval_tag: "approval-tag",
     })
+  })
+
+  it("signs the invited address with a tag keyed from the form private key", async () => {
+    const apiFetch = vi.fn(async <T>(path: string) =>
+      (path.endsWith("/recipient-key")
+        ? { sharing_public_key: null, sharing_key_version: null }
+        : {}) as T
+    ) as InvitationApiFetch
+    const approve = vi.fn(() => "approval-tag")
+
+    await sendInvitation(
+      {
+        formId: "018f0000-0000-7000-8000-000000000001",
+        email: "collaborator@example.com",
+        role: "viewer",
+        formDataKey: "raw-data-key",
+        formPrivateKey: "raw-private-key",
+      },
+      { apiFetch, sealFormGrant: vi.fn() as InvitationSealer, approve }
+    )
+
+    expect(approve).toHaveBeenCalledWith(
+      "raw-private-key",
+      "018f0000-0000-7000-8000-000000000001",
+      "collaborator@example.com"
+    )
   })
 })

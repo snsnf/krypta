@@ -34,6 +34,13 @@ link again from the form's page to give respondents the stronger check. A collab
 key in its own grant before opening the form, so a planted grant cannot get
 the commitment rewritten by that collaborator's next save.
 
+A collaborator receives a form's keys only from the owner's browser, and only
+for an address the owner invited. When the owner invites someone, their
+browser makes an approval tag over the form and the address with a key the
+server never holds, and before it hands keys to anyone waiting for them it
+checks that tag. A member added to the database directly gets nothing; the
+owner is told instead.
+
 Your password never reaches the server. The browser derives a key from it and
 sends a one-way verifier instead, so the password is absent from the wire, from
 request logs and from the server's memory.
@@ -70,6 +77,14 @@ no MIME sniffing, no magic-number check and no virus scanning on uploads,
 because the bytes arrive already encrypted. "Required" fields and conditional
 visibility are enforced in the browser only. Treat downloaded attachments the
 way you would treat any file a stranger sent you.
+
+**Which key belongs to an invited address.** The owner's browser seals form
+keys to the sharing key the server reports for the address the owner invited.
+Nothing the owner holds can confirm that key belongs to that person, so
+someone who can write the database and replaces an invitee's stored key
+before the owner's browser seals to it receives that invitee's access. The
+approval tag stops a member being added who was never invited; it cannot
+vouch for the key of one who was.
 
 **Collaborator removal is not retroactive.** Removing someone, revoking an
 invitation or transferring ownership stops future API access. It cannot erase
