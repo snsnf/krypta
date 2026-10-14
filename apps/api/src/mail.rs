@@ -125,17 +125,25 @@ pub enum Mailer {
 /// arrived, so each spelling of one inbox got a fresh counter, and the limit
 /// that exists to stop one inbox being mail-bombed stopped nothing.
 ///
-/// Only a bare address that lettre would print back unchanged is accepted,
-/// lowercased to match the CITEXT column. A decorated one is refused rather
-/// than stripped: the browser derives the account's salts from the address it
+/// Only a bare address that delivers to exactly itself is accepted, lowercased
+/// to match the CITEXT column. A decorated one is refused rather than
+/// stripped: the browser derives the account's salts from the address it
 /// holds, so quietly turning `" a@b.c"` into `"a@b.c"` here would give the
 /// account a stored address its own salts were not derived from.
+///
+/// The check parses with the same `Mailbox` parser `send` uses, not with
+/// `Address`. `Address` keeps its input verbatim, so it accepted a quoted local
+/// part (`"alice"@b.c`, `"\a\lice"@b.c` and so on), while `Mailbox` unquotes
+/// it and delivers every one of those spellings to `alice@b.c`. Each spelling
+/// hashed to its own rate-limit counter, which is the bypass this function
+/// exists to close. Now an address is accepted only when what would be
+/// delivered to is the string itself.
 pub fn canonical_address(raw: &str) -> Option<String> {
     if raw.len() > 320 {
         return None;
     }
-    let address: lettre::Address = raw.parse().ok()?;
-    if AsRef::<str>::as_ref(&address) != raw {
+    let mailbox: lettre::message::Mailbox = raw.parse().ok()?;
+    if mailbox.name.is_some() || AsRef::<str>::as_ref(&mailbox.email) != raw {
         return None;
     }
     Some(raw.to_lowercase())
@@ -870,6 +878,10 @@ mod tests {
             canonical_address("Someone@Example.COM").as_deref(),
             Some("someone@example.com")
         );
+        assert_eq!(
+            canonical_address("first.last+tag@sub.example.com").as_deref(),
+            Some("first.last+tag@sub.example.com")
+        );
         for decorated in [
             " someone@example.com",
             "someone@example.com ",
@@ -878,6 +890,10 @@ mod tests {
             "someone@example.com, other@example.com",
             "not an address",
             "",
+            // Quoted local parts: each one is delivered to someone@example.com.
+            "\"someone\"@example.com",
+            "\"\\someone\"@example.com",
+            "\"some\\one\"@example.com",
         ] {
             assert_eq!(canonical_address(decorated), None, "{decorated:?}");
         }

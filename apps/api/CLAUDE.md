@@ -959,8 +959,9 @@ Five properties to preserve:
   parameters a test pins to a real hash's), so the reply time does not reveal
   which addresses have accounts.
 - **An address is keyed, stored and mailed in one canonical form.**
-  `mail::canonical_address` accepts only a bare address that lettre prints back
-  unchanged, lowercased; registration, recovery and invitations use it before
+  `mail::canonical_address` accepts only a bare address that lettre's
+  `Mailbox` parser, the one `send` uses, delivers to unchanged, lowercased (a
+  quoted local part is refused, since `Mailbox` unquotes it); registration, recovery and invitations use it before
   any rate-limit key is built, because lettre delivers every decorated
   spelling to the same inbox and each spelling used to get its own counter.
   Registration refuses a padded address rather than trimming it, since the
