@@ -78,8 +78,8 @@ jobs:
   integration:
     name: Integration and e2e
     runs-on: ubuntu-24.04
-    # The long one: every Rust integration suite single-threaded (TOTP
-    # deliberately waits out 30-second timesteps) plus Playwright at one worker.
+    # The long one: every Rust integration suite single-threaded plus
+    # Playwright at one worker.
     timeout-minutes: 60
     env:
       # The API compiles here before its database is migrated, so SQLx must

@@ -278,7 +278,7 @@ PORT=8089 cargo run
 
 cargo test --bin api -- --test-threads=1           # unit tests (plain `cargo test` also runs every integration suite)
 cargo test --test auth_test -- --test-threads=1    # integration suites need the API running
-cargo test --test totp_test -- --test-threads=1    # ~30s: waits out a TOTP step
+cargo test --test totp_test -- --test-threads=1
 cargo test --test email_verify_test -- --test-threads=1   # mailpit must be running
 cargo test --test billing_test -- --test-threads=1        # needs Stripe configured, see above
 
@@ -756,9 +756,11 @@ Three properties to preserve when touching `apps/api/src/totp.rs`:
   with `SET NX`, so an observed code is dead for the rest of its 30 seconds.
   A consequence worth knowing before calling it a bug: enrolling and then
   logging in inside the same 30-second window is refused, because enrolment
-  already spent that step. Tests that mean to exercise a valid login must cross
-  the boundary first, which is what `code_from_next_step` in
-  `tests/common/mod.rs` exists for.
+  already spent that step. Tests that mean to exercise a valid login must use
+  a step nothing has claimed yet, which is what `code_from_next_step` in
+  `tests/common/mod.rs` exists for: it hands out the next step's code, which
+  the skew of one already accepts, and waits only when a test asks for a
+  second code inside one step.
 - **Brute force.** Six digits fall quickly, so the pending handle is consumed on
   any attempt: a wrong code forces the password step again rather than allowing
   repeated guesses, and verify is rate limited by IP on top. Every code check

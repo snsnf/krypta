@@ -1,6 +1,7 @@
 mod common;
 
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
+use common::{code_from_next_step, code_now};
 use password_hash::{SaltString, rand_core::OsRng};
 use redis::AsyncCommands;
 use reqwest::Client;
@@ -232,19 +233,6 @@ async fn register(client: &Client, base_url: &str, email: &str) {
 
 fn authenticator_from(uri: &str) -> Totp {
     Totp::from_url(uri).expect("server should return a valid otpauth URI")
-}
-
-fn code_now(totp: &Totp) -> String {
-    totp.generate_current().to_string()
-}
-
-async fn code_from_next_step(totp: &Totp) -> String {
-    let unix_now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    tokio::time::sleep(Duration::from_secs(30 - (unix_now % 30) + 1)).await;
-    code_now(totp)
 }
 
 async fn enable_totp(client: &Client, base_url: &str) -> Totp {
