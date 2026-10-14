@@ -5,11 +5,15 @@ const mocks = vi.hoisted(() => ({
   unsealBox: vi.fn(),
   openMemberGrant: vi.fn(),
   apiFetch: vi.fn(),
+  sealPublicKeyFromPrivate: vi.fn(),
+  matchesFormKeyCommitment: vi.fn(),
 }))
 
 vi.mock("@krypta/crypto", () => ({
   decryptWithKey: mocks.decryptWithKey,
   unsealBox: mocks.unsealBox,
+  sealPublicKeyFromPrivate: mocks.sealPublicKeyFromPrivate,
+  matchesFormKeyCommitment: mocks.matchesFormKeyCommitment,
 }))
 
 vi.mock("./form-grants", () => ({
@@ -22,6 +26,7 @@ vi.mock("./api", () => ({
 
 import type { AccountSharingMaterial } from "./account-sharing-key"
 import { loadFormDefinition, loadFormWorkspace } from "./form-workspace"
+import { FormKeyMismatchError } from "./load-public-form"
 
 const sharing: AccountSharingMaterial = {
   sharingPublicKey: "sharing-public-key",
@@ -31,6 +36,7 @@ const sharing: AccountSharingMaterial = {
 }
 
 const schema = {
+  publicKeyCommitment: "commitment-of-pub",
   questions: [{ id: "q1", type: "short_text", label: "Q1" }],
   theme: {},
   settings: {},
@@ -74,6 +80,52 @@ beforeEach(() => {
     ciphertext === "ct-title" ? "My form" : JSON.stringify(schema)
   )
   mocks.unsealBox.mockImplementation(() => JSON.stringify({ q1: "an answer" }))
+  // Stand-in crypto: the private key derives "pub", and a commitment matches
+  // only the key it was made from.
+  mocks.sealPublicKeyFromPrivate.mockImplementation((privateKey: string) =>
+    privateKey === "private-key" ? "pub" : "attacker-pub"
+  )
+  mocks.matchesFormKeyCommitment.mockImplementation(
+    (publicKey: string, commitment: string) =>
+      commitment === `commitment-of-${publicKey}`
+  )
+})
+
+describe("loadFormDefinition key check", () => {
+  it("refuses a grant whose private key is not the one the schema commits to", async () => {
+    // A sealed grant can be planted by anyone holding the member's public
+    // sharing key; saving with it would re-commit the form to that key.
+    mocks.openMemberGrant.mockReturnValue({
+      formDataKey: "data-key",
+      formPrivateKey: "planted-key",
+    })
+    respondWith(formWire(), [])
+
+    await expect(
+      loadFormDefinition("form-1", "account-key", sharing)
+    ).rejects.toBeInstanceOf(FormKeyMismatchError)
+  })
+
+  it("refuses a served public key that differs from the committed one", async () => {
+    respondWith(formWire({ form_public_key: "swapped-pub" }), [])
+
+    await expect(
+      loadFormDefinition("form-1", "account-key", sharing)
+    ).rejects.toBeInstanceOf(FormKeyMismatchError)
+  })
+
+  it("refuses a schema with no commitment", async () => {
+    mocks.decryptWithKey.mockImplementation((ciphertext: string) =>
+      ciphertext === "ct-title"
+        ? "My form"
+        : JSON.stringify({ ...schema, publicKeyCommitment: undefined })
+    )
+    respondWith(formWire(), [])
+
+    await expect(
+      loadFormDefinition("form-1", "account-key", sharing)
+    ).rejects.toBeInstanceOf(FormKeyMismatchError)
+  })
 })
 
 describe("loadFormWorkspace", () => {
