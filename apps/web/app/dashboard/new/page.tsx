@@ -96,7 +96,7 @@ export default function NewFormPage() {
 
   async function handleSave() {
     if (!accountKey) {
-      window.location.href = "/unlock"
+      router.push("/unlock")
       return
     }
     setSaving(true)

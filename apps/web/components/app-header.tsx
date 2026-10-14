@@ -94,6 +94,10 @@ export function AppHeader({ formName, actions }: AppHeaderProps) {
       await clearPersistedAccountKey(userId)
     }
     clear()
+    // A full load, not router.push: it drops every module still holding
+    // decrypted content or key material in memory, which a client-side
+    // navigation would carry onto the login page.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/login"
   }
 
