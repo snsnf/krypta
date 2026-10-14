@@ -70,7 +70,11 @@ export default function EditResponsePage() {
           return
         }
         setToken(token)
-        const form = await loadPublicForm(formId, key)
+        const form = await loadPublicForm(
+          formId,
+          key,
+          readFragmentParam(window.location.hash, "pk")
+        )
         setSchemaKey(key)
         setHasHeaderImage(form.headerImage)
         setTitle(form.title)

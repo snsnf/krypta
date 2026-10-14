@@ -51,7 +51,7 @@ describe("loadPublicForm", () => {
           })
     )
 
-    const form = await loadPublicForm("form-id", "schema-key")
+    const form = await loadPublicForm("form-id", "schema-key", null)
 
     expect(form.acceptingResponses).toBe(false)
   })
@@ -60,7 +60,7 @@ describe("loadPublicForm", () => {
     // The beforeEach schema carries no commitment, as a form written before
     // the check existed would. Passing it would be a way around the check.
     await expect(
-      loadPublicForm("form-id", "schema-key")
+      loadPublicForm("form-id", "schema-key", null)
     ).rejects.toBeInstanceOf(FormKeyMismatchError)
   })
 
@@ -84,7 +84,7 @@ describe("loadPublicForm", () => {
     )
 
     await expect(
-      loadPublicForm("form-id", "schema-key")
+      loadPublicForm("form-id", "schema-key", null)
     ).rejects.toBeInstanceOf(FormKeyMismatchError)
   })
 
@@ -106,7 +106,55 @@ describe("loadPublicForm", () => {
           })
     )
 
-    const form = await loadPublicForm("form-id", "schema-key")
+    const form = await loadPublicForm("form-id", "schema-key", null)
     expect(form.publicKey).toBe(owner.publicKey)
+  })
+
+  describe("with a key fingerprint from the link", () => {
+    async function servedForm(servedKey: string, committedKey: string) {
+      mocks.apiFetch.mockResolvedValue({
+        title_ciphertext: "encrypted-title",
+        schema_ciphertext: "encrypted-schema",
+        form_public_key: servedKey,
+        accepting_responses: true,
+      })
+      mocks.decryptWithKey.mockImplementation((ciphertext: string) =>
+        ciphertext === "encrypted-title"
+          ? "Form"
+          : JSON.stringify({
+              questions: [],
+              theme: {},
+              settings: {},
+              publicKeyCommitment: formKeyCommitment(committedKey),
+            })
+      )
+    }
+
+    it("opens when the served key matches the link's fingerprint", async () => {
+      await ensureSodiumReady()
+      const owner = generateSealKeyPair()
+      await servedForm(owner.publicKey, owner.publicKey)
+
+      const form = await loadPublicForm(
+        "form-id",
+        "schema-key",
+        formKeyCommitment(owner.publicKey)
+      )
+
+      expect(form.publicKey).toBe(owner.publicKey)
+    })
+
+    it("refuses a key whose schema was re-encrypted to match by a link holder", async () => {
+      // A link holder can rewrite the schema's commitment, so a served key
+      // that agrees with the schema still has to agree with the link.
+      await ensureSodiumReady()
+      const owner = generateSealKeyPair()
+      const attacker = generateSealKeyPair()
+      await servedForm(attacker.publicKey, attacker.publicKey)
+
+      await expect(
+        loadPublicForm("form-id", "schema-key", formKeyCommitment(owner.publicKey))
+      ).rejects.toBeInstanceOf(FormKeyMismatchError)
+    })
   })
 })

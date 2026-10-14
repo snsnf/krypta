@@ -10,7 +10,7 @@ import {
   type FormLoadFailure,
 } from "@/lib/form-load-failure"
 import { loadPublicForm } from "@/lib/load-public-form"
-import { readFragmentParam } from "@/lib/form-link"
+import { readFragmentParam, responseEditLink } from "@/lib/form-link"
 import {
   buildResponsePayload,
   ResponseTooLargeError,
@@ -44,6 +44,7 @@ export default function PublicFormPage() {
   const [theme, setTheme] = useState<FormTheme>(DEFAULT_FORM_THEME)
   const [settings, setSettings] = useState<FormSettings>(DEFAULT_FORM_SETTINGS)
   const [schemaKey, setSchemaKey] = useState<string | null>(null)
+  const [keyFingerprint, setKeyFingerprint] = useState<string | null>(null)
   const [hasHeaderImage, setHasHeaderImage] = useState(false)
   const headerImageUrl = useHeaderImage(formId, schemaKey, hasHeaderImage)
   const [selectedMode, setSelectedMode] = useState<FormRenderMode | null>(null)
@@ -88,7 +89,9 @@ export default function PublicFormPage() {
           setLoading(false)
           return
         }
-        const form = await loadPublicForm(formId, key)
+        const keyFingerprint = readFragmentParam(window.location.hash, "pk")
+        const form = await loadPublicForm(formId, key, keyFingerprint)
+        setKeyFingerprint(keyFingerprint)
         setTitle(form.title)
         setQuestions(form.questions)
         setTheme(form.theme)
@@ -132,7 +135,13 @@ export default function PublicFormPage() {
       discardDraft()
       if (result.edit_token && schemaKey) {
         setEditLink(
-          `${window.location.origin}/f/${formId}/r#token=${encodeURIComponent(result.edit_token)}&key=${encodeURIComponent(schemaKey)}`
+          responseEditLink(
+            window.location.origin,
+            formId,
+            result.edit_token,
+            schemaKey,
+            keyFingerprint
+          )
         )
       }
       setSubmitted(true)

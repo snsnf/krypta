@@ -31,9 +31,16 @@ interface PublicForm {
   headerImage: boolean
 }
 
+/**
+ * `keyFingerprint` is the `pk` value from the link, or null for a link copied
+ * before links carried one. Those still get the commitment check alone: they
+ * are already in respondents' hands, and refusing them would break every form
+ * shared until now.
+ */
 export async function loadPublicForm(
   formId: string,
-  schemaKey: string
+  schemaKey: string,
+  keyFingerprint: string | null
 ): Promise<PublicForm> {
   const form = await apiFetch<{
     title_ciphertext: string
@@ -57,6 +64,16 @@ export async function loadPublicForm(
   if (
     typeof schema.publicKeyCommitment !== "string" ||
     !matchesFormKeyCommitment(form.form_public_key, schema.publicKeyCommitment)
+  ) {
+    throw new FormKeyMismatchError()
+  }
+  // The schema commitment is only as trustworthy as the link key, and every
+  // respondent holds that key. The fingerprint was fixed in the link itself
+  // when a member copied it, so a key served from a rewritten forms row fails
+  // here even when its schema was re-encrypted to match.
+  if (
+    keyFingerprint !== null &&
+    !matchesFormKeyCommitment(form.form_public_key, keyFingerprint)
   ) {
     throw new FormKeyMismatchError()
   }
