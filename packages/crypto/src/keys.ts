@@ -108,3 +108,64 @@ export function deriveQuizKey(formPrivateKeyBase64: string): string {
     sodium.crypto_generichash(sodium.crypto_secretbox_KEYBYTES, input, null),
   );
 }
+
+// Frozen, both of them. Every approval tag an owner has issued is computed
+// under a key derived with the first and over a message beginning with the
+// second; changing either makes every pending collaborator unapprovable.
+const MEMBER_APPROVAL_KEY_DOMAIN = "krypta:member-approval-key:v1";
+const MEMBER_APPROVAL_MESSAGE_DOMAIN = "krypta:member-approval:v1";
+
+function memberApprovalKey(formPrivateKeyBase64: string): Uint8Array {
+  const privateKey = sodium.from_base64(formPrivateKeyBase64);
+  const domain = sodium.from_string(MEMBER_APPROVAL_KEY_DOMAIN);
+  const input = new Uint8Array(domain.length + privateKey.length);
+  input.set(domain, 0);
+  input.set(privateKey, domain.length);
+  return sodium.crypto_generichash(32, input, null);
+}
+
+/**
+ * The owner's statement that an address was invited to a form, which the
+ * owner's browser checks before it hands that member the form keys.
+ *
+ * The list of members waiting for keys comes from the server, and nothing in
+ * it was authenticated by anything the owner holds, so a party able to write
+ * the database could add a row for an account of their own and receive both
+ * form keys on the owner's next dashboard load. This tag is made when the
+ * owner invites and is keyed from the form private key, which no respondent
+ * and no server holds, so it cannot be produced for an address the owner did
+ * not invite. Not keyed from the form data key: that key is in every form
+ * link. Keyed BLAKE2b-256, the same primitive as the commitments, over the
+ * form id and the address trimmed and lowercased the way the API stores it.
+ */
+export function memberApprovalTag(
+  formPrivateKeyBase64: string,
+  formId: string,
+  email: string,
+): string {
+  const message = sodium.from_string(
+    `${MEMBER_APPROVAL_MESSAGE_DOMAIN}\u0000${formId}\u0000${email.trim().toLowerCase()}`,
+  );
+  return sodium.to_base64(
+    sodium.crypto_generichash(32, message, memberApprovalKey(formPrivateKeyBase64)),
+  );
+}
+
+/** Whether a stored approval tag is the owner's tag for this form and address. */
+export function matchesMemberApprovalTag(
+  tag: string,
+  formPrivateKeyBase64: string,
+  formId: string,
+  email: string,
+): boolean {
+  try {
+    const expected = sodium.from_base64(
+      memberApprovalTag(formPrivateKeyBase64, formId, email),
+    );
+    const actual = sodium.from_base64(tag);
+    return expected.length === actual.length && sodium.memcmp(expected, actual);
+  } catch {
+    // A tag that does not decode approves nothing.
+    return false;
+  }
+}

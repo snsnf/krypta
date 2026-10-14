@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT form_id, role, encrypted_form_data_key, encrypted_form_private_key\n         FROM form_invitations\n         WHERE id = $1 AND form_id = $2\n           AND status = 'pending' AND expires_at > now()\n         FOR UPDATE",
+  "query": "SELECT form_id, role, encrypted_form_data_key, encrypted_form_private_key,\n                approval_tag\n         FROM form_invitations\n         WHERE id = $1 AND form_id = $2\n           AND status = 'pending' AND expires_at > now()\n         FOR UPDATE",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,11 @@
         "ordinal": 3,
         "name": "encrypted_form_private_key",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "approval_tag",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -34,8 +39,9 @@
       false,
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "3da2573144cfd9d9ada96ef2ab6d177dfffb57fc0263c51c623f62b1bb7dab9c"
+  "hash": "62e7bfceba4845683d79f5f0b1a8104c7b6eb0b0be8e94e03d4540a1b22eed77"
 }

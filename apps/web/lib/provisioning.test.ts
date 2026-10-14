@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   openMemberGrant: vi.fn(),
   sealFormGrant: vi.fn(),
+  matchesMemberApprovalTag: vi.fn(),
 }))
 
 vi.mock("./api", () => ({
@@ -16,6 +17,7 @@ vi.mock("./form-grants", () => ({
 
 vi.mock("@krypta/crypto", () => ({
   sealFormGrant: mocks.sealFormGrant,
+  matchesMemberApprovalTag: mocks.matchesMemberApprovalTag,
 }))
 
 import type { AccountSharingMaterial } from "./account-sharing-key"
@@ -39,12 +41,22 @@ const provisioningItem = {
   owner_key_scheme: "master_wrap_v1" as const,
   owner_encrypted_form_data_key: "wrapped-owner-form-data-key",
   owner_encrypted_form_private_key: "wrapped-owner-form-private-key",
+  member_email: "bob@example.com",
+  approval_tag: "owner-approval-tag",
 }
 
 describe("provisionPendingMembers", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.openMemberGrant.mockReturnValue({ formDataKey, formPrivateKey })
+    // Stand-in for the keyed tag: only the owner's tag for this address
+    // verifies. Its binding to the form id is covered in @krypta/crypto.
+    mocks.matchesMemberApprovalTag.mockImplementation(
+      (tag: string, key: string, _formId: string, email: string) =>
+        tag === "owner-approval-tag" &&
+        key === formPrivateKey &&
+        email === "bob@example.com"
+    )
     mocks.sealFormGrant.mockReturnValue({
       keyScheme: "account_sealed_box_v1",
       encryptedFormDataKey: "sealed-form-data-key",
@@ -135,6 +147,38 @@ describe("provisionPendingMembers", () => {
       expect.objectContaining({ method: "PUT" })
     )
     expect(onItemFailure).toHaveBeenCalledOnce()
-    expect(onItemFailure).toHaveBeenCalledWith()
+    expect(onItemFailure).toHaveBeenCalledWith("failed")
+  })
+
+  it("hands no keys to a member the owner never approved", async () => {
+    // A row written straight into form_members carries no tag the owner made,
+    // so the owner's browser must not seal the form keys to it.
+    const injected = { ...provisioningItem, approval_tag: null }
+    const forged = { ...provisioningItem, member_id: "0198-member-two", approval_tag: "forged" }
+    mocks.apiFetch.mockResolvedValueOnce({ items: [injected, forged] })
+    const onItemFailure = vi.fn()
+
+    const activated = await provisionPendingMembers(
+      accountKey,
+      sharingMaterial,
+      onItemFailure
+    )
+
+    expect(activated).toBe(0)
+    expect(mocks.sealFormGrant).not.toHaveBeenCalled()
+    expect(mocks.apiFetch).toHaveBeenCalledOnce()
+    expect(onItemFailure).toHaveBeenCalledTimes(2)
+    expect(onItemFailure).toHaveBeenCalledWith("unapproved")
+  })
+
+  it("refuses a tag made for another address", async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      items: [{ ...provisioningItem, member_email: "eve@example.com" }],
+    })
+
+    const activated = await provisionPendingMembers(accountKey, sharingMaterial)
+
+    expect(activated).toBe(0)
+    expect(mocks.sealFormGrant).not.toHaveBeenCalled()
   })
 })

@@ -1765,6 +1765,101 @@ async fn invitation_acceptance_without_grant_creates_awaiting_keys_membership() 
 }
 
 #[tokio::test]
+async fn an_owner_approval_tag_travels_from_invitation_to_membership_to_provisioning() {
+    let base = common::base_url();
+    let (owner, _, _, _) = register_invitation_user(&base, "approval-owner").await;
+    let (recipient, recipient_id, recipient_email, recipient_session) =
+        register_invitation_user(&base, "appr-recipient").await;
+    let form_id = create_test_form(&owner, &base, "approval-tag").await;
+    let tag = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([61_u8; 32]);
+
+    let refused = owner
+        .post(format!("{base}/api/v1/forms/{form_id}/invitations"))
+        .json(&json!({
+            "invited_email": recipient_email,
+            "role": "viewer",
+            "approval_tag": "not a tag",
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_generic_bad_request(refused).await;
+
+    let sent = owner
+        .post(format!("{base}/api/v1/forms/{form_id}/invitations"))
+        .json(&json!({
+            "invited_email": recipient_email,
+            "role": "viewer",
+            "approval_tag": tag,
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(sent.status(), 200);
+
+    // The mailed token is not readable here, so the stored invitation is given
+    // a token this test knows, as the other acceptance tests do.
+    let db = test_db().await;
+    let token = format!("invitation-token-{}", Uuid::now_v7());
+    let stored_tag = sqlx::query_scalar!(
+        "UPDATE form_invitations
+         SET token_hash = $1, status = 'pending'
+         WHERE form_id = $2
+         RETURNING approval_tag",
+        format!("{:x}", Sha256::digest(token.as_bytes())),
+        form_id,
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(stored_tag.as_deref(), Some(tag.as_str()));
+
+    let continuation_cookie = continue_invitation(&recipient, &base, &token).await;
+    let accepted = recipient
+        .post(format!("{base}/api/v1/invitations/current/accept"))
+        .header(
+            reqwest::header::COOKIE,
+            invitation_cookie_header(&recipient_session, &continuation_cookie),
+        )
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(accepted.status(), 200);
+    let member_tag = sqlx::query_scalar!(
+        "SELECT approval_tag FROM form_members WHERE form_id = $1 AND user_id = $2",
+        form_id,
+        recipient_id,
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(member_tag.as_deref(), Some(tag.as_str()));
+
+    set_account_sharing_key(
+        recipient_id,
+        &sharing_public_key(62),
+        &base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([63_u8; 72]),
+    )
+    .await;
+    let list: serde_json::Value = owner
+        .get(format!("{base}/api/v1/sharing/provisioning"))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let item = list["data"]["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["form_id"] == form_id.to_string())
+        .expect("the accepted member is waiting for keys");
+    assert_eq!(item["approval_tag"], tag);
+    assert_eq!(item["member_email"], recipient_email.to_lowercase());
+}
+
+#[tokio::test]
 async fn invitation_wrong_account_is_forbidden_without_consuming_invitation() {
     let base = common::base_url();
     let (owner, _, _, _) = register_invitation_user(&base, "wrong-owner").await;
@@ -3012,10 +3107,14 @@ async fn secure_provisioning_lists_only_current_owner_work_and_activates_idempot
         item["owner_encrypted_form_private_key"],
         "secure-provisioning-private-key"
     );
+    // The member's address is returned to the owner, who already sees it in
+    // the sharing dialog, because the owner's browser verifies the approval
+    // tag over it. A row written straight into form_members carries no tag.
+    assert_eq!(item["member_email"], recipient_email.to_lowercase());
+    assert!(item["approval_tag"].is_null());
     let serialized = serde_json::to_string(&list_body).unwrap();
     assert!(!serialized.contains("wrapped_sharing_private_key"));
     assert!(!serialized.contains(&wrapped_account_private_key));
-    assert!(!serialized.contains(&recipient_email));
 
     let before_mail = common::delivery_count_for(&recipient_email).await;
     let grant = json!({

@@ -279,6 +279,7 @@
     "subtitle": "Create forms and open work shared with you.",
     "newForm": "New form",
     "provisioningWarning": "Some secure access updates could not be completed. Try refreshing in a moment.",
+    "provisioningUnapproved": "A collaborator is waiting for access that this browser cannot confirm you approved, so they were not given the form's keys. If you did invite them, remove them from the form and invite them again.",
     "active": "Active",
     "archived": "Archived",
     "empty": "You haven't created a form yet.",

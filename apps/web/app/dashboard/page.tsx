@@ -27,7 +27,10 @@ import {
   type DashboardFormListItem,
   type FormListWireItem,
 } from "@/lib/dashboard-forms"
-import { provisionPendingMembers } from "@/lib/provisioning"
+import {
+  provisionPendingMembers,
+  type ProvisioningFailure,
+} from "@/lib/provisioning"
 import { duplicateForm } from "@/lib/duplicate-form"
 import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { toast } from "@/components/ui/toast"
@@ -57,7 +60,7 @@ import { autoDir } from "@/lib/text-direction"
 interface DashboardLoadResult {
   activeForms: DashboardFormListItem[]
   archivedForms: DashboardFormListItem[]
-  provisioningHadFailures: boolean
+  provisioningWarning: ProvisioningFailure | null
 }
 
 interface DashboardLoadAttempt {
@@ -72,7 +75,7 @@ interface DashboardViewState {
   activeForms: DashboardFormListItem[]
   archivedForms: DashboardFormListItem[]
   failed: boolean
-  provisioningWarning: boolean
+  provisioningWarning: ProvisioningFailure | null
 }
 
 async function loadDashboard(
@@ -82,14 +85,16 @@ async function loadDashboard(
   const sharingMaterial: AccountSharingMaterial = await ensureAccountSharingKey(
     { expectedUserId: userId, accountKey }
   )
-  let provisioningHadFailures = false
+  // An unapproved member outranks a transient failure: it is the one the
+  // owner has to act on, and refreshing will not clear it.
+  let provisioningWarning: ProvisioningFailure | null = null
 
   try {
-    await provisionPendingMembers(accountKey, sharingMaterial, () => {
-      provisioningHadFailures = true
+    await provisionPendingMembers(accountKey, sharingMaterial, (reason) => {
+      if (provisioningWarning !== "unapproved") provisioningWarning = reason
     })
   } catch {
-    provisioningHadFailures = true
+    provisioningWarning ??= "failed"
   }
 
   const [{ forms: activeRaw }, { forms: archivedRaw }] = await Promise.all([
@@ -99,7 +104,7 @@ async function loadDashboard(
   return {
     activeForms: decryptFormList(activeRaw, accountKey, sharingMaterial),
     archivedForms: decryptFormList(archivedRaw, accountKey, sharingMaterial),
-    provisioningHadFailures,
+    provisioningWarning,
   }
 }
 
@@ -157,7 +162,7 @@ export default function DashboardPage() {
           activeForms: result.activeForms,
           archivedForms: result.archivedForms,
           failed: false,
-          provisioningWarning: result.provisioningHadFailures,
+          provisioningWarning: result.provisioningWarning,
         })
       },
       () => {
@@ -175,7 +180,7 @@ export default function DashboardPage() {
           activeForms: [],
           archivedForms: [],
           failed: true,
-          provisioningWarning: false,
+          provisioningWarning: null,
         })
       }
     )
@@ -431,7 +436,9 @@ export default function DashboardPage() {
             role="status"
             className="mb-6 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
           >
-            {t("dashboard.provisioningWarning")}
+            {provisioningWarning === "unapproved"
+              ? t("dashboard.provisioningUnapproved")
+              : t("dashboard.provisioningWarning")}
           </p>
         ) : null}
 

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO form_members (\n                id, form_id, user_id, role, state, key_scheme,\n                encrypted_form_data_key, encrypted_form_private_key, approval_tag\n             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "89d8b739895a20cddf5092f4742090e96c5d587bac165aa2621e88383919e8e1"
+}

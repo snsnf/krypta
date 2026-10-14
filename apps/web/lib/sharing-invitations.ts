@@ -1,4 +1,5 @@
 import {
+  memberApprovalTag,
   sealFormGrant,
   type EncryptedFormGrant,
   type FormRole,
@@ -32,14 +33,22 @@ export type InvitationSealer = (
   recipientPublicKey: string
 ) => EncryptedFormGrant
 
+export type InvitationApprover = (
+  formPrivateKey: string,
+  formId: string,
+  email: string
+) => string
+
 interface SendInvitationDependencies {
   apiFetch: InvitationApiFetch
   sealFormGrant: InvitationSealer
+  approve: InvitationApprover
 }
 
 const defaultDependencies: SendInvitationDependencies = {
   apiFetch,
   sealFormGrant,
+  approve: memberApprovalTag,
 }
 
 function trySealGrant(
@@ -113,6 +122,14 @@ export async function sendInvitation(
       recipient_sharing_public_key: grant.recipientSharingPublicKey,
       encrypted_form_data_key: grant.encryptedFormDataKey,
       encrypted_form_private_key: grant.encryptedFormPrivateKey,
+      // The owner's own statement that this address was invited. Provisioning
+      // checks it before handing over keys, so the server's list of members
+      // awaiting keys cannot name someone the owner never invited.
+      approval_tag: dependencies.approve(
+        input.formPrivateKey,
+        input.formId,
+        input.email
+      ),
     }),
   })
 }

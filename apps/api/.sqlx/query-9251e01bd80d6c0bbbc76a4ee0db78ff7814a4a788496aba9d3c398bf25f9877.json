@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE form_invitations\n         SET token_hash = $1, status = 'pending'\n         WHERE form_id = $2\n         RETURNING approval_tag",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "approval_tag",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "9251e01bd80d6c0bbbc76a4ee0db78ff7814a4a788496aba9d3c398bf25f9877"
+}

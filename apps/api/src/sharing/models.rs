@@ -63,6 +63,10 @@ pub struct InvitationBody {
     pub recipient_sharing_public_key: Option<String>,
     pub encrypted_form_data_key: Option<String>,
     pub encrypted_form_private_key: Option<String>,
+    /// The owner's approval of this address, made in their browser and
+    /// checked there before keys are provisioned. The server only stores it.
+    #[serde(default)]
+    pub approval_tag: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -153,6 +157,10 @@ pub struct ProvisioningItem {
     pub owner_key_scheme: String,
     pub owner_encrypted_form_data_key: String,
     pub owner_encrypted_form_private_key: String,
+    /// The member's address and the owner's approval tag for it, so the
+    /// owner's browser can refuse to seal keys to a member it never invited.
+    pub member_email: String,
+    pub approval_tag: Option<String>,
 }
 
 #[derive(serde::Serialize)]
