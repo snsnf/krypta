@@ -10,7 +10,7 @@ import {
 import { useParams } from "next/navigation"
 import { readFragmentParam } from "@/lib/form-link"
 import type { FormTheme, Question } from "@krypta/crypto"
-import { apiFetch } from "@/lib/api"
+import { ApiClientError, apiFetch } from "@/lib/api"
 import { loadPublicForm } from "@/lib/load-public-form"
 import { useHeaderImage } from "@/hooks/use-header-image"
 import { visibleQuestions } from "@/lib/form-visibility"
@@ -51,7 +51,7 @@ export default function EditResponsePage() {
   const [loadError, setLoadError] = useState<FormLoadFailure | null>(null)
   // A message key rather than text, so it is worded in the form's language.
   const [submitError, setSubmitError] = useState<
-    "tooLong" | "saveFailed" | null
+    "tooLong" | "saveFailed" | "editClosed" | null
   >(null)
   const t = formTranslator(normalizeFormLanguage(theme.language))
   const [schemaKey, setSchemaKey] = useState<string | null>(null)
@@ -103,6 +103,10 @@ export default function EditResponsePage() {
       })
       setSubmitted(true)
     } catch (error) {
+      if (error instanceof ApiClientError && error.code === "form_closed") {
+        setSubmitError("editClosed")
+        return
+      }
       if (error instanceof ResponseTooLargeError) {
         setSubmitError("tooLong")
         return

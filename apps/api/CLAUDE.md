@@ -375,7 +375,10 @@ What follows is what a future edit would break by accident.
   the edit turns a closed form open, refuses it with `check_reopen_allowed` if
   the owner is at the open-form limit. Deleting responses below a cap can still
   reopen a form without that check, deliberately: refusing a deletion would
-  trap the owner's data.
+  trap the owner's data. `update_response` applies the provisional half
+  (`form_is_provisionally_open`) under the form lock: an edit after the close
+  date or a manual close is refused, while the cap is not checked, since the
+  edited row is already one of the responses it counts.
   The attachment sites originally checked the raw column, which let a
   respondent upload files to a closed form. `get_form_public` returns the
   computed value as `accepting_responses` so a respondent never learns which
