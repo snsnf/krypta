@@ -211,13 +211,19 @@ Six things to preserve:
   (BLAKE2b-256 under a frozen domain string in `keys.ts`), and
   `loadPublicForm` refuses a served key that does not match. The schema is
   authenticated by the fragment key the server never sees, which is what makes
-  this a check a database writer cannot satisfy. Two rules keep it honest.
+  this a check a database writer cannot satisfy. Three rules keep it honest.
   A save must commit to the key derived from the member's own private key
   (`sealPublicKeyFromPrivate`), never to the served one, or it would bless a
   key already swapped. And a schema with no commitment is refused, not
   trusted: only a form written before the check could lack one, and passing
   those would be a way around the check. This shipped strict because no such
-  form existed yet; there is no legacy path to add back.
+  form existed yet; there is no legacy path to add back. The third follows
+  from the first: the member's own private key has to be checked too.
+  `loadFormDefinition` (`apps/web/lib/form-workspace.ts`) refuses a workspace
+  whose grant opens a private key the schema does not commit to, or whose
+  served key does not match it. A sealed grant authenticates no sender, so
+  anyone holding a member's public sharing key can plant one, and without
+  this check the member's next save would commit the form to the planted key.
 - **The KEM is not constant-time**: the library says so, and JIT, GC and
   `bigint` arithmetic offer no guarantee. This is tolerable only because
   decapsulation runs solely in the user's own browser with the user's own key,

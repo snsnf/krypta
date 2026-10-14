@@ -26,7 +26,9 @@ encrypted form, which only the key in the link opens. Someone who can write
 the database therefore cannot swap in their own key and read new responses:
 the respondent's browser compares the served key with that commitment and
 refuses to open the form if they differ, or if the form carries no
-commitment at all.
+commitment at all. A collaborator's browser makes the same check against the
+key in its own grant before opening the form, so a planted grant cannot get
+the commitment rewritten by that collaborator's next save.
 
 Your password never reaches the server. The browser derives a key from it and
 sends a one-way verifier instead, so the password is absent from the wire, from

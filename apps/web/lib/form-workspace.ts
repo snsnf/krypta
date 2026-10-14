@@ -2,6 +2,8 @@
 
 import {
   decryptWithKey,
+  matchesFormKeyCommitment,
+  sealPublicKeyFromPrivate,
   unsealBox,
   type FormRole,
   type FormSchema,
@@ -13,6 +15,7 @@ import type { AccountSharingMaterial } from "./account-sharing-key"
 import type { AnswerValue } from "./form-answers"
 import { apiFetch } from "./api"
 import { openMemberGrant } from "./form-grants"
+import { FormKeyMismatchError } from "./load-public-form"
 import { normalizeFormSettings } from "./form-settings"
 import { normalizeFormTheme } from "./form-theme"
 import type { AnswerKey } from "./quiz"
@@ -139,6 +142,27 @@ export async function loadFormDefinition(
   const schema = JSON.parse(
     decryptWithKey(form.schema_ciphertext, formDataKey)
   ) as FormSchema
+
+  // A sealed grant authenticates nothing about who sealed it: anyone holding
+  // this member's public sharing key can seal a private key of their own and
+  // store it as the grant. A save then commits the schema to whatever key the
+  // grant held, so an unchecked grant would let a database writer re-point
+  // the form's commitment through an Editor's ordinary save. The schema, by
+  // contrast, needs the data key to forge, so the key opened here has to be
+  // the one it commits to. The served copy is checked against the same
+  // commitment, so a substituted public key surfaces here too instead of only
+  // on the respondent's side.
+  const commitment = schema.publicKeyCommitment
+  if (
+    typeof commitment !== "string" ||
+    !matchesFormKeyCommitment(
+      sealPublicKeyFromPrivate(formPrivateKey),
+      commitment
+    ) ||
+    !matchesFormKeyCommitment(form.form_public_key, commitment)
+  ) {
+    throw new FormKeyMismatchError()
+  }
 
   return {
     role: form.role,

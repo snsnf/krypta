@@ -259,6 +259,10 @@
       "title": "This form could not be opened",
       "description": "Its keys did not open with your account. Reloading usually clears this; if it keeps happening, ask the owner to share the form with you again."
     },
+    "keysMismatch": {
+      "title": "This form's keys do not match",
+      "description": "The key your account holds for this form is not the one the form was set up with, so it was not opened and nothing can be saved to it. Ask the owner to remove you and share the form with you again."
+    },
     "formsListUnreachable": {
       "title": "Your forms could not be loaded",
       "description": "Something interrupted the request. Check your connection and try again."

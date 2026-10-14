@@ -19,6 +19,7 @@ export type FailureKey =
   | "formUnavailable"
   | "keysPending"
   | "keysUnreadable"
+  | "keysMismatch"
   | "formsListUnreachable"
 
 export interface FormLoadFailure {
@@ -97,7 +98,10 @@ const KEYS_UNREADABLE: FormLoadFailure = {
   retryable: true,
 }
 
+const KEYS_MISMATCH: FormLoadFailure = { key: "keysMismatch", retryable: false }
+
 export function describeWorkspaceLoadFailure(error: unknown): FormLoadFailure {
+  if (error instanceof FormKeyMismatchError) return KEYS_MISMATCH
   if (error instanceof ApiClientError) {
     return error.code === "not_found" ? FORM_UNAVAILABLE : UNREACHABLE
   }

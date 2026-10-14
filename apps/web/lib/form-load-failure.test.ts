@@ -72,6 +72,12 @@ describe("describeWorkspaceLoadFailure", () => {
     expect(failure.retryable).toBe(true)
   })
 
+  test("a grant that does not match the form's commitment is not retried", () => {
+    const failure = describeWorkspaceLoadFailure(new FormKeyMismatchError())
+    expect(failure.key).toBe("keysMismatch")
+    expect(failure.retryable).toBe(false)
+  })
+
   test("anything else that failed after the form arrived blames the keys", () => {
     expect(describeWorkspaceLoadFailure(new Error("bad mac")).key).toBe(
       "keysUnreadable"
