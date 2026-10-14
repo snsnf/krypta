@@ -431,8 +431,6 @@ integration_checks() {
   clear_rate_limits
   run "rust: email verification integration" bash -c "cd '$API' && cargo test --test email_verify_test -- --test-threads=1"
   clear_rate_limits
-  # Single-threaded and slow on purpose: the TOTP tests wait out a 30-second
-  # timestep so a code is not rejected as a replay.
   run "rust: totp integration" bash -c "cd '$API' && cargo test --test totp_test -- --test-threads=1"
   clear_rate_limits
   run "rust: passkey integration" bash -c "cd '$API' && cargo test --test passkey_test -- --test-threads=1"

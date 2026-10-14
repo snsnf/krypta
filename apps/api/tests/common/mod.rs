@@ -503,19 +503,39 @@ pub fn code_now(totp: &Totp) -> String {
     totp.generate_current().to_string()
 }
 
-/// Waits for the next timestep before producing a code.
+/// Produces a code from a timestep no earlier call has handed out, later than
+/// the current one.
 ///
 /// Enrolment consumes the step its confirmation code belonged to, so a code
-/// taken from that same step is a replay and is rejected by design. Tests that
-/// mean to exercise a valid login have to cross the boundary first.
+/// taken from that same step is a replay and is rejected by design. The server
+/// accepts one step of skew, so the next step's code is valid immediately and
+/// claims a step of its own; only a second code inside the same step has to
+/// wait for the boundary. That used to be a sleep on every call, which cost
+/// the suites several minutes per run.
 #[allow(dead_code)]
 pub async fn code_from_next_step(totp: &Totp) -> String {
-    let now = std::time::SystemTime::now()
+    static ISSUED: OnceLock<Mutex<HashMap<Vec<u8>, u64>>> = OnceLock::new();
+    let now = unix_now();
+    let step = {
+        let mut issued = ISSUED.get_or_init(Default::default).lock().unwrap();
+        let last = issued.get(totp.secret().as_bytes()).copied().unwrap_or(0);
+        let step = (now / 30 + 1).max(last + 1);
+        issued.insert(totp.secret().as_bytes().to_vec(), step);
+        step
+    };
+    // A step two ahead is outside the skew until the next one begins.
+    let accepted_from = (step - 1) * 30;
+    if accepted_from > now {
+        tokio::time::sleep(std::time::Duration::from_secs(accepted_from - now + 1)).await;
+    }
+    totp.generate(step * 30).to_string()
+}
+
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
-        .as_secs();
-    tokio::time::sleep(std::time::Duration::from_secs(30 - (now % 30) + 1)).await;
-    code_now(totp)
+        .as_secs()
 }
 
 /// Starts a recovery and returns the pending handle.
