@@ -486,6 +486,69 @@ async fn editable_form_returns_token_and_accepts_edit() {
 }
 
 #[tokio::test]
+async fn a_closed_form_refuses_edits_to_its_responses() {
+    let base =
+        std::env::var("TEST_API_BASE").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    let client = Client::builder().cookie_store(true).build().unwrap();
+    register_and_login(&client, &base).await;
+    let form_id = create_test_form(&client, &base).await;
+    let version = current_version(&client, &base, &form_id.to_string()).await;
+    let enabled = client
+        .patch(format!("{base}/api/v1/forms/{form_id}"))
+        .json(&json!({ "allow_response_editing": true, "expected_version": version }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(enabled.status(), 200);
+
+    let anon = Client::new();
+    let submitted: serde_json::Value = anon
+        .post(format!("{base}/api/v1/forms/{form_id}/responses"))
+        .json(&json!({ "ciphertext": "sealed-before-close" }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let edit_token = submitted["data"]["edit_token"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let version = current_version(&client, &base, &form_id.to_string()).await;
+    let closed = client
+        .patch(format!("{base}/api/v1/forms/{form_id}"))
+        .json(&json!({ "accepting_responses": false, "expected_version": version }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(closed.status(), 200);
+
+    let edit = anon
+        .patch(format!("{base}/api/v1/forms/{form_id}/responses/edit"))
+        .header("X-Response-Token", &edit_token)
+        .json(&json!({ "ciphertext": "sealed-after-close" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(edit.status(), reqwest::StatusCode::CONFLICT);
+
+    let listed: serde_json::Value = client
+        .get(format!("{base}/api/v1/forms/{form_id}/responses"))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        listed["data"]["responses"][0]["ciphertext"], "sealed-before-close",
+        "an answer must not change after the form closed"
+    );
+}
+
+#[tokio::test]
 async fn non_editable_form_returns_no_token_and_rejects_edit() {
     let base =
         std::env::var("TEST_API_BASE").unwrap_or_else(|_| "http://localhost:8080".to_string());

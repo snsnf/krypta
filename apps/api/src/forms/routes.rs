@@ -1187,20 +1187,6 @@ pub async fn update_response(
         return Err(ApiError::NotFound);
     };
 
-    let form = sqlx::query!(
-        "SELECT allow_response_editing FROM forms WHERE id = $1",
-        form_id
-    )
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| ApiError::Internal(e.into()))?;
-    let Some(form) = form else {
-        return Err(ApiError::NotFound);
-    };
-    if !form.allow_response_editing {
-        return Err(ApiError::NotFound);
-    }
-
     check_attachment_references(&body.attachment_ids)?;
 
     let token_hash = hash_token(token);
@@ -1209,6 +1195,40 @@ pub async fn update_response(
         .begin()
         .await
         .map_err(|error| ApiError::Internal(error.into()))?;
+    // Read under the form lock, so an owner switching editing off or closing
+    // the form cannot be overtaken by an edit that read the old setting.
+    // The same owner join as submission: a suspended owner's form, or one
+    // being deleted, takes no edits either.
+    let form = sqlx::query!(
+        "SELECT forms.allow_response_editing, forms.accepting_responses, forms.closes_at
+         FROM forms
+         JOIN form_members owner
+           ON owner.form_id = forms.id
+          AND owner.role = 'owner'
+          AND owner.state = 'active'
+         JOIN users owner_user
+           ON owner_user.id = owner.user_id
+          AND owner_user.suspended_at IS NULL
+         WHERE forms.id = $1 AND forms.deletion_started_at IS NULL
+         FOR UPDATE OF forms",
+        form_id,
+    )
+    .fetch_optional(&mut *transaction)
+    .await
+    .map_err(|e| ApiError::Internal(e.into()))?;
+    let Some(form) = form else {
+        return Err(ApiError::NotFound);
+    };
+    if !form.allow_response_editing {
+        return Err(ApiError::NotFound);
+    }
+    // A closed form takes no edits, or a respondent could replace their
+    // answers after the deadline with nothing in the owner's view to show it.
+    // The response cap is not checked: this row is already one of the
+    // responses the cap counts, so editing it adds nothing.
+    if !form_is_provisionally_open(form.accepting_responses, form.closes_at) {
+        return Err(ApiError::FormClosed);
+    }
     // Deliberately no allowance check and no `record_response` call here.
     // This edits a response already counted at submission time, so metering
     // it again would double count, and a limit that filled up since then

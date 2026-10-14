@@ -46,6 +46,7 @@
     "saving": "Saving...",
     "saveChanges": "Save changes",
     "saveFailed": "Something went wrong saving your changes. This link may have expired.",
+    "editClosed": "This form has closed, so your answers can no longer be changed.",
     "updated": "Your response was updated.",
     "orDragDrop": "or drag and drop",
     "chooseDifferentFile": "Choose a different file",
