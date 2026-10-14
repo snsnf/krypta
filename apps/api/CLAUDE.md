@@ -334,6 +334,9 @@ What follows is what a future edit would break by accident.
   consecutive failure to a one-day cap, and the candidate query skips a member
   until its retry is due. That last part is what actually fixes the starvation,
   because a backing-off member stops consuming a slot in the `LIMIT 200`.
+  The exponent is capped before it is cast to an integer: uncapped, the cast
+  overflowed at the 32nd failure and every later update errored, putting a
+  dead address back on every sweep.
   Two things about it are easy to get backwards. **The increment must stay
   OUTSIDE `notify_member`'s transaction** and the reset INSIDE it: that
   transaction rolls back on a failed send, which is what preserves the retry,

@@ -309,12 +309,18 @@ async fn notify_member(
 /// settles at one attempt per day instead of one per sweep. Nothing here gives
 /// up on a member: `notify_retry_after` only defers, because a dropped
 /// notification is the thing this feature exists to prevent.
+///
+/// The exponent is capped before the cast. Casting an uncapped `power(2, n)`
+/// to an integer overflows at the 32nd consecutive failure, the statement then
+/// errors on every attempt, and a dead address goes back to being retried on
+/// every sweep: the starvation this backoff was written to end. Two to the
+/// 20th fits easily and is already far beyond the one-day cap.
 async fn record_delivery_failure(db: &PgPool, member_id: Uuid) -> anyhow::Result<()> {
     sqlx::query!(
         "UPDATE form_members
          SET notify_failure_count = notify_failure_count + 1,
              notify_retry_after = now() + make_interval(
-                 mins => least(power(2, notify_failure_count)::int, $2)
+                 mins => least(power(2, least(notify_failure_count, 20))::int, $2)
              )
          WHERE id = $1",
         member_id,
@@ -696,6 +702,42 @@ mod tests {
             .execute(&db)
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn a_long_dead_address_keeps_backing_off_by_a_day() {
+        let db = test_db().await;
+        let (owner_id, form_id, _) = form_with_notifying_owner(&db).await;
+        let member_id = sqlx::query_scalar!(
+            "UPDATE form_members
+             SET notify_failure_count = 31, notify_retry_after = now() - interval '1 minute'
+             WHERE form_id = $1
+             RETURNING id",
+            form_id,
+        )
+        .fetch_one(&db)
+        .await
+        .unwrap();
+
+        // At 31 failures the uncapped expression overflowed int and errored.
+        record_delivery_failure(&db, member_id).await.unwrap();
+
+        let row = sqlx::query!(
+            "SELECT notify_failure_count,
+                    notify_retry_after > now() + interval '23 hours' AS \"deferred_a_day!\"
+             FROM form_members WHERE id = $1",
+            member_id,
+        )
+        .fetch_one(&db)
+        .await
+        .unwrap();
+        assert_eq!(row.notify_failure_count, 32);
+        assert!(
+            row.deferred_a_day,
+            "a dead address must settle at one attempt a day"
+        );
+
+        drop_fixture(&db, owner_id, form_id).await;
     }
 
     async fn backoff_state(db: &PgPool, form_id: Uuid) -> (i32, bool) {
