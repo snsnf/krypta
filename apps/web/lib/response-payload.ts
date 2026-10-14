@@ -38,6 +38,26 @@ export function attachmentIdsOf(
     .map((answer) => answer.attachmentId)
 }
 
+const ATTACHMENT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * The attachment ids to send when a member deletes a response: only
+ * well-formed ones, each once.
+ *
+ * The answers were written by a respondent, so an id here can be anything.
+ * The API reads the list as UUIDs and refuses the whole request when one does
+ * not parse, which left a response with a junk id undeletable from the
+ * dashboard. The server already skips a well-formed id that names nothing.
+ */
+export function attachmentIdsForDeletion(
+  answers: Record<string, AnswerValue | undefined>
+): string[] {
+  const ids = attachmentIdsOf(answers).filter(
+    (id): id is string => typeof id === "string" && ATTACHMENT_ID.test(id)
+  )
+  return [...new Set(ids)]
+}
+
 export function buildResponsePayload(
   questions: Question[],
   answers: Record<string, AnswerValue | undefined>,

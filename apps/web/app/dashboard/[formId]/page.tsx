@@ -96,7 +96,7 @@ import {
   type AnswerValue,
   type FileAnswer,
 } from "@/lib/form-answers"
-import { attachmentIdsOf } from "@/lib/response-payload"
+import { attachmentIdsForDeletion } from "@/lib/response-payload"
 import { deleteResponsesInTurn } from "@/lib/response-deletion"
 
 interface ResponseRow {
@@ -569,7 +569,7 @@ export default function FormDetailPage() {
           // because that link lives inside the ciphertext it has no key for.
           // So send them.
           body: JSON.stringify({
-            attachment_ids: attachmentIdsOf(response.answers),
+            attachment_ids: attachmentIdsForDeletion(response.answers),
           }),
         })
     )

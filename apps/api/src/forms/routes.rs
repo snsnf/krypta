@@ -1121,21 +1121,20 @@ pub async fn delete_response(
         return Err(ApiError::NotFound);
     }
 
+    // These ids come from the decrypted response, so a respondent wrote them.
+    // One that names nothing on this form (made up, another form's, already
+    // cleaned up, or listed twice) is skipped rather than refused: refusing
+    // rolled the whole deletion back, so a respondent could plant a response
+    // no member could ever delete. Form-scoped all the same, so a skipped id
+    // can never reach another form's file.
     for attachment_id in body.attachment_ids {
-        let transitioned = crate::attachments::cleanup::mark_deleted_by_owner(
+        crate::attachments::cleanup::mark_deleted_by_owner(
             &mut transaction,
             form_id,
             attachment_id,
         )
         .await
         .map_err(ApiError::Internal)?;
-        if !transitioned {
-            // Rolls back the response delete too. Skipping silently would hide
-            // a client bug behind a successful response. BadRequest, not
-            // NotFound: the client's `not_found` handling treats that code as
-            // "already gone" and would otherwise swallow this rejection too.
-            return Err(ApiError::BadRequest("Invalid attachment reference.".into()));
-        }
     }
 
     transaction

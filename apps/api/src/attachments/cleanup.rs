@@ -185,8 +185,9 @@ pub(crate) async fn mark_cleanup_pending(
 /// caller has already taken that lock, preserving the form-first order every
 /// other attachment path uses.
 ///
-/// Returns false when no attachment with that id belongs to that form, which
-/// the caller treats as a failed request rather than a no-op.
+/// Returns false when no attachment with that id belongs to that form and is
+/// still live. Response deletion ignores that, since the ids it passes come
+/// from what a respondent wrote.
 pub(crate) async fn mark_deleted_by_owner(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     form_id: Uuid,
