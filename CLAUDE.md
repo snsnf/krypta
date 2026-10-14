@@ -224,6 +224,18 @@ Six things to preserve:
   served key does not match it. A sealed grant authenticates no sender, so
   anyone holding a member's public sharing key can plant one, and without
   this check the member's next save would commit the form to the planted key.
+- **The share link carries a fingerprint of the form public key** (`pk`,
+  `formShareLink` in `apps/web/lib/form-link.ts`), and `loadPublicForm` checks
+  the served key against it as well as against the schema. The schema
+  commitment alone is only as strong as the link key, and every respondent
+  holds that key, so a link holder who could write the forms row could
+  re-encrypt the schema around a key of their own. The fragment value never
+  reaches the server and is fixed when a member copies the link. It is
+  computed from the member's private key, never the served key, and the edit
+  link carries forward whatever fingerprint the respondent arrived with. A
+  link without `pk` still opens on the schema check alone, deliberately:
+  refusing it would break every form shared before links carried one, so
+  `SECURITY.md` names the residual instead.
 - **The KEM is not constant-time**: the library says so, and JIT, GC and
   `bigint` arithmetic offer no guarantee. This is tolerable only because
   decapsulation runs solely in the user's own browser with the user's own key,

@@ -41,6 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useAuthStore } from "@/lib/auth-store"
+import { formShareLink } from "@/lib/form-link"
 import { useAppT } from "@/lib/app-i18n"
 import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
@@ -682,13 +683,15 @@ export default function FormDetailPage() {
         )
       : null
 
-  // Rebuilt from the unwrapped data key rather than read from the creation
+  // Rebuilt from the unwrapped keys rather than read from the creation
   // fragment, so the link stays available on reloads and after saving. The key
   // lives in the fragment, which browsers never send to the server.
   const shareLink =
-    formDataKey === null || typeof window === "undefined"
+    formDataKey === null ||
+    formPrivateKey === null ||
+    typeof window === "undefined"
       ? null
-      : `${window.location.origin}/f/${formId}#key=${encodeURIComponent(formDataKey)}`
+      : formShareLink(window.location.origin, formId, formDataKey, formPrivateKey)
 
   async function copyShareLink() {
     if (shareLink === null) return

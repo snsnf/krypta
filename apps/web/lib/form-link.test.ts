@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { readFragmentParam } from "./form-link"
+import {
+  formKeyCommitment,
+  generateSealKeyPair,
+  matchesFormKeyCommitment,
+} from "@krypta/crypto"
+import { formShareLink, readFragmentParam, responseEditLink } from "./form-link"
+import { ensureSodiumReady } from "./sodium-ready"
 
 describe("readFragmentParam", () => {
   it("reads a value from a form link", () => {
@@ -23,5 +29,40 @@ describe("readFragmentParam", () => {
 
   it("is null, not a throw, when the value is not valid percent-encoding", () => {
     expect(readFragmentParam("#key=%E0%A4%A", "key")).toBeNull()
+  })
+})
+
+describe("formShareLink", () => {
+  it("carries the data key and a fingerprint of the key derived from the private key", async () => {
+    await ensureSodiumReady()
+    const pair = generateSealKeyPair()
+    const link = formShareLink("https://x.test", "f1", "data/key+", pair.privateKey)
+    const hash = link.slice(link.indexOf("#"))
+
+    expect(link.startsWith("https://x.test/f/f1#")).toBe(true)
+    expect(readFragmentParam(hash, "key")).toBe("data/key+")
+    const pk = readFragmentParam(hash, "pk")
+    expect(pk).not.toBeNull()
+    expect(matchesFormKeyCommitment(pair.publicKey, pk!)).toBe(true)
+  })
+})
+
+describe("responseEditLink", () => {
+  it("keeps the fingerprint the respondent arrived with", async () => {
+    await ensureSodiumReady()
+    const pair = generateSealKeyPair()
+    const fingerprint = formKeyCommitment(pair.publicKey)
+    const link = responseEditLink("https://x.test", "f1", "tok", "k", fingerprint)
+    const hash = link.slice(link.indexOf("#"))
+
+    expect(readFragmentParam(hash, "token")).toBe("tok")
+    expect(readFragmentParam(hash, "key")).toBe("k")
+    expect(readFragmentParam(hash, "pk")).toBe(fingerprint)
+  })
+
+  it("adds no fingerprint for a link that never had one", () => {
+    expect(responseEditLink("https://x.test", "f1", "tok", "k", null)).toBe(
+      "https://x.test/f/f1/r#token=tok&key=k"
+    )
   })
 })

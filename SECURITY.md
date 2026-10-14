@@ -22,11 +22,15 @@ one worth trusting: a database dump, a stolen backup, a compromised host or a
 subpoena to the operator yields ciphertext.
 
 The key a respondent's answers are sealed to is committed to inside the
-encrypted form, which only the key in the link opens. Someone who can write
-the database therefore cannot swap in their own key and read new responses:
-the respondent's browser compares the served key with that commitment and
-refuses to open the form if they differ, or if the form carries no
-commitment at all. A collaborator's browser makes the same check against the
+encrypted form, which only the key in the link opens, and the link itself
+carries a fingerprint of that key. Someone who can write the database
+therefore cannot swap in their own key and read new responses: the
+respondent's browser compares the served key with both and refuses to open
+the form if either differs, or if the form carries no commitment at all. The
+fingerprint is what covers a database writer who also holds the link, since
+anyone with the link could rewrite the commitment. A link copied before links
+carried the fingerprint is checked against the commitment alone; copy the
+link again from the form's page to give respondents the stronger check. A collaborator's browser makes the same check against the
 key in its own grant before opening the form, so a planted grant cannot get
 the commitment rewritten by that collaborator's next save.
 
