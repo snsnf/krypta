@@ -10,6 +10,7 @@ vi.mock("@krypta/crypto", async () => ({
 }))
 
 import {
+  attachmentIdsForDeletion,
   attachmentIdsOf,
   buildResponsePayload,
   MAX_RESPONSE_CIPHERTEXT_BYTES,
@@ -33,6 +34,20 @@ describe("attachmentIdsOf", () => {
     expect(attachmentIdsOf({ q1: "Ada", q2: file, q3: ["a", "b"] })).toEqual([
       "a1",
     ])
+  })
+})
+
+describe("attachmentIdsForDeletion", () => {
+  it("keeps well-formed ids once and drops what a respondent made up", () => {
+    const id = "0198e904-aa65-7bd1-a2d2-b734286d8f72"
+    expect(
+      attachmentIdsForDeletion({
+        q1: { ...file, attachmentId: id },
+        q2: { ...file, attachmentId: id },
+        q3: { ...file, attachmentId: "../../auth/me" },
+        q4: { ...file, attachmentId: 5 as unknown as string },
+      })
+    ).toEqual([id])
   })
 })
 

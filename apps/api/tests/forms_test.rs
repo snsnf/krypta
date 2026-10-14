@@ -1254,7 +1254,7 @@ async fn a_response_id_from_another_form_is_not_deletable_through_this_form() {
 }
 
 #[tokio::test]
-async fn an_unknown_attachment_id_fails_the_delete_and_keeps_the_response() {
+async fn an_attachment_id_naming_nothing_does_not_block_the_delete() {
     let base =
         std::env::var("TEST_API_BASE").unwrap_or_else(|_| "http://localhost:8080".to_string());
     let client = Client::builder().cookie_store(true).build().unwrap();
@@ -1280,7 +1280,9 @@ async fn an_unknown_attachment_id_fails_the_delete_and_keeps_the_response() {
         .send()
         .await
         .unwrap();
-    assert_eq!(deleted.status(), reqwest::StatusCode::BAD_REQUEST);
+    // The ids come from the decrypted response, which a respondent wrote, so
+    // refusing an unknown one let a respondent plant an undeletable response.
+    assert_eq!(deleted.status(), reqwest::StatusCode::OK);
 
     let listed: serde_json::Value = client
         .get(format!("{base}/api/v1/forms/{form_id}/responses"))
@@ -1292,8 +1294,8 @@ async fn an_unknown_attachment_id_fails_the_delete_and_keeps_the_response() {
         .unwrap();
     assert_eq!(
         listed["data"]["responses"].as_array().unwrap().len(),
-        1,
-        "a rejected attachment id must roll the whole delete back",
+        0,
+        "an attachment id that names nothing must not keep the response",
     );
 }
 
