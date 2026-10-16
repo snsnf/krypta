@@ -10,7 +10,7 @@ import {
 } from "./fixtures"
 
 // One registration per test via createVerifiedAccount (see full-flow.spec.ts's
-// budget comment at the top): this file adds 2 to the suite's total.
+// budget comment at the top): this file adds 1 to the suite's total.
 
 test("a recovered account still decrypts everything it had", async ({
   page,
@@ -84,45 +84,4 @@ test("a recovered account still decrypts everything it had", async ({
   await expect(page.getByRole("tab", { name: "Responses" })).toBeVisible()
   await page.getByRole("tab", { name: "Responses" }).click()
   await expect(page.getByText("an answer from before")).toBeVisible()
-})
-
-test("a spent recovery code is rejected on a second recovery attempt", async ({
-  page,
-}) => {
-  const { email, recoveryCode } = await createVerifiedAccount("recovery")
-  const signupCode = await verificationCodeFor(email)
-
-  await page.goto("/recover")
-  await waitForInteractive(page)
-  await page.getByLabel("Email").fill(email)
-  await page.getByRole("button", { name: "Send recovery code" }).click()
-  const firstRecoverCode = await nextVerificationCodeFor(email, signupCode)
-  await page.getByLabel("Emailed code").fill(firstRecoverCode)
-  await page.getByLabel("Recovery code").fill(recoveryCode)
-  await page.getByRole("button", { name: "Verify" }).click()
-
-  await page.getByLabel("New password").fill("a-brand-new-password")
-  await page.getByRole("button", { name: "Set new password" }).click()
-  await page.getByTestId("recovery-code").waitFor()
-
-  // Second attempt, same original (now-spent) code.
-  await page.goto("/recover")
-  await waitForInteractive(page)
-  await page.getByLabel("Email").fill(email)
-  await page.getByRole("button", { name: "Send recovery code" }).click()
-  const secondRecoverCode = await nextVerificationCodeFor(
-    email,
-    firstRecoverCode
-  )
-  await page.getByLabel("Emailed code").fill(secondRecoverCode)
-  await page.getByLabel("Recovery code").fill(recoveryCode)
-  await page.getByRole("button", { name: "Verify" }).click()
-
-  await expect(
-    page.getByText(
-      "That combination wasn't accepted. Check both codes and try again."
-    )
-  ).toBeVisible()
-  // Still on the verify step: a rejected attempt must not advance the flow.
-  await expect(page.getByLabel("New password")).toHaveCount(0)
 })

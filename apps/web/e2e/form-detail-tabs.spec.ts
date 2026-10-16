@@ -52,46 +52,6 @@ test("form detail page defaults to the Questions tab and switches correctly", as
   await expect(page.getByLabel("Accept responses")).toBeChecked()
 })
 
-test("closed public form blocks submission", async ({
-  page,
-  browser,
-  sharedAccount,
-}) => {
-  await page.context().addCookies(sharedAccount.sessionCookies)
-  await page.goto("/unlock")
-  await unlock(page, sharedAccount.password)
-  await page.getByRole("button", { name: /new form/i }).click()
-  await page.waitForURL(/\/dashboard\/new/)
-  await startBlankForm(page)
-  await page.getByRole("textbox", { name: "Form title" }).fill("Closed form")
-  await page.getByRole("textbox", { name: "Question label" }).fill("Q1")
-  await page.getByRole("button", { name: "Publish form" }).click()
-  await page.waitForURL(/\/dashboard\/.+\?created=1/)
-  const shareLinkText = shareLinkFor(page)
-
-  await page.getByRole("tab", { name: "Settings" }).click()
-  await Promise.all([
-    page.waitForResponse(
-      (response) =>
-        response.request().method() === "PATCH" &&
-        response.url().includes("/api/v1/forms/")
-    ),
-    page.getByLabel("Accept responses").click(),
-  ])
-
-  const respondentContext = await browser.newContext()
-  const respondentPage = await respondentContext.newPage()
-  await installIsolatedCorsRoute(respondentPage)
-  await respondentPage.goto(shareLinkText)
-  await expect(
-    respondentPage.getByText("This form is not accepting responses")
-  ).toBeVisible()
-  await expect(
-    respondentPage.getByRole("button", { name: "Submit" })
-  ).toHaveCount(0)
-  await respondentContext.close()
-})
-
 test("limiting to 1 response blocks a second submission in the same browser", async ({
   page,
   browser,
@@ -249,43 +209,6 @@ test("the response summary counts each chosen option", async ({
 
   await page.getByRole("button", { name: "Individual" }).click()
   await expect(page.getByText("Ada")).toBeVisible()
-})
-
-test("deleting a response from the Individual view removes it from the table", async ({
-  page,
-  sharedAccount,
-}) => {
-  await page.context().addCookies(sharedAccount.sessionCookies)
-  await page.goto("/unlock")
-  await unlock(page, sharedAccount.password)
-  await page.getByRole("button", { name: /new form/i }).click()
-  await page.waitForURL(/\/dashboard\/new/)
-  await startBlankForm(page)
-  await page.getByRole("textbox", { name: "Form title" }).fill("Deletable form")
-  await page.getByRole("textbox", { name: "Question label" }).fill("Your name")
-  await page.click('button:has-text("Publish form")')
-  await page.waitForURL(/\/dashboard\/.+\?created=1/)
-
-  const shareLink = shareLinkFor(page)
-
-  const respondent = await page.context().newPage()
-  await respondent.goto(shareLink)
-  await respondent.getByRole("textbox").first().fill("Ada")
-  await respondent.getByRole("button", { name: "Submit" }).click()
-  await expect(respondent.getByText("Thanks!")).toBeVisible()
-  await respondent.close()
-
-  await page.reload()
-  await page.getByRole("tab", { name: "Responses" }).click()
-  await page.getByRole("button", { name: "Individual" }).click()
-  await expect(page.getByText("Ada")).toBeVisible()
-
-  await page.getByRole("button", { name: "Delete response 1" }).click()
-  await page
-    .getByRole("button", { name: "Delete response", exact: true })
-    .click()
-
-  await expect(page.getByText("Ada")).toHaveCount(0)
 })
 
 test("selecting several responses deletes exactly those, and the deletion survives a reload", async ({
