@@ -16,6 +16,7 @@ import { useAppT } from "@/lib/app-i18n"
 import { clearPersistedAccountKey } from "@/lib/device-key"
 import { useEnsureUnlocked } from "@/hooks/use-ensure-unlocked"
 import { AppHeader } from "@/components/app-header"
+import { FullPageSpinner } from "@/components/spinner"
 import { PasskeyPanel } from "@/components/settings/passkey-panel"
 import { PlanPanel } from "@/components/settings/plan-panel"
 import { RecoveryCodePanel } from "@/components/settings/recovery-code-panel"
@@ -40,6 +41,7 @@ export default function AccountSettingsPage() {
   const email = useAuthStore((s) => s.email)
   const userId = useAuthStore((s) => s.userId)
   const clear = useAuthStore((s) => s.clear)
+  const signedOut = useAuthStore((s) => s.signedOut)
   const [signingOut, setSigningOut] = useState(false)
   const [totpEnabled, setTotpEnabled] = useState<boolean | null>(null)
 
@@ -57,6 +59,11 @@ export default function AccountSettingsPage() {
       cancelled = true
     }
   }, [])
+
+  // The recovery code and TOTP panels keep a code they have just shown in
+  // their own state. Unmounting them here, as sign-out clears the session,
+  // takes that code out of the document before the browser leaves it.
+  if (signedOut) return <FullPageSpinner />
 
   async function handleSignOutEverywhere() {
     setSigningOut(true)
