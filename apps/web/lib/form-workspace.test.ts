@@ -150,7 +150,7 @@ describe("loadFormWorkspace", () => {
       { id: "r1", answers: { q1: "an answer" } },
       { id: "r2", answers: { q1: "an answer" } },
     ])
-    expect(workspace.unreadableResponses).toBe(0)
+    expect(workspace.unreadableResponseIds).toEqual([])
   })
 
   it("follows the response cursor until the last page", async () => {
@@ -190,7 +190,7 @@ describe("loadFormWorkspace", () => {
     const workspace = await loadFormWorkspace("form-1", "account-key", sharing)
 
     expect(workspace.responses.map((r) => r.id)).toEqual(["r1", "r3"])
-    expect(workspace.unreadableResponses).toBe(1)
+    expect(workspace.unreadableResponseIds).toEqual(["r2"])
     expect(workspace.title).toBe("My form")
   })
 
@@ -201,7 +201,43 @@ describe("loadFormWorkspace", () => {
     const workspace = await loadFormWorkspace("form-1", "account-key", sharing)
 
     expect(workspace.responses).toEqual([])
-    expect(workspace.unreadableResponses).toBe(1)
+    expect(workspace.unreadableResponseIds).toEqual(["r1"])
+  })
+
+  it("refuses decrypted plaintext that is not a set of answers", async () => {
+    // Anyone with the link can seal any JSON. Each of these used to reach the
+    // response summary or table and throw while rendering.
+    const plaintexts: Record<string, unknown> = {
+      "ct-null": null,
+      "ct-array": ["a"],
+      "ct-number": { q1: 42 },
+      "ct-nested": { q1: [1, 2] },
+      "ct-file": { q1: { attachmentId: "a", filename: 3 } },
+      "ct-ok": { q1: "fine", q2: ["a", "b"] },
+    }
+    mocks.unsealBox.mockImplementation((ciphertext: string) =>
+      JSON.stringify(plaintexts[ciphertext])
+    )
+    respondWith(
+      formWire(),
+      Object.keys(plaintexts).map((ciphertext) => ({
+        id: ciphertext.slice(3),
+        ciphertext,
+      }))
+    )
+
+    const workspace = await loadFormWorkspace("form-1", "account-key", sharing)
+
+    expect(workspace.responses).toEqual([
+      { id: "ok", answers: { q1: "fine", q2: ["a", "b"] } },
+    ])
+    expect(workspace.unreadableResponseIds).toEqual([
+      "null",
+      "array",
+      "number",
+      "nested",
+      "file",
+    ])
   })
 
   it("reports a membership whose keys are not provisioned as not ready", async () => {

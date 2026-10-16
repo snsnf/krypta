@@ -12,7 +12,7 @@ import {
   type Question,
 } from "@krypta/crypto"
 import type { AccountSharingMaterial } from "./account-sharing-key"
-import type { AnswerValue } from "./form-answers"
+import { parseAnswers, type AnswerValue } from "./form-answers"
 import { apiFetch } from "./api"
 import { openMemberGrant } from "./form-grants"
 import { FormKeyMismatchError } from "./load-public-form"
@@ -68,23 +68,25 @@ interface FormWorkspace {
   hasHeaderImage: boolean
   responses: WorkspaceResponse[]
   /**
-   * How many responses did not decrypt and are therefore not in `responses`.
+   * The responses that did not decrypt, or decrypted to something that is not
+   * a set of answers, and are therefore not in `responses`.
    *
-   * Nearly always 0. It exists because the alternative shapes are both worse:
-   * letting one bad response throw loses the entire workspace, which is what
-   * this code used to do, and dropping them silently would hide a response
-   * the owner has been sent. The dashboard list already degrades a single
-   * unreadable form rather than failing the whole list; this is the same
-   * choice one level down.
+   * Nearly always empty. It exists because the alternative shapes are both
+   * worse: letting one bad response throw loses the entire workspace, which
+   * is what this code used to do, and dropping them silently would hide a
+   * response the owner has been sent. The dashboard list already degrades a
+   * single unreadable form rather than failing the whole list; this is the
+   * same choice one level down. Ids rather than a count, so a member can
+   * still delete them.
    */
-  unreadableResponses: number
+  unreadableResponseIds: string[]
   /** Null when the form is not a quiz, or its key could not be opened. */
   answerKey: AnswerKey | null
 }
 
 export type FormDefinition = Omit<
   FormWorkspace,
-  "responses" | "unreadableResponses"
+  "responses" | "unreadableResponseIds"
 >
 
 interface FormWire {
@@ -210,22 +212,25 @@ export async function loadFormWorkspace(
   } while (cursor !== null)
 
   const responses: WorkspaceResponse[] = []
-  let unreadableResponses = 0
+  const unreadableResponseIds: string[] = []
   for (const raw of rawResponses) {
+    // Contained per response on purpose. One corrupt or unopenable blob used
+    // to take the whole workspace down with it, so a form with a hundred good
+    // responses became unreadable because of one bad one. The shape is checked
+    // here too: anyone with the link can seal any JSON, and a `null` or a
+    // number where an answer belongs used to reach the summary and the table,
+    // which threw while rendering and left the response tab unusable.
+    let answers: Record<string, AnswerValue> | null = null
     try {
-      responses.push({
-        id: raw.id,
-        answers: JSON.parse(
-          unsealBox(raw.ciphertext, formPrivateKey)
-        ) as Record<string, AnswerValue>,
-      })
+      answers = parseAnswers(
+        JSON.parse(unsealBox(raw.ciphertext, formPrivateKey))
+      )
     } catch {
-      // Contained per response on purpose. One corrupt or unopenable blob used
-      // to take the whole workspace down with it, so a form with a hundred
-      // good responses became unreadable because of one bad one.
-      unreadableResponses += 1
+      answers = null
     }
+    if (answers === null) unreadableResponseIds.push(raw.id)
+    else responses.push({ id: raw.id, answers })
   }
 
-  return { ...definition, responses, unreadableResponses }
+  return { ...definition, responses, unreadableResponseIds }
 }

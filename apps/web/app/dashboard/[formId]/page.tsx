@@ -176,7 +176,7 @@ export default function FormDetailPage() {
     {}
   )
   const [deleteTargets, setDeleteTargets] = useState<ResponseRow[] | null>(null)
-  const [unreadableResponses, setUnreadableResponses] = useState(0)
+  const [unreadableIds, setUnreadableIds] = useState<string[]>([])
   const quiz = useQuizGrades(
     formId,
     formPrivateKey,
@@ -256,7 +256,7 @@ export default function FormDetailPage() {
         setMaxResponses(workspace.maxResponses)
         setNotifyOnResponse(workspace.notifyOnResponse)
         setResponses(workspace.responses)
-        setUnreadableResponses(workspace.unreadableResponses)
+        setUnreadableIds(workspace.unreadableResponseIds)
         setError(null)
       } catch (cause) {
         if (!isCurrentLoad()) return
@@ -555,8 +555,10 @@ export default function FormDetailPage() {
   // Rows leave the table at once and only the failures come back.
   async function handleDeleteResponses(targets: ResponseRow[]) {
     const previous = responses
+    const previousUnreadable = unreadableIds
     const targetIds = new Set(targets.map((r) => r.id))
     setResponses((current) => current.filter((r) => !targetIds.has(r.id)))
+    setUnreadableIds((current) => current.filter((id) => !targetIds.has(id)))
     setSelectedIds((current) => withoutIds(current, targetIds))
     setDeletingResponses(true)
 
@@ -579,6 +581,7 @@ export default function FormDetailPage() {
     if (failed > 0) {
       const gone = new Set(deleted)
       setResponses(previous.filter((r) => !gone.has(r.id)))
+      setUnreadableIds(previousUnreadable.filter((id) => !gone.has(id)))
       toast.add({
         title: t("formPage.deleteResponseFailed", { count: failed }),
         description: t("common.genericError"),
@@ -937,10 +940,32 @@ export default function FormDetailPage() {
                     })
                   : t("formPage.responseCount", { count: responses.length })}
               </h2>
-              {unreadableResponses > 0 && (
-                <p className="mb-4 text-sm text-destructive">
-                  {t("formPage.unreadable", { count: unreadableResponses })}
-                </p>
+              {unreadableIds.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="text-sm text-destructive">
+                    {t("formPage.unreadable", { count: unreadableIds.length })}
+                  </p>
+                  {canEdit && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={deletingResponses}
+                      onClick={() =>
+                        // Nothing in them could be read, so there are no
+                        // answers to carry; the server releases their files
+                        // by its own record of which response owns each one.
+                        setDeleteTargets(
+                          unreadableIds.map((id) => ({ id, answers: {} }))
+                        )
+                      }
+                    >
+                      {t("formPage.deleteUnreadable", {
+                        count: unreadableIds.length,
+                      })}
+                    </Button>
+                  )}
+                </div>
               )}
               {quizOn && quiz.unreadable && (
                 <p className="mb-4 text-xs text-destructive">

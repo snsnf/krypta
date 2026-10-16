@@ -33,6 +33,45 @@ export function isFileAnswer(
 }
 
 /**
+ * Whether an untrusted value has the shape of an answer.
+ *
+ * A response is sealed in the respondent's browser, so anyone holding the form
+ * link can seal any JSON at all. The TypeScript type is therefore a claim, not
+ * a fact, until this has checked it.
+ */
+export function isAnswerValue(value: unknown): value is AnswerValue {
+  if (typeof value === "string") return true
+  if (Array.isArray(value)) return value.every((v) => typeof v === "string")
+  if (typeof value !== "object" || value === null) return false
+  const file = value as Record<string, unknown>
+  return (
+    typeof file.attachmentId === "string" &&
+    typeof file.filename === "string" &&
+    typeof file.mimeType === "string" &&
+    typeof file.size === "number"
+  )
+}
+
+/**
+ * A decrypted response's answers, or null when the plaintext is not an object
+ * of answers. All or nothing: a response with one malformed answer is refused
+ * whole rather than shown with a gap the member cannot see.
+ */
+export function parseAnswers(
+  value: unknown
+): Record<string, AnswerValue> | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return null
+  }
+  const answers: Record<string, AnswerValue> = {}
+  for (const [id, answer] of Object.entries(value)) {
+    if (!isAnswerValue(answer)) return null
+    answers[id] = answer
+  }
+  return answers
+}
+
+/**
  * An answer as a response table cell or CSV field shows it: a file by its
  * name, and a written-in Other answer as what the respondent wrote. The raw
  * value of an Other answer carries a U+0000 marker, and joining raw values
