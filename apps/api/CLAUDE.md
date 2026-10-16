@@ -1128,7 +1128,19 @@ proxy by container name instead (`TRUSTED_PROXY_HOSTS`, resolved through
 Docker's DNS every fifteen seconds). A name counts only while it resolves
 to one address per family: when another container claims it the resolver
 keeps the last unambiguous address, because anything else would let a
-neighbour make itself trusted by naming itself after the proxy.
+neighbour make itself trusted by naming itself after the proxy. The Dokploy
+file does not pass `TRUSTED_PROXY_CIDRS` through at all: an earlier version
+told operators to set it to the proxy subnet, and passing it on would keep
+that subnet trusted on every installation that once did.
+
+**A limit counts a source, and an IPv6 source is its /64.** `ClientIp` hands
+handlers `rate_limit_source` of the resolved address, never the full IPv6
+address: a host is normally routed a whole /64 and can use a fresh address
+per request, so keyed on the address one machine held 2^64 budgets, login
+guesses against one account included. A mapped IPv4 address is unwrapped
+first, or a dual-stack listener would put every IPv4 client in one bucket.
+Do not key a limit on `ConnectInfo` or the resolved address to "get the
+real one back".
 
 ## Quizzes
 
