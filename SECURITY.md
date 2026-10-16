@@ -216,6 +216,10 @@ fixed; the rest are defaults an operator can change:
 | Header image download | 600 per minute per source per form |
 | Editing a submitted response | 10 per minute per source per form |
 
+"Per source" and "per IP" count an IPv4 address as one source and an IPv6
+address by its /64, since an IPv6 host is normally given a whole /64 and could
+otherwise use a fresh address, and get a fresh budget, for every request.
+
 Six-digit codes are additionally single-use and consumed on any attempt, and a
 wrong TOTP code forces the password step again rather than allowing repeated
 guesses.

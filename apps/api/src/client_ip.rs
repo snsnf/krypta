@@ -28,6 +28,11 @@ use crate::{error::ApiError, state::AppState};
  * have it survive a proxy that appends rather than overwrites. With no trusted
  * proxies configured, the peer address is the answer and the header is inert,
  * which is the correct state for local development and the integration suites.
+ *
+ * What the limits count is a source, not an address. An IPv4 address is one
+ * source. An IPv6 host is normally handed a whole /64 and can pick any address
+ * in it per request, so keyed on the full address one machine held 2^64
+ * budgets; it is keyed on its /64 instead. See `rate_limit_source`.
  */
 pub struct ClientIp(pub IpAddr);
 
@@ -48,12 +53,26 @@ impl FromRequestParts<AppState> for ClientIp {
             .headers
             .get("x-forwarded-for")
             .and_then(|value| value.to_str().ok());
-        Ok(ClientIp(resolve_client_ip(
+        Ok(ClientIp(rate_limit_source(resolve_client_ip(
             peer,
             forwarded_for,
             &state.config.trusted_proxy_cidrs,
             &state.trusted_proxy_addresses.snapshot(),
-        )))
+        ))))
+    }
+}
+
+/// The source a client address is counted as: an IPv4 address as itself, an
+/// IPv6 address as its /64. An IPv4 address carried inside IPv6 (`::ffff:a.b.c.d`,
+/// as a dual-stack listener reports one) is unwrapped first, or every IPv4
+/// client would share the one /64 those all fall in.
+pub fn rate_limit_source(ip: IpAddr) -> IpAddr {
+    match ip.to_canonical() {
+        IpAddr::V4(v4) => IpAddr::V4(v4),
+        IpAddr::V6(v6) => {
+            let prefix = u128::from(v6) & !((1u128 << 64) - 1);
+            IpAddr::V6(prefix.into())
+        }
     }
 }
 
@@ -227,6 +246,29 @@ mod tests {
 
     fn trusted() -> Vec<IpNet> {
         parse_trusted_proxies("172.28.0.0/24, 10.0.0.5").unwrap()
+    }
+
+    #[test]
+    fn an_ipv6_source_is_its_64_and_an_ipv4_source_is_itself() {
+        assert_eq!(
+            rate_limit_source(ip("2001:db8:1:2:aaaa:bbbb:cccc:dddd")),
+            ip("2001:db8:1:2::")
+        );
+        assert_eq!(
+            rate_limit_source(ip("2001:db8:1:2::1")),
+            rate_limit_source(ip("2001:db8:1:2:ffff:ffff:ffff:ffff")),
+            "every address in one /64 is one source"
+        );
+        assert_ne!(
+            rate_limit_source(ip("2001:db8:1:2::1")),
+            rate_limit_source(ip("2001:db8:1:3::1"))
+        );
+        assert_eq!(rate_limit_source(ip("203.0.113.9")), ip("203.0.113.9"));
+        assert_eq!(
+            rate_limit_source(ip("::ffff:203.0.113.9")),
+            ip("203.0.113.9"),
+            "a mapped IPv4 address must not collapse into one shared /64"
+        );
     }
 
     #[test]
