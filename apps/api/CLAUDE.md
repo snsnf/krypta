@@ -651,6 +651,25 @@ let a free account collect its 250, export them, delete them, and collect 250
 more, indefinitely: the limit would be decorative rather than a real cap on
 volume.
 
+**Two consequences of this metering are accepted, not overlooked.** Security
+audits have reported both; neither is to be "fixed" without a deliberate
+design change.
+
+- *One form can spend the whole account allowance.* The allowance is per
+  account with no form dimension, so anyone holding one public link can submit
+  until the owner's monthly total is gone, and every other form that owner has
+  then reads closed until the UTC month changes. The per-source and per-form
+  rate limits slow this; nothing stops it. Splitting the allowance per form
+  would make the plan a set of limits an owner has to manage rather than one
+  number, which is the trade declined here. The 80% warning mail is the
+  owner's signal.
+- *Response bytes are not metered.* The allowance counts rows, and each row
+  may hold up to the 512 KiB body limit. On an instance with no Stripe and no
+  `default_max_responses_per_period` there is no allowance at all, so
+  anonymous respondents can grow the database for as long as the rate limits
+  admit them. That is the pre-billing behaviour migration `0024` restored on
+  purpose; an operator who wants a bound sets the instance default.
+
 **Nothing is ever deleted on downgrade, whether from a failed payment or a
 cancellation.** `handle_invoice_payment_failed` only moves `status` to
 `past_due`; `plan_id` is left alone until Stripe reports the subscription
