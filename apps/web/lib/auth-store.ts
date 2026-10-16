@@ -66,6 +66,15 @@ interface AuthState {
   instanceAdmin: boolean | null
   totpEnabled: boolean | null
   totpVerified: boolean | null
+  /**
+   * True once this document has signed out. Distinct from `userId === null`,
+   * which is also the state before a fresh page has restored its session, so a
+   * page holding something it showed once (a new recovery code, TOTP backup
+   * codes) can drop it the moment sign-out begins, before the navigation that
+   * follows, rather than leaving it in a document the back/forward cache may
+   * keep.
+   */
+  signedOut: boolean
   setSession: (session: {
     userId: string
     email?: string
@@ -91,11 +100,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   instanceAdmin: null,
   totpEnabled: null,
   totpVerified: null,
+  signedOut: false,
   setSession: (session) =>
     set((state) => {
       const userChanged = state.userId !== session.userId
       if (userChanged) clearEphemeralAuthMaterial()
       return {
+        signedOut: false,
         userId: session.userId,
         email: session.email ?? null,
         accountKey: userChanged ? null : state.accountKey,
@@ -130,6 +141,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       instanceAdmin: null,
       totpEnabled: null,
       totpVerified: null,
+      signedOut: true,
     })
   },
 }))
