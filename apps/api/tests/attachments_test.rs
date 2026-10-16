@@ -1079,3 +1079,126 @@ async fn a_submitted_response_claims_the_uploads_it_references() {
 
     purge_form(&db, uuid::Uuid::parse_str(&form_id).unwrap()).await;
 }
+
+#[tokio::test]
+async fn a_response_releases_the_files_an_edit_drops_and_its_own_on_delete() {
+    let _guard = suite_lock().await;
+    let base =
+        std::env::var("TEST_API_BASE").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    let db = test_db().await;
+    let (owner, _) = register_and_login_fresh(&base).await;
+    let form_id = create_form(&owner, &base).await;
+    let version = current_version(&owner, &base, &form_id).await;
+    let enabled = owner
+        .patch(format!("{base}/api/v1/forms/{form_id}"))
+        .json(&json!({ "allow_response_editing": true, "expected_version": version }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(enabled.status(), 200);
+
+    let anonymous = Client::new();
+    let mut ids = Vec::new();
+    for _ in 0..4 {
+        let uploaded: serde_json::Value = anonymous
+            .post(format!("{base}/api/v1/forms/{form_id}/attachments"))
+            .header("Content-Type", "application/octet-stream")
+            .body(vec![1_u8, 2, 3])
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        ids.push(
+            uuid::Uuid::parse_str(uploaded["data"]["attachment_id"].as_str().unwrap()).unwrap(),
+        );
+    }
+    let [a, b, c, other] = [ids[0], ids[1], ids[2], ids[3]];
+
+    let submit = |files: Vec<uuid::Uuid>| {
+        let anonymous = anonymous.clone();
+        let url = format!("{base}/api/v1/forms/{form_id}/responses");
+        async move {
+            let body: serde_json::Value = anonymous
+                .post(url)
+                .json(&json!({ "ciphertext": "sealed", "attachment_ids": files }))
+                .send()
+                .await
+                .unwrap()
+                .json()
+                .await
+                .unwrap();
+            (
+                body["data"]["id"].as_str().unwrap().to_string(),
+                body["data"]["edit_token"].as_str().unwrap().to_string(),
+            )
+        }
+    };
+    let edit = |token: String, files: Vec<uuid::Uuid>| {
+        let anonymous = anonymous.clone();
+        let url = format!("{base}/api/v1/forms/{form_id}/responses/edit");
+        async move {
+            let res = anonymous
+                .patch(url)
+                .header("X-Response-Token", token)
+                .json(&json!({ "ciphertext": "sealed-edit", "attachment_ids": files }))
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(res.status(), 200);
+        }
+    };
+    let live = |id: uuid::Uuid| {
+        let db = db.clone();
+        async move {
+            // Live means the reaper has not been told to remove it: still ready.
+            sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS (SELECT 1 FROM attachments
+                                WHERE id = $1 AND upload_state = 'ready')",
+            )
+            .bind(id)
+            .fetch_one(&db)
+            .await
+            .unwrap()
+        }
+    };
+
+    let (response, token) = submit(vec![a, b]).await;
+    let (_, _) = submit(vec![other]).await;
+
+    // Replacing a with c releases a; b, kept, and c, added, stay.
+    edit(token.clone(), vec![b, c]).await;
+    assert!(!live(a).await, "a file the edit dropped must be released");
+    assert!(live(b).await);
+    assert!(live(c).await);
+
+    // Naming another response's file neither adopts it nor, on the next edit
+    // that leaves it out, releases it: only this response's own files go.
+    edit(token.clone(), vec![b, c, other]).await;
+    edit(token, vec![b]).await;
+    assert!(!live(c).await);
+    assert!(
+        live(other).await,
+        "an edit must never release another response's file"
+    );
+
+    // Deleting releases the response's files from the server's own record,
+    // even when the member's browser lists none.
+    let deleted = owner
+        .delete(format!(
+            "{base}/api/v1/forms/{form_id}/responses/{response}"
+        ))
+        .json(&json!({ "attachment_ids": [] }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(deleted.status(), 200);
+    assert!(
+        !live(b).await,
+        "a deleted response's files must be released"
+    );
+    assert!(live(other).await);
+
+    purge_form(&db, uuid::Uuid::parse_str(&form_id).unwrap()).await;
+}

@@ -207,17 +207,23 @@ pub(crate) async fn mark_deleted_by_owner(
     Ok(transitioned)
 }
 
-/// Marks finished uploads as referenced, so the reaper leaves them alone.
+/// Marks finished uploads as referenced, so the reaper leaves them alone, and
+/// records the response they belong to (`None` for a header image).
 ///
 /// The server cannot see which files a response names, because that link is
-/// inside the ciphertext, so the client sends the ids alongside it, exactly as
-/// response deletion already does. An id that names nothing claimable on this
-/// form is ignored rather than rejected: the worst a wrong id can do is keep
-/// an upload alive that would otherwise have been reclaimed, and failing the
-/// submission over it would lose the respondent's answers instead.
+/// inside the ciphertext, so the client sends the ids alongside it. An id that
+/// names nothing claimable on this form is ignored rather than rejected: the
+/// worst a wrong id can do is keep an upload alive that would otherwise have
+/// been reclaimed, and failing the submission over it would lose the
+/// respondent's answers instead.
+///
+/// Only unclaimed uploads are taken, so a response can never adopt a file
+/// already belonging to another response or to the header, and therefore
+/// `release_response_attachments` can never reach one.
 pub(crate) async fn claim_attachments(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     form_id: Uuid,
+    response_id: Option<Uuid>,
     attachment_ids: &[Uuid],
 ) -> sqlx::Result<()> {
     if attachment_ids.is_empty() {
@@ -225,13 +231,45 @@ pub(crate) async fn claim_attachments(
     }
     sqlx::query!(
         "UPDATE attachments
-         SET claimed_at = now()
+         SET claimed_at = now(), response_id = $3
          WHERE form_id = $1
            AND id = ANY($2)
            AND upload_state = 'ready'
            AND claimed_at IS NULL",
         form_id,
         attachment_ids,
+        response_id,
+    )
+    .execute(&mut **transaction)
+    .await?;
+    Ok(())
+}
+
+/// Moves every upload claimed by `response_id` to `cleanup_pending`, except
+/// those in `keep`, so the reaper deletes the objects and returns the form's
+/// slots and the owner's bytes.
+///
+/// An edit passes the files the edited response still lists, releasing the
+/// ones it dropped; deletion passes nothing. Keyed on the response the server
+/// recorded at claim time, never on ids the client sends, so an edit-token
+/// holder can release only their own response's files. Runs inside the
+/// caller's transaction, which already holds the form lock.
+pub(crate) async fn release_response_attachments(
+    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    form_id: Uuid,
+    response_id: Uuid,
+    keep: &[Uuid],
+) -> sqlx::Result<()> {
+    sqlx::query!(
+        "UPDATE attachments
+         SET upload_state = 'cleanup_pending', lifecycle_updated_at = now()
+         WHERE form_id = $1
+           AND response_id = $2
+           AND upload_state <> 'cleanup_pending'
+           AND NOT (id = ANY($3))",
+        form_id,
+        response_id,
+        keep,
     )
     .execute(&mut **transaction)
     .await?;
@@ -573,7 +611,7 @@ mod tests {
         .unwrap();
         backdate_completion(&db, claimed_id, UNCLAIMED_ATTACHMENT_TTL_SECONDS + 60).await;
         let mut transaction = db.begin().await.unwrap();
-        claim_attachments(&mut transaction, form_id, &[claimed_id])
+        claim_attachments(&mut transaction, form_id, None, &[claimed_id])
             .await
             .unwrap();
         transaction.commit().await.unwrap();

@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE responses SET ciphertext = $1, updated_at = now()\n         WHERE form_id = $2 AND edit_token_hash = $3\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e8a04bce3a670b039397d68ffd662e6e8d4b834a1eb35acf7cc186b4fc99ce33"
+}

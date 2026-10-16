@@ -525,9 +525,14 @@ pub async fn update_form(
                 .map_err(ApiError::Internal)?;
         }
         if let Some(header_id) = row.header_attachment_id {
-            crate::attachments::cleanup::claim_attachments(&mut transaction, id, &[header_id])
-                .await
-                .map_err(|error| ApiError::Internal(error.into()))?;
+            crate::attachments::cleanup::claim_attachments(
+                &mut transaction,
+                id,
+                None,
+                &[header_id],
+            )
+            .await
+            .map_err(|error| ApiError::Internal(error.into()))?;
         }
     }
 
@@ -919,9 +924,14 @@ pub async fn submit_response(
     .await
     .map_err(|error| ApiError::Internal(error.into()))?;
 
-    crate::attachments::cleanup::claim_attachments(&mut transaction, form_id, &body.attachment_ids)
-        .await
-        .map_err(|error| ApiError::Internal(error.into()))?;
+    crate::attachments::cleanup::claim_attachments(
+        &mut transaction,
+        form_id,
+        Some(response_id),
+        &body.attachment_ids,
+    )
+    .await
+    .map_err(|error| ApiError::Internal(error.into()))?;
 
     // In the same transaction as the insert above: a rolled-back submission
     // must not burn allowance, and a committed one must always count.
@@ -1070,9 +1080,11 @@ pub async fn list_responses(
 pub struct DeleteResponseBody {
     /// Attachment ids the response referenced.
     ///
-    /// The server cannot derive these: the link from a response to its files
-    /// lives inside the encrypted ciphertext, which the API has no key for. The
-    /// browser decrypted the response to display it and supplies them here.
+    /// Needed only for files claimed before migration `0034`, which recorded
+    /// no response: for those the link from a response to its files lives
+    /// inside the encrypted ciphertext, which the API has no key for, so the
+    /// browser decrypted the response and supplies them here. Files claimed
+    /// since are released from `attachments.response_id` whatever this says.
     ///
     /// An empty list is accepted and cannot be validated: the server cannot
     /// distinguish a response with no files from a client that forgot to send
@@ -1126,6 +1138,18 @@ pub async fn delete_response(
         .ok_or(ApiError::NotFound)?
         .require_edit()?;
 
+    // Before the delete, whose ON DELETE SET NULL would otherwise detach the
+    // files from the response. Rolled back with everything else if the
+    // response turns out not to exist.
+    crate::attachments::cleanup::release_response_attachments(
+        &mut transaction,
+        form_id,
+        response_id,
+        &[],
+    )
+    .await
+    .map_err(|error| ApiError::Internal(error.into()))?;
+
     // Keyed on form_id too, so a response id belonging to another form cannot
     // be deleted through this form's path.
     let deleted = sqlx::query_scalar!(
@@ -1140,8 +1164,9 @@ pub async fn delete_response(
         return Err(ApiError::NotFound);
     }
 
-    // These ids come from the decrypted response, so a respondent wrote them.
-    // One that names nothing on this form (made up, another form's, already
+    // Files claimed before migration `0034` recorded no response, so these
+    // ids, read from the decrypted response, are the only way to reach them.
+    // A respondent wrote them. One that names nothing on this form (made up, another form's, already
     // cleaned up, or listed twice) is skipped rather than refused: refusing
     // rolled the whole deletion back, so a respondent could plant a response
     // no member could ever delete. Form-scoped all the same, so a skipped id
@@ -1167,8 +1192,9 @@ pub async fn delete_response(
 #[derive(Deserialize)]
 pub struct UpdateResponseBody {
     ciphertext: String,
-    /// Files the edited response references, including any added in this
-    /// edit. Same purpose as on submission.
+    /// Every file the edited response references, including any added in
+    /// this edit. A file this response held that is missing here is
+    /// released, so the list must be the complete set, as on submission.
     #[serde(default)]
     attachment_ids: Vec<Uuid>,
 }
@@ -1252,26 +1278,40 @@ pub async fn update_response(
     // This edits a response already counted at submission time, so metering
     // it again would double count, and a limit that filled up since then
     // must not block editing a response it already admitted.
-    let result = sqlx::query!(
+    let response_id = sqlx::query_scalar!(
         "UPDATE responses SET ciphertext = $1, updated_at = now()
-         WHERE form_id = $2 AND edit_token_hash = $3",
+         WHERE form_id = $2 AND edit_token_hash = $3
+         RETURNING id",
         body.ciphertext,
         form_id,
         token_hash,
     )
-    .execute(&mut *transaction)
+    .fetch_optional(&mut *transaction)
     .await
-    .map_err(|e| ApiError::Internal(e.into()))?;
-
-    if result.rows_affected() == 0 {
-        return Err(ApiError::NotFound);
-    }
+    .map_err(|e| ApiError::Internal(e.into()))?
+    .ok_or(ApiError::NotFound)?;
 
     // Only after the token has proved this caller holds a response on this
-    // form, so an unauthenticated request cannot claim anything.
-    crate::attachments::cleanup::claim_attachments(&mut transaction, form_id, &body.attachment_ids)
-        .await
-        .map_err(|error| ApiError::Internal(error.into()))?;
+    // form, so an unauthenticated request cannot claim or release anything.
+    // The list is the edited response's complete set of files, so a file of
+    // this response missing from it was replaced or removed, and is released
+    // rather than holding the form's slot until the response is deleted.
+    crate::attachments::cleanup::release_response_attachments(
+        &mut transaction,
+        form_id,
+        response_id,
+        &body.attachment_ids,
+    )
+    .await
+    .map_err(|error| ApiError::Internal(error.into()))?;
+    crate::attachments::cleanup::claim_attachments(
+        &mut transaction,
+        form_id,
+        Some(response_id),
+        &body.attachment_ids,
+    )
+    .await
+    .map_err(|error| ApiError::Internal(error.into()))?;
     transaction
         .commit()
         .await

@@ -239,11 +239,12 @@ just above the per-file cap. Accounts have their own storage quota on top.
 An upload that no submission or header has claimed is reclaimed 31 days after
 it finished, one day past the lifetime of the respondent's saved draft, so an
 abandoned upload stops holding the form's slots and the owner's quota. A
-header image is released as soon as it is replaced or removed, and a deleted
-response's files with it. One gap remains: a submission lists its uploads
-beside the sealed answers, and the server cannot read the answers to check
-that list, so an upload listed there but not named in the answers stays until
-its response or the form is deleted. A
+header image is released as soon as it is replaced or removed. A submission
+lists its uploads beside the sealed answers, and the server records which
+response each one belongs to: an edit releases the files it no longer lists,
+and deleting a response releases all of its files. The server cannot read the
+answers, so it cannot check that a listed file is actually named in them; a
+listed file counts as that response's file. A
 response submission or edit is capped at 512 KiB.
 Stored objects are named by identifier, never by the uploaded filename: the
 name a respondent chose is part of the encrypted payload and never reaches the

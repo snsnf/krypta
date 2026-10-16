@@ -325,7 +325,12 @@ A header is claimed when it is set, so the reaper leaves it alone, and
 `update_form` releases the previous one (to `cleanup_pending`) when an edit
 replaces or clears it. A claim is never cleared, so without that release
 every header change held one of the form's twenty slots for good. Only the
-id the subquery accepted is claimed, never the requested one.
+id the subquery accepted is claimed, never the requested one. A header is
+claimed with no response; a response's files record theirs in
+`attachments.response_id` (migration `0034`), which is how an edit releases
+the files it dropped and a deletion releases the rest. Releasing goes by that
+column, never by ids the client sends, and a claim only ever takes an
+unclaimed upload, so no response can adopt, and then release, another's file.
 
 The theme carries no image reference at all. The form row owns it, so there is
 one source of truth rather than two that can disagree, and `FormTheme` no
