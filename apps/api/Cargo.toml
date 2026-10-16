@@ -95,7 +95,7 @@ async-stripe-shared = "=1.0.0-rc.8"
 # `ring` provider explicitly (matching `rustls-ring`) before that happens.
 # This dependency exists only to call that one function; it adds no new code
 # to the build, since `ring` is already unified in from `async-stripe`.
-rustls = { version = "=0.23.45", default-features = false, features = [
+rustls = { version = "=0.23.46", default-features = false, features = [
     "ring",
 ] }
 

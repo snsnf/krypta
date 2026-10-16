@@ -311,6 +311,11 @@ async fn login_with_totp(client: &Client, base_url: &str, email: &str, totp: &To
         .unwrap();
 
     let pending_token = login["data"]["pending_token"].as_str().unwrap();
+    // The code step is capped at ten a minute per address, and every login in
+    // this suite comes from 127.0.0.1. With no TOTP step to wait out between
+    // logins any more, the suite outran that cap, so it is cleared here the way
+    // `register` clears the signup limit. totp_test covers the cap itself.
+    clear_rate_limit_key("totp:127.0.0.1").await;
     let verify = client
         .post(format!("{base_url}/api/v1/auth/2fa/verify"))
         .json(&json!({
@@ -1596,6 +1601,7 @@ async fn lifecycle_suspend_and_reactivate_invalidates_stale_pending_totp_login_b
         .unwrap();
     assert_eq!(reactivate.status(), 200);
 
+    clear_rate_limit_key("totp:127.0.0.1").await;
     let stale_verify = stale_login_client
         .post(format!("{}/api/v1/auth/2fa/verify", api.base_url))
         .json(&json!({
@@ -1634,6 +1640,7 @@ async fn lifecycle_suspend_and_reactivate_invalidates_stale_pending_totp_login_b
         .unwrap()
         .to_string();
 
+    clear_rate_limit_key("totp:127.0.0.1").await;
     let fresh_verify = fresh_login_client
         .post(format!("{}/api/v1/auth/2fa/verify", api.base_url))
         .json(&json!({
