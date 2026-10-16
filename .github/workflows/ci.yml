@@ -76,16 +76,23 @@ jobs:
       - run: ./scripts/ci.sh images
 
   # The Rust suites and Playwright share nothing but the stack, so each half
-  # gets its own runner and stack, and the run takes as long as the slower one
-  # instead of both back to back.
+  # gets its own runner and stack, and the run takes as long as the slowest
+  # job instead of everything back to back. Playwright is the slowest half and
+  # runs one test at a time, so it is split by file into three shards, each on
+  # a runner and stack of its own: no shard shares a database, a rate limit or
+  # a registration budget with another.
   integration:
-    name: Integration (${{ matrix.suite }})
+    name: Integration (${{ matrix.label }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        suite: [api, e2e]
+        include:
+          - { suite: api, label: api }
+          - { suite: e2e, shard: 1/3, label: e2e 1 of 3 }
+          - { suite: e2e, shard: 2/3, label: e2e 2 of 3 }
+          - { suite: e2e, shard: 3/3, label: e2e 3 of 3 }
     env:
       # The API compiles here before its database is migrated, so SQLx must
       # read the committed .sqlx metadata rather than query the empty database.
@@ -145,15 +152,24 @@ jobs:
           cat /tmp/krypta-api.log >&2
           exit 1
 
+      # A production build, not `next dev`: the dev server compiles each route
+      # the first time a test opens it and runs React's development checks,
+      # which cost the suite minutes, and it serves a policy with the dev-only
+      # 'unsafe-eval' that no deployment sends. Built in its own step so a
+      # compile error reads as one rather than as a server that never came up.
+      - name: Build the web app
+        if: matrix.suite == 'e2e'
+        working-directory: apps/web
+        run: bun run build
+
       # Output goes to a file rather than the step log, because a background
-      # process's output is lost once its step ends, and that is where next dev
-      # reports each route it compiles and how long it took. The file is
-      # uploaded below whenever the job fails.
+      # process's output is lost once its step ends. The file is uploaded below
+      # whenever the job fails.
       - name: Start the web app
         if: matrix.suite == 'e2e'
         working-directory: apps/web
         run: |
-          bun run dev >/tmp/krypta-web.log 2>&1 &
+          bun run start >/tmp/krypta-web.log 2>&1 &
           for _ in $(seq 1 60); do
             curl -sf -o /dev/null http://localhost:3000/ && exit 0
             sleep 2
@@ -163,12 +179,15 @@ jobs:
           exit 1
 
       - run: ./scripts/ci.sh integration-${{ matrix.suite }}
+        env:
+          E2E_SHARD: ${{ matrix.shard }}
 
       - name: Upload Playwright artifacts
         if: failure() && matrix.suite == 'e2e'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: playwright-report
+          # Unique per job: an artifact name can only be uploaded once per run.
+          name: playwright-report-${{ strategy.job-index }}
           path: |
             apps/web/test-results
             apps/web/playwright-report
@@ -183,7 +202,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: server-logs-${{ matrix.suite }}
+          name: server-logs-${{ strategy.job-index }}
           path: /tmp/krypta-*.log
           if-no-files-found: ignore
           retention-days: 7

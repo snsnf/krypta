@@ -462,7 +462,13 @@ e2e_checks() {
   require_suite_env || return
 
   clear_rate_limits
-  run "web: e2e" bash -c "cd '$WEB' && bunx playwright test --reporter=line --workers=1"
+  # E2E_SHARD (for example 2/3) runs one slice of the suite, as each CI shard
+  # does; unset, the whole suite runs, as it always has locally.
+  local shard_args=""
+  if [ -n "${E2E_SHARD:-}" ]; then
+    shard_args="--shard=$E2E_SHARD"
+  fi
+  run "web: e2e${E2E_SHARD:+ (shard $E2E_SHARD)}" bash -c "cd '$WEB' && bunx playwright test --reporter=line --workers=1 $shard_args"
 }
 
 # The images a self-hoster runs. Building is necessary and not sufficient:
