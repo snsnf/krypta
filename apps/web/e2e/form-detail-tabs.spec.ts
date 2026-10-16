@@ -254,12 +254,27 @@ test("selecting several responses deletes exactly those, and the deletion surviv
   }
   await expect(page.getByText("2 responses selected")).toBeVisible()
 
+  // The rows leave the table before the server has answered, and the deletes
+  // go one at a time, so reloading as soon as they vanish can cancel the
+  // second one. Count the answers instead, then reload.
+  let deletesAnswered = 0
+  page.on("response", (response) => {
+    if (
+      response.request().method() === "DELETE" &&
+      /\/responses\/[^/]+$/.test(new URL(response.url()).pathname) &&
+      response.ok()
+    ) {
+      deletesAnswered += 1
+    }
+  })
+
   await page.getByRole("button", { name: "Delete selected" }).click()
   await page.getByRole("button", { name: "Delete 2 responses" }).click()
 
   await expect(page.getByText("Ada")).toHaveCount(0)
   await expect(page.getByText("Linus")).toHaveCount(0)
   await expect(page.getByText("Grace")).toBeVisible()
+  await expect.poll(() => deletesAnswered).toBe(2)
 
   await page.reload()
   await page.getByRole("tab", { name: "Responses" }).click()
