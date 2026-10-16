@@ -82,6 +82,18 @@ Two failure modes look like broken product code but are not: an exhausted
 registration cap (see the root `CLAUDE.md`) and this hydration race. Rule both
 out before investigating the app.
 
+**CI runs the suite against a production build, in three shards.** Locally it
+usually runs against `next dev`, so a test can pass there and fail in CI for
+two reasons. A production page is faster, so a test that reloads or navigates
+the moment the UI changes can cut off a request still in flight: wait for the
+server's answer, not for the optimistic UI (the bulk delete test counts its
+DELETE responses for this reason). And Strict Mode's doubled effects exist
+only in development, so `invitation-acceptance.spec.ts` proves its point only
+in a local run. A shard runs whole files on a stack of its own, so tests may
+not depend on another file having run first. To reproduce CI, build with
+`bun run build`, serve with `bun run start`, and pass the shard to
+`scripts/ci.sh integration-e2e` as `E2E_SHARD=2/3`.
+
 ## The app header has to fit a 375px phone
 
 `e2e/form-appearance.spec.ts` asserts no horizontal overflow at 375px, and
