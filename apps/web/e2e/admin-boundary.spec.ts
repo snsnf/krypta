@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test"
 
-const API_BASE = "http://localhost:8080/api/v1"
+// The same overrides fixtures.ts reads, so this file also runs against an
+// isolated stack on other ports. Unset, these are the ports CI uses.
+const API_BASE =
+  process.env.PLAYWRIGHT_API_BASE ?? "http://localhost:8080/api/v1"
+const WEB_ORIGIN = new URL(
+  process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"
+).origin
 const accountId = "0198e904-aa65-7bd1-a2d2-b734286d8f70"
 const formId = "0198e904-aa65-7bd1-a2d2-b734286d8f71"
 const editorMemberId = "0198e904-aa65-7bd1-a2d2-b734286d8f72"
@@ -10,7 +16,7 @@ function response(data: unknown, status = 200) {
     status,
     contentType: "application/json",
     headers: {
-      "access-control-allow-origin": "http://localhost:3000",
+      "access-control-allow-origin": WEB_ORIGIN,
       "access-control-allow-credentials": "true",
     },
     body: JSON.stringify({
