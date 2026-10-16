@@ -15,4 +15,11 @@ describe("csvCell", () => {
     expect(csvCell('a,"b"')).toBe('"a,""b"""')
     expect(csvCell("=SUM(A1)")).toBe(`"'=SUM(A1)"`)
   })
+
+  it("defuses every leading character a spreadsheet may run", () => {
+    for (const lead of ["=", "+", "-", "@", "\t", "\r"]) {
+      expect(csvCell(`${lead}1+1`)).toBe(`"'${lead}1+1"`)
+    }
+    expect(csvCell("a\t=1")).toBe('"a\t=1"')
+  })
 })

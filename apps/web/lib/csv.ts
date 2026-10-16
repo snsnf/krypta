@@ -1,11 +1,13 @@
 /**
  * One CSV cell. Every value is quoted, quotes are doubled, and a value that a
- * spreadsheet would run as a formula (leading = + - @) is prefixed with a
- * quote so opening an export cannot execute a respondent's text.
+ * spreadsheet would run as a formula is prefixed with a quote so opening an
+ * export cannot execute a respondent's text. The leading characters are
+ * OWASP's list: = + - @, and the tab and carriage return a spreadsheet may
+ * strip on import before reading what follows as a formula.
  */
 export function csvCell(value: string): string {
   let v = value
-  if (/^[=+\-@]/.test(v)) {
+  if (/^[=+\-@\t\r]/.test(v)) {
     v = `'${v}`
   }
   return `"${v.replace(/"/g, '""')}"`
