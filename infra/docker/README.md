@@ -170,9 +170,10 @@ docker ps --format '{{.Names}}' | grep -i traefik
    subnet would let any of them send a made-up client address and walk past
    every rate limit keyed on it. A name is trusted only while it resolves to
    one container: if another container claims the same name, the API keeps
-   the address it already had and logs the conflict. An installation that set
-   `TRUSTED_PROXY_CIDRS` to the subnet before this keeps working, and should
-   remove it.
+   the address it already had and logs the conflict. The Dokploy file does
+   not pass `TRUSTED_PROXY_CIDRS` to the API at all, so a subnet left in the
+   Environment tab by an earlier setup is ignored; delete it there to keep
+   things tidy.
 3. Add the domain twice in the service's Domains tab, both with HTTPS and a
    certificate:
 

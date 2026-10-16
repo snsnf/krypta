@@ -31,8 +31,10 @@
 #       docker network ls | grep -i dokploy
 #     The proxy container is normally dokploy-traefik, which is the default for
 #     TRUSTED_PROXY_HOSTS; check with `docker ps --format '{{.Names}}'` and set
-#     it only if yours differs. Leave TRUSTED_PROXY_CIDRS unset: a subnet here
-#     would trust every app on the server, not just the proxy.
+#     it only if yours differs. This file deliberately does not pass
+#     TRUSTED_PROXY_CIDRS to the API: a subnet here would trust every app on
+#     the server, not just the proxy. If an earlier setup put it in the
+#     Environment tab, it is now ignored; delete it there to keep things tidy.
 #   - Add the domain twice in Dokploy's Domains tab for this service, both
 #     with HTTPS and Let's Encrypt on:
 #       service api, path /api,  container port 8080
@@ -45,8 +47,10 @@
 # Two things to check after the first deploy:
 #   - Rate limits see real client addresses. Fail a login five times from one
 #     network and confirm a second device is unaffected. If everyone is locked
-#     out at once, TRUSTED_PROXY_CIDRS does not match the proxy network, or
-#     Dokploy's Traefik is forwarding a client-supplied X-Forwarded-For.
+#     out at once, TRUSTED_PROXY_HOSTS does not name Dokploy's proxy
+#     container (the API logs "trusted proxy host did not resolve" or a
+#     conflict over the name), or Dokploy's Traefik is forwarding a
+#     client-supplied X-Forwarded-For.
 #   - Passkeys are scoped permanently to WEBAUTHN_RP_ID. On a throwaway test
 #     hostname, anything enrolled there is worthless later, which is fine for
 #     a test and not something to carry into production.
@@ -151,9 +155,8 @@ services:
       # name that suddenly resolves to a second container is not trusted
       # further; the API keeps the address it had and logs the conflict.
       TRUSTED_PROXY_HOSTS: ${TRUSTED_PROXY_HOSTS:-dokploy-traefik}
-      # Unset on purpose. Kept only so an installation that set it before
-      # keeps booting; remove it from the Environment tab.
-      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      # TRUSTED_PROXY_CIDRS is left out on purpose, so a subnet still set in
+      # the Environment tab from an earlier setup never reaches the API.
       SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
