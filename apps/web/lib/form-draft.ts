@@ -1,4 +1,4 @@
-import type { AnswerValue } from "./form-answers"
+import { isAnswerValue, type AnswerValue } from "./form-answers"
 
 /**
  * A respondent's in-progress answers, kept on their own device so closing a
@@ -61,19 +61,6 @@ function storage(): Storage | null {
   } catch {
     return null
   }
-}
-
-function isValidAnswer(value: unknown): value is AnswerValue {
-  if (typeof value === "string") return true
-  if (Array.isArray(value)) return value.every((v) => typeof v === "string")
-  if (typeof value !== "object" || value === null) return false
-  const file = value as Record<string, unknown>
-  return (
-    typeof file.attachmentId === "string" &&
-    typeof file.filename === "string" &&
-    typeof file.mimeType === "string" &&
-    typeof file.size === "number"
-  )
 }
 
 /**
@@ -166,7 +153,7 @@ export function loadDraft(formId: string): Record<string, AnswerValue> | null {
 
   const answers: Record<string, AnswerValue> = {}
   for (const [id, value] of Object.entries(draft.answers)) {
-    if (isValidAnswer(value)) answers[id] = value
+    if (isAnswerValue(value)) answers[id] = value
   }
   return Object.keys(answers).length > 0 ? answers : null
 }
