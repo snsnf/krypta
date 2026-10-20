@@ -48,8 +48,21 @@ jobs:
         with:
           workspaces: apps/api
       - run: bun install --frozen-lockfile
+      # The release binary rather than `cargo install`, which compiled it from
+      # source on every run that missed the cache (about three minutes). The
+      # version and checksum are pinned so the download cannot change under us;
+      # bump both together from the release's published sha256.
       - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+        env:
+          VERSION: 0.22.2
+          SHA256: ab28a1bdb54db4d5d8ad5981cf1f959410370b3d28250dbd35f6a44248620e39
+        run: |
+          name="cargo-audit-x86_64-unknown-linux-gnu-v$VERSION"
+          curl -fsSL -o "$RUNNER_TEMP/$name.tgz" \
+            "https://github.com/rustsec/rustsec/releases/download/cargo-audit%2Fv$VERSION/$name.tgz"
+          echo "$SHA256  $RUNNER_TEMP/$name.tgz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$name.tgz" -C "$RUNNER_TEMP"
+          install -m 0755 "$RUNNER_TEMP/$name/cargo-audit" "$HOME/.cargo/bin/cargo-audit"
       # The unit tests open real Redis, Postgres and S3 connections (the
       # attachment cleanup tests put and delete real objects), so the whole dev
       # stack is started by the same prepare step the integration job uses: it
