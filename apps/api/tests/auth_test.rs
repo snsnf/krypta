@@ -685,3 +685,50 @@ async fn verify_email_rejects_a_signup_missing_the_recovery_material() {
         .unwrap();
     assert_eq!(accepted["success"], json!(true));
 }
+
+#[tokio::test]
+async fn signing_in_marks_the_browser_known_until_logout_all_forgets_it() {
+    let base = common::base_url();
+    let client = Client::builder().build().unwrap();
+    let email = format!("known-device-{}@example.com", uuid::Uuid::now_v7());
+    let account =
+        common::register_test_account(&base, &client, &email, "correct horse battery staple").await;
+
+    let login = client
+        .post(format!("{base}/api/v1/auth/login"))
+        .json(&json!({ "email": email, "verifier": account.verifier }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(login.status(), 200);
+    let cookie = login
+        .headers()
+        .get_all("set-cookie")
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .find(|v| v.starts_with("__Host-known-device="))
+        .expect("a sign-in marks the browser")
+        .to_string();
+    for attribute in ["HttpOnly", "Secure", "Path=/", "Max-Age=7776000"] {
+        assert!(cookie.contains(attribute), "{attribute} missing: {cookie}");
+    }
+    let marker = cookie
+        .trim_start_matches("__Host-known-device=")
+        .split(';')
+        .next()
+        .unwrap();
+    assert!(common::known_device_stored(marker).await);
+
+    let session = session_cookie_value(&login).unwrap();
+    let res = client
+        .post(format!("{base}/api/v1/auth/logout-all"))
+        .header("Cookie", format!("__Host-session={session}"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(res.status(), 200);
+    assert!(
+        !common::known_device_stored(marker).await,
+        "signing out everywhere forgets the browsers too"
+    );
+}

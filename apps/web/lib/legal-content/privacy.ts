@@ -11,7 +11,7 @@ export const PRIVACY: LocalizedDoc = {
     title: "Privacy",
     description:
       "What this instance stores, what it cannot read, and how to ask for your data.",
-    updated: "18 September 2026",
+    updated: "20 October 2026",
     lead: "This instance is operated by {entity}. This page describes what it stores about you, what it is unable to read, and how to ask for something to be changed or removed.",
     intro: [
       "The short version: form titles, questions, answers and uploaded files are encrypted in your browser before they are sent. We hold ciphertext and no key that opens it. That is not a policy commitment that could be revised later, it is a property of how the software is built, and it means a database dump, a stolen backup, a compromised host or a legal demand made to us yields ciphertext.",
@@ -29,6 +29,7 @@ export const PRIVACY: LocalizedDoc = {
               "Wrapped copies of your account key, one for each way you unlock it. These are ciphertext that only your password, your vault recovery code or your passkey can open.",
               "If you enrol two-factor authentication, the TOTP secret, which has to be readable to check your codes, and hashes of your TOTP recovery codes. If you enrol a passkey, the credential it registered.",
               "Session records, which hold a hash of the session token rather than the token. Sessions expire after 30 days of not being used, and 90 days after they were created whatever happens.",
+              "A record of each browser that has signed in to your account, held as a hash of a random value the browser keeps, for 90 days or until you sign out everywhere. It gives those browsers their own allowance of login attempts, so someone else guessing at your address cannot lock you out of them.",
             ],
           },
         ],
@@ -73,7 +74,7 @@ export const PRIVACY: LocalizedDoc = {
           },
           {
             kind: "text",
-            text: "Cookies here do two things: they sign you in (a session cookie, and a short-lived one that carries a collaboration invitation while you accept it), and, only if you choose a language, one remembers that choice. The language cookie is not set unless you choose, and it holds only the language. All of them are restricted to this site and none is used to follow you anywhere.",
+            text: "Cookies here do two things: they sign you in (a session cookie; one that marks a browser you have signed in from, so it keeps its own allowance of login attempts; and a short-lived one that carries a collaboration invitation while you accept it), and, only if you choose a language, one remembers that choice. The language cookie is not set unless you choose, and it holds only the language. All of them are restricted to this site and none is used to follow you anywhere.",
           },
         ],
       },
@@ -156,7 +157,7 @@ export const PRIVACY: LocalizedDoc = {
     title: "الخصوصية",
     description:
       "ما تخزنه هذه النسخة، وما لا تستطيع قراءته، وكيف تطلب بياناتك.",
-    updated: "18 سبتمبر 2026",
+    updated: "20 أكتوبر 2026",
     lead: "تشغّل هذه النسخةَ {entity}. تصف هذه الصفحة ما تخزنه عنك، وما لا تستطيع قراءته، وكيف تطلب تعديل شيء أو إزالته. هذه الصفحة ترجمة للنص الإنجليزي، وعند أي اختلاف بين النصين يُعتمد النص الإنجليزي.",
     intro: [
       "باختصار: عناوين النماذج وأسئلتها وإجاباتها والملفات المرفوعة تُشفَّر في متصفحك قبل إرسالها. نحتفظ بنص مشفر ولا نملك أي مفتاح يفتحه. وهذا ليس التزامًا في سياسة يمكن مراجعته لاحقًا، بل خاصية في طريقة بناء البرنامج، ويعني أن نسخة من قاعدة البيانات أو نسخة احتياطية مسروقة أو خادمًا مخترقًا أو طلبًا قانونيًا موجّهًا إلينا لا يُنتج إلا نصًا مشفرًا.",
@@ -174,6 +175,7 @@ export const PRIVACY: LocalizedDoc = {
               "نسخًا ملفوفة من مفتاح حسابك، واحدة لكل طريقة تفتح بها حسابك. هذه نصوص مشفرة لا يفتحها إلا كلمة مرورك أو رمز استرداد خزنتك أو مفتاح المرور الخاص بك.",
               "إذا فعّلت المصادقة الثنائية: سر TOTP الذي يجب أن يكون مقروءًا للتحقق من رموزك، وتجزئات رموز استرداد TOTP. وإذا سجّلت مفتاح مرور: بيانات الاعتماد التي سجّلها.",
               "سجلات الجلسات، وتحتوي تجزئة لرمز الجلسة لا الرمز نفسه. تنتهي الجلسات بعد 30 يومًا من عدم الاستخدام، وبعد 90 يومًا من إنشائها مهما حدث.",
+              "سجل لكل متصفح سجّل الدخول إلى حسابك، محفوظ تجزئةً لقيمة عشوائية يحتفظ بها المتصفح، لمدة 90 يومًا أو إلى أن تسجّل الخروج من كل الأجهزة. يمنح هذه المتصفحات حصتها الخاصة من محاولات الدخول، فلا يستطيع شخص آخر يخمّن كلمة المرور لعنوانك أن يمنعك من الدخول منها.",
             ],
           },
         ],
@@ -218,7 +220,7 @@ export const PRIVACY: LocalizedDoc = {
           },
           {
             kind: "text",
-            text: "تؤدي ملفات تعريف الارتباط هنا أمرين: تُبقيك مسجلًا للدخول (ملف للجلسة، وآخر قصير العمر يحمل دعوة التعاون أثناء قبولك لها)، وإن اخترت لغة فقط، ملف يتذكر اختيارك. لا يُضبط ملف اللغة ما لم تختر، ولا يحمل إلا اللغة. كلها مقصورة على هذا الموقع، ولا يُستخدم أي منها لتتبعك في أي مكان.",
+            text: "تؤدي ملفات تعريف الارتباط هنا أمرين: تُبقيك مسجلًا للدخول (ملف للجلسة، وملف يميّز متصفحًا سبق أن سجّلت الدخول منه كي تبقى له حصته الخاصة من محاولات الدخول، وآخر قصير العمر يحمل دعوة التعاون أثناء قبولك لها)، وإن اخترت لغة فقط، ملف يتذكر اختيارك. لا يُضبط ملف اللغة ما لم تختر، ولا يحمل إلا اللغة. كلها مقصورة على هذا الموقع، ولا يُستخدم أي منها لتتبعك في أي مكان.",
           },
         ],
       },

@@ -23,7 +23,7 @@ use crate::{
     client_ip::ClientIp,
     email_verify,
     error::{ApiError, ApiJson, ApiResponse, ApiResult},
-    mail, password, rate_limit, session,
+    known_device, mail, password, rate_limit, session,
     state::AppState,
     totp,
 };
@@ -307,15 +307,14 @@ pub async fn verify_email(
     // dropped before a new one is issued.
     drop_presented_session(&mut state, &jar).await;
     let session_generation = load_active_session_generation(&state.db, user_id).await?;
-    let token = session::create_session(
+    let jar = sign_in(
         &mut state.redis,
+        jar,
         user_id,
         session_generation,
         session::SecondFactor::NotVerified,
     )
-    .await
-    .map_err(ApiError::Internal)?;
-    let jar = jar.add(session_cookie(token));
+    .await?;
 
     let wrapped_account_key = password_wrapper(&state.db, user_id).await?;
     Ok(auth_success(jar, user_id, &wrapped_account_key))
@@ -585,43 +584,57 @@ fn login_address_rate_limit_key(email: &str) -> String {
     format!("login_address:{}", hashed_login_address(email))
 }
 
+/// The hourly budget a login attempt spends: the browser's own when it has
+/// signed in to this account before, otherwise the one every source trying
+/// this address shares. `account` is the account the address names, if any.
+fn hourly_login_budget_key(
+    email: &str,
+    account: Option<Uuid>,
+    device: Option<&known_device::KnownDevice>,
+) -> String {
+    match (device, account) {
+        (Some(device), Some(account)) if device.belongs_to(account) => device.login_budget_key(),
+        _ => login_address_rate_limit_key(email),
+    }
+}
+
 fn hashed_login_address(email: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(email.trim().to_lowercase().as_bytes());
     format!("{:x}", hasher.finalize())
 }
 
+/// The two login limits: attempts per source and address each minute, and
+/// attempts against one hourly budget (see `hourly_login_budget_key`).
+struct LoginLimits {
+    per_source_per_minute: u32,
+    per_budget_per_hour: u32,
+}
+
 /// Both login limits, the per-source one first.
 ///
 /// The per-source limit alone left one account a fresh budget on every
-/// source, and an IPv6 /48 is 65,536 of those. The per-address limit closes
-/// that, at a cost worth stating: anyone who knows an address can spend its
-/// hour, so the owner cannot sign in with the password until it resets. Their
-/// signed-in sessions and passkey sign-in are untouched. Checking the source
-/// first means one source that is already refused stops spending the shared
-/// budget. Unknown addresses are counted exactly like real ones, or the limit
-/// would tell a prober which addresses have accounts.
+/// source, and an IPv6 /48 is 65,536 of those. The hourly limit closes that.
+/// A stranger can still spend an address's shared hour, but only from
+/// browsers that never signed in to the account: the owner's own browsers
+/// spend budgets of their own. Checking the source first means one source
+/// that is already refused stops spending the hourly budget.
 async fn check_login_rate_limits(
     redis: &mut redis::aio::ConnectionManager,
-    ip: IpAddr,
-    email: &str,
-    per_source_per_minute: u32,
-    per_address_per_hour: u32,
+    source_key: &str,
+    hourly_budget_key: &str,
+    limits: &LoginLimits,
 ) -> anyhow::Result<bool> {
-    Ok(rate_limit::check_rate_limit(
-        redis,
-        &login_rate_limit_key(ip, email),
-        per_source_per_minute,
-        60,
+    Ok(
+        rate_limit::check_rate_limit(redis, source_key, limits.per_source_per_minute, 60).await?
+            && rate_limit::check_rate_limit(
+                redis,
+                hourly_budget_key,
+                limits.per_budget_per_hour,
+                3600,
+            )
+            .await?,
     )
-    .await?
-        && rate_limit::check_rate_limit(
-            redis,
-            &login_address_rate_limit_key(email),
-            per_address_per_hour,
-            3600,
-        )
-        .await?)
 }
 
 const TOTP_ATTEMPTS_PER_MINUTE: u32 = 10;
@@ -726,20 +739,9 @@ pub async fn login(
 ) -> Result<Response, ApiError> {
     validate_verifier(&body.verifier)?;
 
-    let login_rate_limit = load_login_rate_limit(&state.db).await?;
-    let allowed = check_login_rate_limits(
-        &mut state.redis,
-        client_ip,
-        &body.email,
-        login_rate_limit,
-        state.config.login_email_rate_limit,
-    )
-    .await
-    .map_err(ApiError::Internal)?;
-    if !allowed {
-        return Err(ApiError::RateLimited);
-    }
-
+    // Read before the limits, because which hourly budget applies depends on
+    // the account. The read is cheap; the Argon2 check the limits protect
+    // still comes after them.
     let row = sqlx::query(
         "SELECT id, password_hash, totp_enabled, session_generation
          FROM users
@@ -751,6 +753,29 @@ pub async fn login(
     .fetch_optional(&state.db)
     .await
     .map_err(|e| ApiError::Internal(e.into()))?;
+
+    let device = known_device::recognise(&mut state.redis, &jar)
+        .await
+        .map_err(ApiError::Internal)?;
+    let limits = LoginLimits {
+        per_source_per_minute: load_login_rate_limit(&state.db).await?,
+        per_budget_per_hour: state.config.login_email_rate_limit,
+    };
+    let allowed = check_login_rate_limits(
+        &mut state.redis,
+        &login_rate_limit_key(client_ip, &body.email),
+        &hourly_login_budget_key(
+            &body.email,
+            row.as_ref().map(|row| row.get::<Uuid, _>("id")),
+            device.as_ref(),
+        ),
+        &limits,
+    )
+    .await
+    .map_err(ApiError::Internal)?;
+    if !allowed {
+        return Err(ApiError::RateLimited);
+    }
 
     // No live account for this address. Pay the Argon2 cost a wrong password
     // pays before answering, or the unknown-address reply comes back
@@ -792,15 +817,14 @@ pub async fn login(
         .into_response());
     }
 
-    let token = session::create_session(
+    let jar = sign_in(
         &mut state.redis,
+        jar,
         row.get::<Uuid, _>("id"),
         row.get::<i64, _>("session_generation"),
         session::SecondFactor::NotVerified,
     )
-    .await
-    .map_err(ApiError::Internal)?;
-    let jar = jar.add(session_cookie(token));
+    .await?;
 
     let wrapped_account_key = password_wrapper(&state.db, row.get::<Uuid, _>("id")).await?;
     Ok(auth_success(
@@ -870,7 +894,7 @@ pub async fn logout_all(
     user: SessionUser,
     jar: CookieJar,
 ) -> Result<Response, ApiError> {
-    let revoked = session::delete_all_sessions_for_user(&mut state.redis, user.user_id)
+    let revoked = session::revoke_all_for_user(&mut state.redis, user.user_id)
         .await
         .map_err(ApiError::Internal)?;
 
@@ -878,7 +902,27 @@ pub async fn logout_all(
     Ok((jar, ApiResponse::ok(json!({ "revoked": revoked }))).into_response())
 }
 
-pub(super) fn session_cookie(token: String) -> Cookie<'static> {
+/// Starts a full session for a user who has just proved who they are, and
+/// remembers this browser as one they sign in from (see `known_device`).
+///
+/// Every route that completes a sign-in ends here, so a new way to sign in
+/// cannot forget the second half.
+pub(super) async fn sign_in(
+    redis: &mut redis::aio::ConnectionManager,
+    jar: CookieJar,
+    user_id: Uuid,
+    session_generation: i64,
+    second_factor: session::SecondFactor,
+) -> Result<CookieJar, ApiError> {
+    let token = session::create_session(redis, user_id, session_generation, second_factor)
+        .await
+        .map_err(ApiError::Internal)?;
+    known_device::remember(redis, jar.add(session_cookie(token)), user_id)
+        .await
+        .map_err(ApiError::Internal)
+}
+
+fn session_cookie(token: String) -> Cookie<'static> {
     session_cookie_for(token, Duration::days(90))
 }
 
@@ -1173,15 +1217,14 @@ pub async fn totp_verify(
     }
 
     drop_presented_session(&mut state, &jar).await;
-    let token = session::create_session(
+    let jar = sign_in(
         &mut state.redis,
+        jar,
         pending_login.user_id,
         row.get::<i64, _>("session_generation"),
         session::SecondFactor::Verified,
     )
-    .await
-    .map_err(ApiError::Internal)?;
-    let jar = jar.add(session_cookie(token));
+    .await?;
 
     let wrapped_account_key = password_wrapper(&state.db, pending_login.user_id).await?;
     Ok(auth_success(
@@ -1397,39 +1440,55 @@ mod tests {
         assert_eq!(remaining_verification_minutes(&record), 2);
     }
 
+    /// One attempt from `ip` at `email` by a browser no account knows.
+    async fn stranger_login_allowed(
+        redis: &mut ConnectionManager,
+        ip: &str,
+        email: &str,
+        limits: &LoginLimits,
+    ) -> bool {
+        check_login_rate_limits(
+            redis,
+            &login_rate_limit_key(ip.parse().unwrap(), email),
+            &hourly_login_budget_key(email, Some(Uuid::now_v7()), None),
+            limits,
+        )
+        .await
+        .unwrap()
+    }
+
+    const TWO_AN_HOUR: LoginLimits = LoginLimits {
+        per_source_per_minute: 5,
+        per_budget_per_hour: 2,
+    };
+
     #[tokio::test]
     async fn one_address_has_one_login_budget_across_every_source() {
         let mut redis = test_redis().await;
         let email = format!("login-cap-{}@example.com", Uuid::now_v7());
-        let first: IpAddr = "198.51.100.1".parse().unwrap();
-        let second: IpAddr = "198.51.100.2".parse().unwrap();
 
+        assert!(stranger_login_allowed(&mut redis, "198.51.100.1", &email, &TWO_AN_HOUR).await);
         assert!(
-            check_login_rate_limits(&mut redis, first, &email, 5, 2)
-                .await
-                .unwrap()
+            stranger_login_allowed(
+                &mut redis,
+                "198.51.100.2",
+                &email.to_uppercase(),
+                &TWO_AN_HOUR
+            )
+            .await
         );
         assert!(
-            check_login_rate_limits(&mut redis, second, &email.to_uppercase(), 5, 2)
-                .await
-                .unwrap()
-        );
-        assert!(
-            !check_login_rate_limits(&mut redis, "198.51.100.3".parse().unwrap(), &email, 5, 2)
-                .await
-                .unwrap(),
+            !stranger_login_allowed(&mut redis, "198.51.100.3", &email, &TWO_AN_HOUR).await,
             "a fresh source must not bring a fresh budget for the same address"
         );
         assert!(
-            check_login_rate_limits(
+            stranger_login_allowed(
                 &mut redis,
-                first,
+                "198.51.100.1",
                 &format!("other-{}@example.com", Uuid::now_v7()),
-                5,
-                2
+                &TWO_AN_HOUR
             )
-            .await
-            .unwrap(),
+            .await,
             "one address's attempts must not consume another's"
         );
     }
@@ -1438,18 +1497,65 @@ mod tests {
     async fn a_refused_source_does_not_spend_the_address_budget() {
         let mut redis = test_redis().await;
         let email = format!("login-cap-{}@example.com", Uuid::now_v7());
-        let noisy: IpAddr = "198.51.100.4".parse().unwrap();
+        let one_a_minute = LoginLimits {
+            per_source_per_minute: 1,
+            per_budget_per_hour: 2,
+        };
 
         for _ in 0..5 {
-            check_login_rate_limits(&mut redis, noisy, &email, 1, 2)
-                .await
-                .unwrap();
+            stranger_login_allowed(&mut redis, "198.51.100.4", &email, &one_a_minute).await;
         }
         assert!(
-            check_login_rate_limits(&mut redis, "198.51.100.5".parse().unwrap(), &email, 1, 2)
-                .await
-                .unwrap(),
+            stranger_login_allowed(&mut redis, "198.51.100.5", &email, &one_a_minute).await,
             "only the first attempt from the noisy source reached the shared budget"
+        );
+    }
+
+    #[test]
+    fn a_browser_known_to_the_account_spends_its_own_budget() {
+        let email = "owner@example.com";
+        let account = Uuid::now_v7();
+        let shared = login_address_rate_limit_key(email);
+
+        let own = known_device::KnownDevice::for_tests(account);
+        assert_eq!(
+            hourly_login_budget_key(email, Some(account), Some(&own)),
+            own.login_budget_key()
+        );
+        assert_ne!(own.login_budget_key(), shared);
+
+        let other_accounts = known_device::KnownDevice::for_tests(Uuid::now_v7());
+        assert_eq!(
+            hourly_login_budget_key(email, Some(account), Some(&other_accounts)),
+            shared,
+            "a browser known to another account earns nothing here"
+        );
+        assert_eq!(hourly_login_budget_key(email, Some(account), None), shared);
+        assert_eq!(
+            hourly_login_budget_key(email, None, Some(&own)),
+            shared,
+            "an address with no account always spends the shared budget"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_stranger_spending_the_shared_hour_leaves_the_owners_browser_its_own() {
+        let mut redis = test_redis().await;
+        let email = format!("login-cap-{}@example.com", Uuid::now_v7());
+        let account = Uuid::now_v7();
+        let owners_browser = known_device::KnownDevice::for_tests(account);
+
+        while stranger_login_allowed(&mut redis, "198.51.100.6", &email, &TWO_AN_HOUR).await {}
+
+        assert!(
+            check_login_rate_limits(
+                &mut redis,
+                &login_rate_limit_key("198.51.100.7".parse().unwrap(), &email),
+                &hourly_login_budget_key(&email, Some(account), Some(&owners_browser)),
+                &TWO_AN_HOUR,
+            )
+            .await
+            .unwrap()
         );
     }
 

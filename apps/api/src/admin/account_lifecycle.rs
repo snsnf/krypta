@@ -339,7 +339,7 @@ pub async fn suspend_account(
     .await?;
 
     let mut redis = state.redis.clone();
-    if let Err(error) = session::delete_all_sessions_for_user(&mut redis, target_user_id).await {
+    if let Err(error) = session::revoke_all_for_user(&mut redis, target_user_id).await {
         tracing::warn!(
             user_id = %target_user_id,
             error = %error,
@@ -565,7 +565,7 @@ pub async fn delete_account(
     )
     .await?;
 
-    if let Err(error) = session::delete_all_sessions_for_user(&mut redis, target_user_id).await {
+    if let Err(error) = session::revoke_all_for_user(&mut redis, target_user_id).await {
         tracing::warn!(
             user_id = %target_user_id,
             error = %error,

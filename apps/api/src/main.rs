@@ -10,6 +10,7 @@ mod form_access;
 mod forms;
 mod health;
 mod healthcheck;
+mod known_device;
 mod mail;
 mod passkey;
 mod password;

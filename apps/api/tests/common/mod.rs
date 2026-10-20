@@ -180,6 +180,19 @@ async fn test_redis() -> redis::aio::ConnectionManager {
     redis::aio::ConnectionManager::new(client).await.unwrap()
 }
 
+/// Whether the server still holds the known-device marker `marker`. Only its
+/// hash is stored, so this is the one way a test can see it from outside.
+#[allow(dead_code)]
+pub async fn known_device_stored(marker: &str) -> bool {
+    let mut hasher = Sha256::new();
+    hasher.update(marker.as_bytes());
+    let mut redis = test_redis().await;
+    redis
+        .exists(format!("known_device:{:x}", hasher.finalize()))
+        .await
+        .unwrap()
+}
+
 #[allow(dead_code)]
 pub async fn pending_record(token: &str) -> Option<serde_json::Value> {
     let mut redis = test_redis().await;
