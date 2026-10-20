@@ -476,9 +476,9 @@ the list rather than leaving it.
 
 ### Rate limits will bite you
 
-The limits default to production values. `REGISTER_EMAIL_RATE_LIMIT_PER_HOUR`
-and `VERIFY_RATE_LIMIT_PER_MINUTE` are read from the environment on every
-start, so raising them in `apps/api/.env` works. **`REGISTER_RATE_LIMIT_PER_HOUR`
+The limits default to production values. `REGISTER_EMAIL_RATE_LIMIT_PER_HOUR`,
+`LOGIN_EMAIL_RATE_LIMIT_PER_HOUR` and `VERIFY_RATE_LIMIT_PER_MINUTE` are read
+from the environment on every start, so raising them in `apps/api/.env` works. **`REGISTER_RATE_LIMIT_PER_HOUR`
 and `LOGIN_RATE_LIMIT_PER_MINUTE` only seed `instance_settings` when that row
 is first created** (`seed_instance_settings` in `main.rs`, `ON CONFLICT DO
 NOTHING`); after that the API reads the database, so change them through

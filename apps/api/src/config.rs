@@ -40,6 +40,9 @@ pub struct Config {
     /// Registrations allowed per address per hour, so one address cannot be
     /// mail-bombed by repeated signup attempts from rotating IPs.
     pub register_email_rate_limit: u32,
+    /// Password logins allowed per email address per hour, from every source
+    /// together, so rotating addresses buys no extra guesses at one account.
+    pub login_email_rate_limit: u32,
     /// Verification attempts allowed per IP per minute.
     pub verify_rate_limit: u32,
     /// Recovery attempts started per IP per hour. Starting a recovery mails a
@@ -226,6 +229,7 @@ impl Config {
             verify_max_attempts: 5,
             resend_cooldown_seconds: 60,
             register_email_rate_limit: 100,
+            login_email_rate_limit: 100,
             verify_rate_limit: 100,
             recover_start_rate_limit: 100,
             recover_verify_rate_limit: 100,
@@ -311,6 +315,9 @@ impl Config {
             register_email_rate_limit: setting_or("REGISTER_EMAIL_RATE_LIMIT_PER_HOUR", "5")
                 .parse()
                 .context("REGISTER_EMAIL_RATE_LIMIT_PER_HOUR must be a number")?,
+            login_email_rate_limit: setting_or("LOGIN_EMAIL_RATE_LIMIT_PER_HOUR", "30")
+                .parse()
+                .context("LOGIN_EMAIL_RATE_LIMIT_PER_HOUR must be a number")?,
             verify_rate_limit: setting_or("VERIFY_RATE_LIMIT_PER_MINUTE", "10")
                 .parse()
                 .context("VERIFY_RATE_LIMIT_PER_MINUTE must be a number")?,
@@ -480,6 +487,7 @@ mod tests {
             ("ATTACHMENT_CLEANUP_INTERVAL_SECONDS", "60"),
             ("REGISTER_RATE_LIMIT_PER_HOUR", "5"),
             ("LOGIN_RATE_LIMIT_PER_MINUTE", "5"),
+            ("LOGIN_EMAIL_RATE_LIMIT_PER_HOUR", "30"),
             ("SMTP_HOST", "localhost"),
             ("SMTP_PORT", "1025"),
             ("SMTP_USER", ""),
@@ -569,6 +577,7 @@ mod tests {
             "REGISTER_RATE_LIMIT_PER_HOUR",
             "REGISTER_EMAIL_RATE_LIMIT_PER_HOUR",
             "LOGIN_RATE_LIMIT_PER_MINUTE",
+            "LOGIN_EMAIL_RATE_LIMIT_PER_HOUR",
             "VERIFY_RATE_LIMIT_PER_MINUTE",
             "VERIFY_CODE_TTL_SECONDS",
             "VERIFY_MAX_ATTEMPTS",
