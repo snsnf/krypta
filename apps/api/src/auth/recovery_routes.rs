@@ -432,7 +432,7 @@ pub async fn recover_complete(
 
     // The generation bump already invalidated every session; this sweeps the
     // Redis index rather than leaving dead records to expire on their own.
-    session::delete_all_sessions_for_user(&mut state.redis, user.user_id)
+    session::revoke_all_for_user(&mut state.redis, user.user_id)
         .await
         .map_err(ApiError::Internal)?;
 

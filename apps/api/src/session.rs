@@ -198,15 +198,21 @@ pub async fn delete_session(redis: &mut ConnectionManager, token: &str) -> anyho
     Ok(())
 }
 
-/// Revokes every session belonging to `user_id`, returning how many were live.
+/// Revokes every session belonging to `user_id` and forgets every browser it
+/// signed in from, returning how many sessions were live.
 ///
 /// Used to sign out other devices after a credential change or a suspected
 /// compromise; without it a leaked token stays valid until it expires, which is
-/// up to the absolute timeout away.
-pub async fn delete_all_sessions_for_user(
+/// up to the absolute timeout away. The known browsers go with the sessions
+/// because a browser that can no longer be signed in should not keep a login
+/// budget of its own, and doing both here means no revocation path can
+/// forget the second.
+pub async fn revoke_all_for_user(
     redis: &mut ConnectionManager,
     user_id: Uuid,
 ) -> anyhow::Result<u32> {
+    crate::known_device::forget_all(redis, user_id).await?;
+
     let index = user_sessions_key(user_id);
     let keys: Vec<String> = redis.smembers(&index).await?;
 
@@ -300,9 +306,7 @@ mod tests {
         .await
         .unwrap();
 
-        let revoked = delete_all_sessions_for_user(&mut redis, user_id)
-            .await
-            .unwrap();
+        let revoked = revoke_all_for_user(&mut redis, user_id).await.unwrap();
 
         assert_eq!(revoked, 2);
         assert!(get_session(&mut redis, &a).await.unwrap().is_none());
@@ -341,9 +345,7 @@ mod tests {
 
         // The index must have dropped the deleted one, so a later revoke-all
         // reports only what was really live.
-        let revoked = delete_all_sessions_for_user(&mut redis, user_id)
-            .await
-            .unwrap();
+        let revoked = revoke_all_for_user(&mut redis, user_id).await.unwrap();
         assert_eq!(revoked, 1);
     }
 

@@ -99,6 +99,8 @@ without collecting something identifying.
 Zero knowledge is about content. Some metadata is unavoidable if the service is
 to function at all, and pretending otherwise would be dishonest:
 
+- Which browsers have signed in to an account, as hashed markers kept for 90
+  days, and therefore whether a login attempt comes from one of them.
 - That an account exists for an address, and when it was created. The API never
   confirms this to an unauthenticated caller: registering an address that
   already exists returns the same response as a fresh signup, and only the
@@ -166,6 +168,12 @@ in and verifying an address both revoke the session presented with the request
 before issuing a new one, which closes session fixation. Sessions are indexed
 per user so they can all be revoked at once.
 
+Each sign-in also marks the browser with a `__Host-known-device` cookie of the
+same kind, whose hash is stored for 90 days, so its login attempts draw on an
+allowance of its own (see Rate limits). Signing out everywhere, vault
+recovery, suspension and deletion forget every marked browser along with the
+sessions.
+
 Vault recovery mints a separate, narrower session that reaches one endpoint and
 expires in 15 minutes, and whose lifetime is deliberately not renewed on use.
 
@@ -220,11 +228,16 @@ fixed; the rest are defaults an operator can change:
 address by its /64, since an IPv6 host is normally given a whole /64 and could
 otherwise use a fresh address, and get a fresh budget, for every request.
 
-The hourly login limit is shared by everyone trying an address, which is what
-makes it hold against someone with many IPs. It also means someone who knows
-your address can use it up and keep you from signing in with your password
-until the hour ends. Devices already signed in and passkey sign-in are not
-affected.
+The hourly login limit is shared by every browser that has never signed in to
+the account, which is what makes it hold against someone with many IPs. A
+browser that has signed in before gets an hour of its own instead, through a
+cookie that marks it, so someone who knows your address and uses up the
+shared hour still cannot keep you out of the browsers you use. The mark only
+decides which allowance an attempt counts against: the password and any
+second factor are still required, and a stolen mark buys one more capped
+allowance and nothing else. A browser you have never signed in from can still
+be held off the password form for the rest of the hour; passkey sign-in is
+not affected.
 
 Six-digit codes are additionally single-use and consumed on any attempt, and a
 wrong TOTP code forces the password step again rather than allowing repeated

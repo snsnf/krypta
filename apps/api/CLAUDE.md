@@ -1108,15 +1108,29 @@ increments and sets the expiry in one Lua script, not two commands: a counter
 that gained its increment but lost its expiry would refuse that key forever.
 
 Login carries two limits (`check_login_rate_limits`): per source and address
-per minute, then per address alone per hour (`LOGIN_EMAIL_RATE_LIMIT_PER_HOUR`,
-30). The second exists because the first gave one account a fresh budget on
-every source. Its cost is accepted, not overlooked: anyone who knows an
-address can spend its hour and keep the owner off the password form until it
-resets, while their sessions and passkey sign-in keep working. Do not make
-it count only failures to soften that: the success path would then have to
-write after the Argon2 check, and two racing requests would both pass a
-budget read before either wrote. Unknown addresses count exactly like real
-ones, or the limit becomes an oracle for which addresses have accounts.
+per minute, then one hourly budget (`LOGIN_EMAIL_RATE_LIMIT_PER_HOUR`, 30).
+The hourly one exists because the per-source limit gave one account a fresh
+budget on every source. Which hourly budget an attempt spends is
+`hourly_login_budget_key`: the address's shared one, unless the browser
+carries a marker from an earlier sign-in to that same account
+(`apps/api/src/known_device.rs`), which earns it a budget of its own. That is
+what stops a stranger who spends an address's hour from locking the owner
+out of their own browsers. Four things to keep:
+
+- **The marker only picks a counter.** It never skips the password or a
+  second factor. Exempting a known browser from the hourly limit outright
+  would turn a stolen marker into unlimited guesses; a budget of its own
+  turns it into one more capped budget.
+- **Every sign-in goes through `sign_in`**, which issues the marker with the
+  session, and every revocation goes through `session::revoke_all_for_user`,
+  which forgets the markers with the sessions. A new sign-in or revocation
+  path written around them silently breaks one half.
+- **Do not count only failures** to soften the shared budget: the success
+  path would then have to write after the Argon2 check, and two racing
+  requests would both pass a budget read before either wrote.
+- **Unknown addresses count exactly like real ones**, and always spend the
+  shared budget, or the limit becomes an oracle for which addresses have
+  accounts.
 
 ## Client addresses and trusted proxies
 

@@ -395,7 +395,7 @@ the reason to lower one.
 | `REGISTER_RATE_LIMIT_PER_HOUR` | 5 | Signups started per address per hour. |
 | `REGISTER_EMAIL_RATE_LIMIT_PER_HOUR` | 5 | Signups started per email address per hour. |
 | `LOGIN_RATE_LIMIT_PER_MINUTE` | 5 | Password attempts per address and email per minute. |
-| `LOGIN_EMAIL_RATE_LIMIT_PER_HOUR` | 30 | Password attempts per email per hour, from every address together. Someone who knows an email can use this up and keep its owner from signing in with the password for the rest of the hour (sessions and passkeys still work), so lowering it makes that easier. |
+| `LOGIN_EMAIL_RATE_LIMIT_PER_HOUR` | 30 | Password attempts per email per hour, from every address together. A browser that has signed in to the account before gets its own allowance of the same size, so someone using up the shared one cannot lock the owner out of their own browsers. |
 | `VERIFY_RATE_LIMIT_PER_MINUTE` | 10 | Email-code checks per address per minute. |
 | `VERIFY_CODE_TTL_SECONDS` | 900 | How long a signup verification code stays valid. |
 | `VERIFY_MAX_ATTEMPTS` | 5 | Wrong codes before a pending signup is discarded. |

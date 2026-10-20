@@ -12,7 +12,7 @@ use webauthn_rs::prelude::{
 use crate::{
     auth::{
         extractor::SessionUser,
-        routes::{drop_presented_session, session_cookie, validate_wrapped_account_key},
+        routes::{drop_presented_session, sign_in, validate_wrapped_account_key},
     },
     client_ip::ClientIp,
     error::{ApiError, ApiJson, ApiPath, ApiResponse, ApiResult},
@@ -368,15 +368,14 @@ pub async fn login_finish(
     // Closes session fixation, matching login and verify-email.
     drop_presented_session(&mut state, &jar).await;
 
-    let token = session::create_session(
+    let jar = sign_in(
         &mut state.redis,
+        jar,
         user_id,
         stored.session_generation,
         session::SecondFactor::Verified,
     )
-    .await
-    .map_err(ApiError::Internal)?;
-    let jar = jar.add(session_cookie(token));
+    .await?;
 
     Ok((
         jar,
