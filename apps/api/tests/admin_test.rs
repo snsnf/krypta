@@ -1,7 +1,7 @@
 mod common;
 
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use common::{code_from_next_step, code_now};
+use common::code_now;
 use password_hash::{SaltString, rand_core::OsRng};
 use redis::AsyncCommands;
 use reqwest::Client;
@@ -299,7 +299,7 @@ async fn count_admins(db: &PgPool) -> i64 {
         .unwrap()
 }
 
-async fn login_with_totp(client: &Client, base_url: &str, email: &str, totp: &Totp) {
+async fn login_with_totp(db: &PgPool, client: &Client, base_url: &str, email: &str, totp: &Totp) {
     let login: serde_json::Value = client
         .post(format!("{base_url}/api/v1/auth/login"))
         .json(&json!({ "email": email, "verifier": common::auth_verifier(email, PASSWORD) }))
@@ -316,11 +316,12 @@ async fn login_with_totp(client: &Client, base_url: &str, email: &str, totp: &To
     // logins any more, the suite outran that cap, so it is cleared here the way
     // `register` clears the signup limit. totp_test covers the cap itself.
     clear_rate_limit_key("totp:127.0.0.1").await;
+    let code = unspent_code(fetch_user_id(db, email).await, totp).await;
     let verify = client
         .post(format!("{base_url}/api/v1/auth/2fa/verify"))
         .json(&json!({
             "pending_token": pending_token,
-            "code": code_from_next_step(totp).await
+            "code": code
         }))
         .send()
         .await
@@ -582,6 +583,21 @@ async fn test_redis() -> redis::aio::ConnectionManager {
     redis::aio::ConnectionManager::new(client).await.unwrap()
 }
 
+/// A code for the current step that the server will accept, however many codes
+/// this account has already spent in it. The server remembers a spent step so
+/// it cannot be replayed, which would make a second login inside one window
+/// wait up to thirty seconds for the next. Forgetting the account's spent steps
+/// first avoids that, the way `clear_rate_limit_key` avoids the cap; totp_test
+/// covers replay rejection itself.
+async fn unspent_code(user_id: Uuid, totp: &Totp) -> String {
+    let mut redis = test_redis().await;
+    let spent: Vec<String> = redis.keys(format!("totp_used:{user_id}:*")).await.unwrap();
+    if !spent.is_empty() {
+        let _: () = redis.del(spent).await.unwrap();
+    }
+    code_now(totp)
+}
+
 async fn clear_rate_limit_key(key: &str) {
     let mut redis = test_redis().await;
     let _: () = redis.del(format!("ratelimit:{key}")).await.unwrap();
@@ -837,7 +853,7 @@ async fn admin_guard_requires_admin_role_totp_enrolment_and_a_totp_verified_sess
     assert_eq!(stale_body["data"], json!({}));
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
     let fresh_me: serde_json::Value = fresh_admin_client
         .get(format!("{}/api/v1/auth/me", api.base_url))
         .send()
@@ -879,7 +895,7 @@ async fn settings_and_metadata_settings_validation_and_registration_toggle() {
     let totp = enable_totp(&admin_client, &api.base_url).await;
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
 
     let current_settings = fresh_admin_client
         .get(format!("{}/api/v1/admin/settings", api.base_url))
@@ -1032,7 +1048,7 @@ async fn settings_and_metadata_account_and_audit_lists_stay_redacted() {
     .unwrap();
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
 
     let accounts_response = fresh_admin_client
         .get(format!(
@@ -1141,7 +1157,14 @@ async fn lifecycle_suspend_and_reactivate_revoke_sessions_without_recreating_the
     assert_eq!(login.status(), 200);
 
     let admin_session = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&admin_session, &api.base_url, &admin_email, &admin_totp).await;
+    login_with_totp(
+        &db,
+        &admin_session,
+        &api.base_url,
+        &admin_email,
+        &admin_totp,
+    )
+    .await;
 
     let target_user_id = fetch_user_id(&db, &target_email).await;
     let suspended_before = count_audit_events(&db, "account_suspended", "succeeded").await;
@@ -1262,7 +1285,14 @@ async fn lifecycle_rejects_self_and_final_admin_account_actions_and_audits_rejec
     let admin_totp = enable_totp(&admin_client, &api.base_url).await;
 
     let admin_session = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&admin_session, &api.base_url, &admin_email, &admin_totp).await;
+    login_with_totp(
+        &db,
+        &admin_session,
+        &api.base_url,
+        &admin_email,
+        &admin_totp,
+    )
+    .await;
     let admin_user_id = fetch_user_id(&db, &admin_email).await;
     let suspended_rejected_before = count_audit_events(&db, "account_suspended", "rejected").await;
     let deleted_rejected_before = count_audit_events(&db, "account_deleted", "rejected").await;
@@ -1356,9 +1386,17 @@ async fn lifecycle_delete_requires_a_session_bound_reauth_receipt_and_rejects_pa
     let target_user_id = fetch_user_id(&db, &target_email).await;
 
     let admin_session = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&admin_session, &api.base_url, &admin_email, &admin_totp).await;
+    login_with_totp(
+        &db,
+        &admin_session,
+        &api.base_url,
+        &admin_email,
+        &admin_totp,
+    )
+    .await;
     let second_admin_session = Client::builder().cookie_store(true).build().unwrap();
     login_with_totp(
+        &db,
         &second_admin_session,
         &api.base_url,
         &admin_email,
@@ -1606,7 +1644,7 @@ async fn lifecycle_suspend_and_reactivate_invalidates_stale_pending_totp_login_b
         .post(format!("{}/api/v1/auth/2fa/verify", api.base_url))
         .json(&json!({
             "pending_token": stale_pending,
-            "code": code_from_next_step(&target_totp).await
+            "code": unspent_code(target_user_id, &target_totp).await
         }))
         .send()
         .await
@@ -1645,7 +1683,7 @@ async fn lifecycle_suspend_and_reactivate_invalidates_stale_pending_totp_login_b
         .post(format!("{}/api/v1/auth/2fa/verify", api.base_url))
         .json(&json!({
             "pending_token": fresh_pending,
-            "code": code_from_next_step(&target_totp).await
+            "code": unspent_code(target_user_id, &target_totp).await
         }))
         .send()
         .await
@@ -2010,7 +2048,7 @@ async fn settings_and_metadata_admin_has_no_form_membership_bypass() {
     let totp = enable_totp(&admin_client, &api.base_url).await;
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
     let forbidden_form = fresh_admin_client
         .get(format!("{}/api/v1/forms/{form_id}", api.base_url))
         .send()
@@ -2299,6 +2337,7 @@ async fn settings_and_metadata_login_and_reauth_consume_live_login_limit() {
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
     login_with_totp(
+        &db,
         &fresh_admin_client,
         &api.base_url,
         &admin_email,
@@ -2372,7 +2411,7 @@ async fn settings_and_metadata_malformed_admin_query_parameters_use_api_envelope
     let totp = enable_totp(&admin_client, &api.base_url).await;
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
 
     let bad_accounts = fresh_admin_client
         .get(format!("{}/api/v1/admin/accounts?limit=nope", api.base_url))
@@ -2427,7 +2466,7 @@ async fn settings_and_metadata_accounts_cursor_requires_an_extra_row() {
     register(&first_client, &api.base_url, &first_email).await;
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
 
     let exact_limit = fresh_admin_client
         .get(format!(
@@ -2502,7 +2541,7 @@ async fn settings_and_metadata_audit_cursor_requires_an_extra_row() {
     .unwrap();
 
     let fresh_admin_client = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&fresh_admin_client, &api.base_url, &admin_email, &totp).await;
+    login_with_totp(&db, &fresh_admin_client, &api.base_url, &admin_email, &totp).await;
 
     let first_page = fresh_admin_client
         .get(format!(
@@ -2563,7 +2602,14 @@ async fn lifecycle_delete_refuses_an_account_that_is_still_subscribed() {
     promote_to_admin(&db, &admin_email).await;
     let admin_totp = enable_totp(&admin_client, &api.base_url).await;
     let admin_session = Client::builder().cookie_store(true).build().unwrap();
-    login_with_totp(&admin_session, &api.base_url, &admin_email, &admin_totp).await;
+    login_with_totp(
+        &db,
+        &admin_session,
+        &api.base_url,
+        &admin_email,
+        &admin_totp,
+    )
+    .await;
 
     let target_client = Client::builder().cookie_store(true).build().unwrap();
     register(&target_client, &api.base_url, &target_email).await;
