@@ -577,9 +577,51 @@ async fn check_reauthentication_rate_limit(
 /// capitalisation, which for a fifteen-letter address is tens of thousands of
 /// counters against one account from one IP.
 pub(super) fn login_rate_limit_key(ip: IpAddr, email: &str) -> String {
+    format!("login:{ip}:{}", hashed_login_address(email))
+}
+
+/// The same address with no source in the key, so every source shares it.
+fn login_address_rate_limit_key(email: &str) -> String {
+    format!("login_address:{}", hashed_login_address(email))
+}
+
+fn hashed_login_address(email: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(email.trim().to_lowercase().as_bytes());
-    format!("login:{ip}:{:x}", hasher.finalize())
+    format!("{:x}", hasher.finalize())
+}
+
+/// Both login limits, the per-source one first.
+///
+/// The per-source limit alone left one account a fresh budget on every
+/// source, and an IPv6 /48 is 65,536 of those. The per-address limit closes
+/// that, at a cost worth stating: anyone who knows an address can spend its
+/// hour, so the owner cannot sign in with the password until it resets. Their
+/// signed-in sessions and passkey sign-in are untouched. Checking the source
+/// first means one source that is already refused stops spending the shared
+/// budget. Unknown addresses are counted exactly like real ones, or the limit
+/// would tell a prober which addresses have accounts.
+async fn check_login_rate_limits(
+    redis: &mut redis::aio::ConnectionManager,
+    ip: IpAddr,
+    email: &str,
+    per_source_per_minute: u32,
+    per_address_per_hour: u32,
+) -> anyhow::Result<bool> {
+    Ok(rate_limit::check_rate_limit(
+        redis,
+        &login_rate_limit_key(ip, email),
+        per_source_per_minute,
+        60,
+    )
+    .await?
+        && rate_limit::check_rate_limit(
+            redis,
+            &login_address_rate_limit_key(email),
+            per_address_per_hour,
+            3600,
+        )
+        .await?)
 }
 
 const TOTP_ATTEMPTS_PER_MINUTE: u32 = 10;
@@ -685,11 +727,12 @@ pub async fn login(
     validate_verifier(&body.verifier)?;
 
     let login_rate_limit = load_login_rate_limit(&state.db).await?;
-    let allowed = rate_limit::check_rate_limit(
+    let allowed = check_login_rate_limits(
         &mut state.redis,
-        &login_rate_limit_key(client_ip, &body.email),
+        client_ip,
+        &body.email,
         login_rate_limit,
-        60,
+        state.config.login_email_rate_limit,
     )
     .await
     .map_err(ApiError::Internal)?;
@@ -1352,6 +1395,62 @@ mod tests {
         let mut record = pending("remaining@example.com".to_string());
         record.expires_at = OffsetDateTime::now_utc() + Duration::seconds(119);
         assert_eq!(remaining_verification_minutes(&record), 2);
+    }
+
+    #[tokio::test]
+    async fn one_address_has_one_login_budget_across_every_source() {
+        let mut redis = test_redis().await;
+        let email = format!("login-cap-{}@example.com", Uuid::now_v7());
+        let first: IpAddr = "198.51.100.1".parse().unwrap();
+        let second: IpAddr = "198.51.100.2".parse().unwrap();
+
+        assert!(
+            check_login_rate_limits(&mut redis, first, &email, 5, 2)
+                .await
+                .unwrap()
+        );
+        assert!(
+            check_login_rate_limits(&mut redis, second, &email.to_uppercase(), 5, 2)
+                .await
+                .unwrap()
+        );
+        assert!(
+            !check_login_rate_limits(&mut redis, "198.51.100.3".parse().unwrap(), &email, 5, 2)
+                .await
+                .unwrap(),
+            "a fresh source must not bring a fresh budget for the same address"
+        );
+        assert!(
+            check_login_rate_limits(
+                &mut redis,
+                first,
+                &format!("other-{}@example.com", Uuid::now_v7()),
+                5,
+                2
+            )
+            .await
+            .unwrap(),
+            "one address's attempts must not consume another's"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_refused_source_does_not_spend_the_address_budget() {
+        let mut redis = test_redis().await;
+        let email = format!("login-cap-{}@example.com", Uuid::now_v7());
+        let noisy: IpAddr = "198.51.100.4".parse().unwrap();
+
+        for _ in 0..5 {
+            check_login_rate_limits(&mut redis, noisy, &email, 1, 2)
+                .await
+                .unwrap();
+        }
+        assert!(
+            check_login_rate_limits(&mut redis, "198.51.100.5".parse().unwrap(), &email, 1, 2)
+                .await
+                .unwrap(),
+            "only the first attempt from the noisy source reached the shared budget"
+        );
     }
 
     #[tokio::test]

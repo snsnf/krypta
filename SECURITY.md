@@ -202,7 +202,7 @@ fixed; the rest are defaults an operator can change:
 | Action | Limit |
 |---|---|
 | Registration | 5 per hour per address, 5 per hour per IP |
-| Login | 5 per minute per address, counted separately for each IP |
+| Login | 5 per minute per address from each IP, and 30 per hour per address from all IPs together |
 | Verification code entry | 10 per minute |
 | TOTP code checks | 10 per minute per account |
 | Passkey ceremonies | 10 per minute |
@@ -219,6 +219,12 @@ fixed; the rest are defaults an operator can change:
 "Per source" and "per IP" count an IPv4 address as one source and an IPv6
 address by its /64, since an IPv6 host is normally given a whole /64 and could
 otherwise use a fresh address, and get a fresh budget, for every request.
+
+The hourly login limit is shared by everyone trying an address, which is what
+makes it hold against someone with many IPs. It also means someone who knows
+your address can use it up and keep you from signing in with your password
+until the hour ends. Devices already signed in and passkey sign-in are not
+affected.
 
 Six-digit codes are additionally single-use and consumed on any attempt, and a
 wrong TOTP code forces the password step again rather than allowing repeated

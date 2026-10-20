@@ -575,6 +575,7 @@ mod tests {
             verify_max_attempts: 5,
             resend_cooldown_seconds: 60,
             register_email_rate_limit: 5,
+            login_email_rate_limit: 30,
             verify_rate_limit: 10,
             recover_start_rate_limit: 5,
             recover_verify_rate_limit: 5,

@@ -1107,6 +1107,17 @@ address was a fresh counter against the same account. And `check_rate_limit`
 increments and sets the expiry in one Lua script, not two commands: a counter
 that gained its increment but lost its expiry would refuse that key forever.
 
+Login carries two limits (`check_login_rate_limits`): per source and address
+per minute, then per address alone per hour (`LOGIN_EMAIL_RATE_LIMIT_PER_HOUR`,
+30). The second exists because the first gave one account a fresh budget on
+every source. Its cost is accepted, not overlooked: anyone who knows an
+address can spend its hour and keep the owner off the password form until it
+resets, while their sessions and passkey sign-in keep working. Do not make
+it count only failures to soften that: the success path would then have to
+write after the Argon2 check, and two racing requests would both pass a
+budget read before either wrote. Unknown addresses count exactly like real
+ones, or the limit becomes an oracle for which addresses have accounts.
+
 ## Client addresses and trusted proxies
 
 **Rate limits read the client address through `ClientIp` in
