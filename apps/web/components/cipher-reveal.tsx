@@ -16,6 +16,23 @@ export function canScramble(text: string): boolean {
   return !/[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(text)
 }
 
+/** One step of the animation, tagged with the text it is scrambling. */
+interface ScrambleFrame {
+  text: string
+  scrambled: string
+}
+
+/**
+ * What to draw: the frame while it still belongs to `text`, otherwise `text`
+ * itself. Tagging frames is what lets the text change mid animation (a
+ * language switch) and show the new text at once. Arabic never scrambles, so
+ * an untagged leftover frame would keep the old language on screen until a
+ * reload.
+ */
+export function shownText(frame: ScrambleFrame | null, text: string): string {
+  return frame !== null && frame.text === text ? frame.scrambled : text
+}
+
 interface CipherRevealProps {
   text: string
   className?: string
@@ -45,14 +62,14 @@ function splitWords(text: string) {
  * animation and it snaps back when the real text lands.
  */
 export function CipherReveal({ text, className }: CipherRevealProps) {
-  const [display, setDisplay] = useState(text)
+  const [frame, setFrame] = useState<ScrambleFrame | null>(null)
+  const display = shownText(frame, text)
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches
-    // `display` is already initialized to `text`, so reduced motion needs no
-    // state update. Just skip the scramble entirely.
+    // With no frame the real text shows, so these need no state update.
     if (prefersReducedMotion || !canScramble(text)) {
       return
     }
@@ -83,12 +100,12 @@ export function CipherReveal({ text, className }: CipherRevealProps) {
           ]
         })
         .join("")
-      setDisplay(next)
+      setFrame({ text, scrambled: next })
       step += 1
       if (step <= totalSteps) {
         rafId = requestAnimationFrame(tick)
       } else {
-        setDisplay(text)
+        setFrame(null)
       }
     }
 
