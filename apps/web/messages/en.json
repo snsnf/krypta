@@ -327,7 +327,7 @@
     "passkeysHeading": "Passkeys",
     "recoveryHeading": "Vault recovery code",
     "sessionsHeading": "Sessions",
-    "sessionsBody": "Signing out everywhere ends every session on every device, including this one. Use it if you think someone else has access to your account.",
+    "sessionsBody": "Signing out everywhere ends every session on every device, including this one, and forgets which browsers you have signed in from, so they lose their own allowance of login attempts until you sign in on them again. Use it if you think someone else has access to your account.",
     "signOutEverywhere": "Sign out everywhere",
     "signOutEverywhereQuestion": "Sign out everywhere?",
     "signOutDescription": "Every device will be signed out, including this one, and you will need your password to get back in. Your forms and responses are not affected.",
