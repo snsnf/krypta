@@ -210,7 +210,7 @@ fixed; the rest are defaults an operator can change:
 | Action | Limit |
 |---|---|
 | Registration | 5 per hour per address, 5 per hour per IP |
-| Login | 5 per minute per address from each IP, and 30 per hour per address from all IPs together |
+| Login | 5 per minute per address from each IP, and 30 per hour per address from all browsers that have not signed in to it before (each that has gets 30 of its own) |
 | Verification code entry | 10 per minute |
 | TOTP code checks | 10 per minute per account |
 | Passkey ceremonies | 10 per minute |
