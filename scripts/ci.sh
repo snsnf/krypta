@@ -73,16 +73,38 @@ run() {
   fi
 }
 
+# Fails when an accepted advisory no longer appears in a report made without
+# the ignore list. Once a fix lands upstream nothing else would notice, and the
+# entry would sit in the list for good, covering for a dependency that may
+# drift back into the vulnerable range. $1 is that report; the rest are the
+# ignored ids.
+check_ignores_still_apply() {
+  local report="$1"
+  shift
+  local stale=0
+  for id in "$@"; do
+    if ! grep -qF -- "$id" <<<"$report"; then
+      printf '\033[31m%s no longer applies: remove it and its reason from the ignore list in scripts/ci.sh\033[0m\n' "$id"
+      stale=1
+    fi
+  done
+  return "$stale"
+}
+
+# The stale check runs only after a passing audit, so a failed fetch cannot
+# report every ignore as stale.
 web_audit() {
   local args=()
   for id in "${WEB_AUDIT_IGNORE[@]}"; do args+=(--ignore="$id"); done
-  (cd "$WEB" && bun audit "${args[@]}")
+  (cd "$WEB" && bun audit "${args[@]}") || return 1
+  check_ignores_still_apply "$(cd "$WEB" && bun audit 2>&1)" "${WEB_AUDIT_IGNORE[@]}"
 }
 
 cargo_audit() {
   local args=()
   for id in "${CARGO_AUDIT_IGNORE[@]}"; do args+=(--ignore "$id"); done
-  (cd "$API" && cargo audit "${args[@]}")
+  (cd "$API" && cargo audit "${args[@]}") || return 1
+  check_ignores_still_apply "$(cd "$API" && cargo audit --no-fetch 2>&1)" "${CARGO_AUDIT_IGNORE[@]}"
 }
 
 # cargo does not load apps/api/.env (only the running binary does, through

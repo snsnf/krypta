@@ -471,8 +471,10 @@ bun run ci               # static and integration
 
 `cargo audit` runs with three advisories explicitly ignored and `bun audit`
 with one, each with its reason recorded in the script. Anything not on that list fails, so a new
-advisory cannot be absorbed silently; when one is fixed upstream, remove it from
-the list rather than leaving it.
+advisory cannot be absorbed silently. The reverse is checked too: an ignored
+advisory that no longer appears in the report fails the step and names itself,
+so when one is fixed upstream (the zod entry, say, once shadcn moves to zod 4)
+the remedy is to delete that entry and its reason, never to keep it.
 
 ### Rate limits will bite you
 
