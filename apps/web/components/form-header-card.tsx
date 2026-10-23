@@ -76,8 +76,12 @@ export function FormHeaderCard({
             aria-label={t("formTitle")}
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
+            // An input clips text to its line box, unlike the heading below,
+            // and at the header's 1.2 the dots under a final Arabic yeh fell
+            // outside it, so it read as alef maqsura. 1.5 clears the deepest
+            // descenders in the font catalogue.
             className={cn(
-              "form-theme-header w-full border-0 border-b border-transparent bg-transparent px-0 py-1 font-medium transition-colors duration-150 ease-out outline-none placeholder:text-muted-foreground/60 focus:border-border",
+              "form-theme-header w-full border-0 border-b border-transparent bg-transparent px-0 py-1 leading-[1.5] font-medium transition-colors duration-150 ease-out outline-none placeholder:text-muted-foreground/60 focus:border-border",
               titleInputClassName
             )}
           />
