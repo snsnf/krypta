@@ -93,6 +93,36 @@ describe("FocusFormRenderer", () => {
     expect(markup).toContain("Next")
   })
 
+  it("introduces the form with its description on the first question only", () => {
+    const questions = [question("a", "First?"), question("b", "Second?")]
+    const first = renderToStaticMarkup(
+      <FocusFormRenderer
+        title="RSVP"
+        description={"Two questions.\nTakes a minute."}
+        questions={questions}
+        answers={{}}
+        {...noopSharedProps}
+      />
+    )
+    expect(first).toMatch(
+      /<p dir="auto" class="[^"]*whitespace-pre-line[^"]*">Two questions.\nTakes a minute.<\/p>/
+    )
+
+    // A respondent resumes at the first unanswered question, which is how a
+    // static render reaches the second step.
+    const second = renderToStaticMarkup(
+      <FocusFormRenderer
+        title="RSVP"
+        description="Two questions."
+        questions={questions}
+        answers={{ a: "Yes" }}
+        {...noopSharedProps}
+      />
+    )
+    expect(second).toContain("Second?")
+    expect(second).not.toContain("Two questions.")
+  })
+
   it("labels the button Submit when there is only one question", () => {
     const markup = renderToStaticMarkup(
       <FocusFormRenderer

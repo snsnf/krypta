@@ -15,11 +15,11 @@ instances you do not operate.
 
 ## What krypta guarantees
 
-Form questions, responses, file attachments and form titles are encrypted in
-the browser before they are sent. The server stores and moves ciphertext and
-holds no key that opens any of it. That is the whole claim, and it is the only
-one worth trusting: a database dump, a stolen backup, a compromised host or a
-subpoena to the operator yields ciphertext.
+Form questions, responses, file attachments, form titles and descriptions are
+encrypted in the browser before they are sent. The server stores and moves
+ciphertext and holds no key that opens any of it. That is the whole claim, and
+it is the only one worth trusting: a database dump, a stolen backup, a
+compromised host or a subpoena to the operator yields ciphertext.
 
 The key a respondent's answers are sealed to is committed to inside the
 encrypted form, which only the key in the link opens, and the link itself

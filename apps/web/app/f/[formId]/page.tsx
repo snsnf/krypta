@@ -40,6 +40,7 @@ import type { FormSettings, FormTheme, Question } from "@krypta/crypto"
 export default function PublicFormPage() {
   const { formId } = useParams<{ formId: string }>()
   const [title, setTitle] = useState("")
+  const [description, setDescription] = useState<string | undefined>()
   const [questions, setQuestions] = useState<Question[]>([])
   const [theme, setTheme] = useState<FormTheme>(DEFAULT_FORM_THEME)
   const [settings, setSettings] = useState<FormSettings>(DEFAULT_FORM_SETTINGS)
@@ -93,6 +94,7 @@ export default function PublicFormPage() {
         const form = await loadPublicForm(formId, key, keyFingerprint)
         setKeyFingerprint(keyFingerprint)
         setTitle(form.title)
+        setDescription(form.description)
         setQuestions(form.questions)
         setTheme(form.theme)
         setSettings(form.settings)
@@ -236,7 +238,11 @@ export default function PublicFormPage() {
         className="flex min-h-svh flex-col items-center justify-center px-4 text-center"
       >
         <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8">
-          <FormHeaderCard title={title} headerImageUrl={headerImageUrl} />
+          <FormHeaderCard
+            title={title}
+            description={description}
+            headerImageUrl={headerImageUrl}
+          />
           <p className="form-theme-text mt-4 font-medium">
             {t("notAccepting")}
           </p>
@@ -288,6 +294,7 @@ export default function PublicFormPage() {
       {isFocusLayout ? (
         <FocusFormRenderer
           title={title}
+          description={description}
           questions={questions}
           answers={answers}
           onAnswerChange={setAnswer}
@@ -304,6 +311,7 @@ export default function PublicFormPage() {
         <ClassicFormFields
           headerImageUrl={headerImageUrl}
           title={title}
+          description={description}
           questions={questions}
           answers={answers}
           onAnswerChange={setAnswer}

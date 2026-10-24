@@ -47,6 +47,7 @@ export default function NewFormPage() {
   const accountKey = useAuthStore((s) => s.accountKey)
   const [tab, setTab] = useState("questions")
   const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
   const [questions, setQuestions] = useState<Question[]>([
     { id: crypto.randomUUID(), type: "short_text", label: "" },
   ])
@@ -104,6 +105,7 @@ export default function NewFormPage() {
       const { id, formDataKey } = await createForm({
         accountKey,
         title,
+        description,
         questions,
         theme,
         settings,
@@ -218,6 +220,8 @@ export default function NewFormPage() {
             eyebrowLabel={t("templates.title")}
             title={title}
             onTitleChange={setTitle}
+            description={description}
+            onDescriptionChange={setDescription}
             questions={questions}
             onQuestionsChange={setQuestions}
             theme={theme}

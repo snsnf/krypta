@@ -116,6 +116,11 @@ export type FormSettings = {
 
 export type FormSchema = {
   questions: Question[];
+  /**
+   * Shown under the title, as plain text with its line breaks. Absent when
+   * the form has none; encrypted and padded with the rest of the schema.
+   */
+  description?: string;
   theme?: FormTheme;
   settings?: FormSettings;
   /**

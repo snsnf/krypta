@@ -17,6 +17,7 @@ import { apiFetch } from "./api"
 import { openMemberGrant } from "./form-grants"
 import { FormKeyMismatchError } from "./load-public-form"
 import { normalizeFormSettings } from "./form-settings"
+import { normalizeFormDescription } from "./form-description"
 import { normalizeFormTheme } from "./form-theme"
 import type { AnswerKey } from "./quiz"
 import { openAnswerKey } from "./quiz-sealing"
@@ -57,6 +58,7 @@ interface FormWorkspace {
   formDataKey: string
   formPrivateKey: string
   title: string
+  description: string | undefined
   questions: Question[]
   theme: FormTheme
   settings: FormSettings
@@ -172,6 +174,7 @@ export async function loadFormDefinition(
     formDataKey,
     formPrivateKey,
     title,
+    description: normalizeFormDescription(schema.description),
     questions: schema.questions,
     theme: normalizeFormTheme(schema.theme),
     settings: normalizeFormSettings(schema.settings),

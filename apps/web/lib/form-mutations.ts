@@ -53,6 +53,7 @@ export function createFormMutationQueue(
 
 interface ClipboardDraft {
   title: unknown
+  description: unknown
   questions: unknown
   theme: unknown
   settings: unknown
@@ -62,6 +63,7 @@ interface ClipboardDraft {
 export function serializeDraftForClipboard(draft: ClipboardDraft): string {
   return JSON.stringify({
     title: draft.title,
+    description: draft.description,
     questions: draft.questions,
     theme: draft.theme,
     settings: draft.settings,

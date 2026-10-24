@@ -68,6 +68,7 @@ describe("serializeDraftForClipboard", () => {
   it("copies only plaintext draft fields and excludes all form keys", () => {
     const clipboard = serializeDraftForClipboard({
       title: "Local title",
+      description: "Local description",
       questions: [{ id: "q1", type: "short_text", label: "Question" }],
       theme: { accentColor: "#123456" },
       settings: { allowMultipleResponses: true },
@@ -77,6 +78,7 @@ describe("serializeDraftForClipboard", () => {
 
     expect(JSON.parse(clipboard)).toEqual({
       title: "Local title",
+      description: "Local description",
       questions: [{ id: "q1", type: "short_text", label: "Question" }],
       theme: { accentColor: "#123456" },
       settings: { allowMultipleResponses: true },

@@ -19,6 +19,7 @@ import { usesNumericShortcuts } from "@/lib/form-language"
 
 interface FocusFormRendererProps {
   title: string
+  description?: string
   questions: Question[]
   answers: Record<string, AnswerValue>
   onAnswerChange: (qid: string, value: AnswerValue) => void
@@ -43,6 +44,7 @@ const useIsomorphicLayoutEffect =
 
 export function FocusFormRenderer({
   title,
+  description,
   questions,
   answers,
   onAnswerChange,
@@ -244,6 +246,19 @@ export function FocusFormRenderer({
           {String(steps.length).padStart(2, "0")}
         </p>
       </div>
+      {/*
+       * Focus has no title card to put the description in, so it introduces
+       * the form on the first question and then gets out of the way: on every
+       * later step it would push the question down for text already read.
+       */}
+      {index === 0 && description && (
+        <p
+          dir="auto"
+          className="form-theme-text mb-6 whitespace-pre-line text-muted-foreground"
+        >
+          {description}
+        </p>
+      )}
       <div className="mb-10 h-1 w-full overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--form-accent)_14%,transparent)]">
         <div
           className="form-theme-accent-bg h-full rounded-full transition-[width] duration-500 ease-out"

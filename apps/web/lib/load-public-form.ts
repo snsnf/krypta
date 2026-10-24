@@ -9,6 +9,7 @@ import {
 import { apiFetch } from "./api"
 import { normalizeFormTheme } from "./form-theme"
 import { normalizeFormSettings } from "./form-settings"
+import { normalizeFormDescription } from "./form-description"
 
 /**
  * The key this form would seal answers to is not the one its owner committed
@@ -23,6 +24,7 @@ export class FormKeyMismatchError extends Error {
 
 interface PublicForm {
   title: string
+  description: string | undefined
   questions: Question[]
   theme: FormTheme
   settings: FormSettings
@@ -80,6 +82,7 @@ export async function loadPublicForm(
 
   return {
     title,
+    description: normalizeFormDescription(schema.description),
     questions: schema.questions,
     theme: normalizeFormTheme(schema.theme),
     settings: normalizeFormSettings(schema.settings),

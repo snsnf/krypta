@@ -117,6 +117,8 @@ interface FormBuilderProps {
   eyebrowLabel: string
   title: string
   onTitleChange: (title: string) => void
+  description?: string
+  onDescriptionChange: (description: string) => void
   questions: Question[]
   onQuestionsChange: (questions: Question[]) => void
   theme: FormTheme
@@ -136,6 +138,8 @@ export function FormBuilder({
   eyebrowLabel,
   title,
   onTitleChange,
+  description,
+  onDescriptionChange,
   questions,
   onQuestionsChange,
   theme,
@@ -233,8 +237,10 @@ export function FormBuilder({
       <div className="flex flex-col gap-4">
         <FormHeaderCard
           title={title}
+          description={description}
           headerImageUrl={headerImage?.previewUrl ?? null}
           onTitleChange={onTitleChange}
+          onDescriptionChange={onDescriptionChange}
         />
 
         {questions.map((q, i) => (
@@ -876,6 +882,7 @@ export function FormBuilder({
         open={previewOpen}
         onOpenChange={onPreviewOpenChange}
         title={title}
+        description={description}
         questions={questions}
         theme={theme}
         headerImageUrl={headerImage?.previewUrl ?? null}

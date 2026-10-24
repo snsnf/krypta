@@ -90,6 +90,7 @@ import {
   serializeDraftForClipboard,
   type FormMutationQueue,
 } from "@/lib/form-mutations"
+import { normalizeFormDescription } from "@/lib/form-description"
 import {
   formatAnswer,
   isFileAnswer,
@@ -136,6 +137,7 @@ export default function FormDetailPage() {
 
   const [tab, setTab] = useState("questions")
   const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
   const [questions, setQuestions] = useState<Question[]>([])
   const [theme, setTheme] = useState<FormTheme>(DEFAULT_FORM_THEME)
   const [answerKey, setAnswerKey] = useState<AnswerKey | null>(null)
@@ -246,6 +248,7 @@ export default function FormDetailPage() {
         setFormRole(workspace.role)
         setLoadIdentity({ formId, userId: expectedUserId, status: "ready" })
         setTitle(workspace.title)
+        setDescription(workspace.description ?? "")
         setQuestions(workspace.questions)
         setTheme(workspace.theme)
         setAnswerKey(workspace.answerKey)
@@ -351,6 +354,7 @@ export default function FormDetailPage() {
     }
     const nextAnswerKey = overrides.answerKey ?? answerKey
     const schema: FormSchema = {
+      description: normalizeFormDescription(description),
       questions,
       theme,
       settings: overrides.settings ?? settings,
@@ -504,7 +508,13 @@ export default function FormDetailPage() {
   async function copyDraft() {
     try {
       await navigator.clipboard.writeText(
-        serializeDraftForClipboard({ title, questions, theme, settings })
+        serializeDraftForClipboard({
+          title,
+          description,
+          questions,
+          theme,
+          settings,
+        })
       )
       toast.add({ title: t("formPage.draftCopied"), type: "success" })
     } catch {
@@ -694,7 +704,12 @@ export default function FormDetailPage() {
     formPrivateKey === null ||
     typeof window === "undefined"
       ? null
-      : formShareLink(window.location.origin, formId, formDataKey, formPrivateKey)
+      : formShareLink(
+          window.location.origin,
+          formId,
+          formDataKey,
+          formPrivateKey
+        )
 
   async function copyShareLink() {
     if (shareLink === null) return
@@ -872,6 +887,8 @@ export default function FormDetailPage() {
                 eyebrowLabel={t("formPage.editingForm")}
                 title={title}
                 onTitleChange={setTitle}
+                description={description}
+                onDescriptionChange={setDescription}
                 questions={questions}
                 onQuestionsChange={setQuestions}
                 theme={theme}
@@ -906,6 +923,7 @@ export default function FormDetailPage() {
                 >
                   <FormHeaderCard
                     title={title}
+                    description={description}
                     headerImageUrl={headerImageUrl}
                   />
                   {questions.map((q) => (

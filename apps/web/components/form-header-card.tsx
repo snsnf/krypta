@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { FORM_DESCRIPTION_MAX_LENGTH } from "@/lib/form-description"
 import { useFormT } from "@/lib/form-i18n"
 import { autoDir } from "@/lib/text-direction"
 
@@ -10,7 +11,10 @@ interface FormHeaderCardProps {
   /** Object URL for the decrypted header image, or null when there is none. */
   headerImageUrl?: string | null
   title: string
+  description?: string
+  /** Present in the builder, where the title and description are editable. */
   onTitleChange?: (title: string) => void
+  onDescriptionChange?: (description: string) => void
   titleInputClassName?: string
 }
 
@@ -51,7 +55,9 @@ function HeaderImage({ src }: { src: string }) {
 
 export function FormHeaderCard({
   title,
+  description,
   onTitleChange,
+  onDescriptionChange,
   titleInputClassName,
   headerImageUrl = null,
 }: FormHeaderCardProps) {
@@ -89,6 +95,27 @@ export function FormHeaderCard({
           <h2 dir="auto" className="form-theme-header font-medium">
             {title || t("untitled")}
           </h2>
+        )}
+        {onDescriptionChange ? (
+          <textarea
+            rows={1}
+            dir={autoDir(description)}
+            placeholder={t("descriptionPlaceholder")}
+            aria-label={t("formDescription")}
+            maxLength={FORM_DESCRIPTION_MAX_LENGTH}
+            value={description ?? ""}
+            onChange={(event) => onDescriptionChange(event.target.value)}
+            className="form-theme-text mt-2 field-sizing-content w-full resize-none border-0 border-b border-transparent bg-transparent px-0 py-1 text-muted-foreground transition-colors duration-150 ease-out outline-none placeholder:text-muted-foreground/60 focus:border-border"
+          />
+        ) : (
+          description && (
+            <p
+              dir="auto"
+              className="form-theme-text mt-2 whitespace-pre-line text-muted-foreground"
+            >
+              {description}
+            </p>
+          )
         )}
       </div>
     </div>
