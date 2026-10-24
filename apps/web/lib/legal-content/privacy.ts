@@ -14,7 +14,7 @@ export const PRIVACY: LocalizedDoc = {
     updated: "20 October 2026",
     lead: "This instance is operated by {entity}. This page describes what it stores about you, what it is unable to read, and how to ask for something to be changed or removed.",
     intro: [
-      "The short version: form titles, questions, answers and uploaded files are encrypted in your browser before they are sent. We hold ciphertext and no key that opens it. That is not a policy commitment that could be revised later, it is a property of how the software is built, and it means a database dump, a stolen backup, a compromised host or a legal demand made to us yields ciphertext.",
+      "The short version: form titles, descriptions, questions, answers and uploaded files are encrypted in your browser before they are sent. We hold ciphertext and no key that opens it. That is not a policy commitment that could be revised later, it is a property of how the software is built, and it means a database dump, a stolen backup, a compromised host or a legal demand made to us yields ciphertext.",
     ],
     sections: [
       {
@@ -44,7 +44,7 @@ export const PRIVACY: LocalizedDoc = {
           {
             kind: "list",
             items: [
-              "Ciphertext for form titles, questions and responses, and the encrypted bytes of uploaded files. None of it can be read by this instance, its operator, its host or anyone served a copy of its database.",
+              "Ciphertext for form titles, descriptions, questions and responses, and the encrypted bytes of uploaded files. None of it can be read by this instance, its operator, its host or anyone served a copy of its database.",
               "The size of each uploaded file, because storage limits are counted against it. Ciphertext lengths for titles, questions and responses are padded, so those sizes say close to nothing about their contents.",
               "Timestamps, counts, and whether a form is accepting responses, along with its close date and response cap. A limit the server cannot read is a limit it cannot enforce.",
               "Who collaborates on which form and in what role, and the email address an invitation was sent to.",
@@ -160,7 +160,7 @@ export const PRIVACY: LocalizedDoc = {
     updated: "20 أكتوبر 2026",
     lead: "تشغّل هذه النسخةَ {entity}. تصف هذه الصفحة ما تخزنه عنك، وما لا تستطيع قراءته، وكيف تطلب تعديل شيء أو إزالته. هذه الصفحة ترجمة للنص الإنجليزي، وعند أي اختلاف بين النصين يُعتمد النص الإنجليزي.",
     intro: [
-      "باختصار: عناوين النماذج وأسئلتها وإجاباتها والملفات المرفوعة تُشفَّر في متصفحك قبل إرسالها. نحتفظ بنص مشفر ولا نملك أي مفتاح يفتحه. وهذا ليس التزامًا في سياسة يمكن مراجعته لاحقًا، بل خاصية في طريقة بناء البرنامج، ويعني أن نسخة من قاعدة البيانات أو نسخة احتياطية مسروقة أو خادمًا مخترقًا أو طلبًا قانونيًا موجّهًا إلينا لا يُنتج إلا نصًا مشفرًا.",
+      "باختصار: عناوين النماذج وأوصافها وأسئلتها وإجاباتها والملفات المرفوعة تُشفَّر في متصفحك قبل إرسالها. نحتفظ بنص مشفر ولا نملك أي مفتاح يفتحه. وهذا ليس التزامًا في سياسة يمكن مراجعته لاحقًا، بل خاصية في طريقة بناء البرنامج، ويعني أن نسخة من قاعدة البيانات أو نسخة احتياطية مسروقة أو خادمًا مخترقًا أو طلبًا قانونيًا موجّهًا إلينا لا يُنتج إلا نصًا مشفرًا.",
     ],
     sections: [
       {
@@ -190,7 +190,7 @@ export const PRIVACY: LocalizedDoc = {
           {
             kind: "list",
             items: [
-              "نصوصًا مشفرة لعناوين النماذج وأسئلتها وردودها، والبايتات المشفرة للملفات المرفوعة. لا تستطيع هذه النسخة ولا مشغّلها ولا مضيفها ولا أي شخص حصل على نسخة من قاعدة بياناتها قراءة شيء منها.",
+              "نصوصًا مشفرة لعناوين النماذج وأوصافها وأسئلتها وردودها، والبايتات المشفرة للملفات المرفوعة. لا تستطيع هذه النسخة ولا مشغّلها ولا مضيفها ولا أي شخص حصل على نسخة من قاعدة بياناتها قراءة شيء منها.",
               "حجم كل ملف مرفوع، لأن حدود التخزين تُحتسب عليه. أما أطوال النصوص المشفرة لعناوين النماذج والأسئلة والردود فتُحشى، لذا لا تكاد تدل أحجامها على شيء من محتواها.",
               "الطوابع الزمنية والأعداد، وما إذا كان النموذج يقبل ردودًا، مع تاريخ إغلاقه وحد ردوده. الحد الذي لا يستطيع الخادم قراءته حد لا يستطيع تطبيقه.",
               "من يتعاون على أي نموذج وبأي دور، وعنوان البريد الذي أُرسلت إليه الدعوة.",

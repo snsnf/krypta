@@ -24,6 +24,7 @@ interface FormPreviewProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
+  description?: string
   questions: Question[]
   theme: FormTheme
 }
@@ -35,6 +36,7 @@ export function FormPreview({
   open,
   onOpenChange,
   title,
+  description,
   questions,
   theme,
   headerImageUrl = null,
@@ -84,6 +86,7 @@ export function FormPreview({
 
   const sharedProps = {
     title,
+    description,
     headerImageUrl,
     questions,
     answers,

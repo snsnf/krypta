@@ -19,6 +19,7 @@ test("classic layout paginates at a section break and submits on the last page",
   await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Section break form")
+  await page.getByLabel("Form description").fill("Two pages.\nAbout a minute.")
   await page.getByLabel("Question label").fill("First question")
 
   await page.getByRole("button", { name: "Add question" }).click()
@@ -30,6 +31,12 @@ test("classic layout paginates at a section break and submits on the last page",
   await page.getByRole("button", { name: /publish form/i }).click()
   await page.waitForURL(/\/dashboard\/[^/]+\?created=1/)
 
+  // The form page reopens the schema it just saved, so the description has
+  // made the round trip through encryption by the time it shows here.
+  await expect(page.getByLabel("Form description")).toHaveValue(
+    "Two pages.\nAbout a minute."
+  )
+
   const shareLink = shareLinkFor(page)
   expect(shareLink).toContain("/f/")
 
@@ -37,6 +44,8 @@ test("classic layout paginates at a section break and submits on the last page",
   await publicPage.goto(shareLink)
   const surface = publicPage.getByTestId("form-theme-surface")
   await expect(publicPage.getByText("Page 1 of 2")).toBeVisible()
+  await expect(surface.getByText("Two pages.")).toBeVisible()
+  await expect(surface.getByText("About a minute.")).toBeVisible()
   await publicPage.getByLabel("First question").fill("Ada")
   await surface.getByRole("button", { name: "Next" }).click()
   await expect(publicPage.getByText("Page 2 of 2")).toBeVisible()
@@ -58,6 +67,7 @@ test("focus layout walks one question at a time via the appearance panel and key
   await startBlankForm(page)
 
   await page.getByLabel("Form title").fill("Focus form")
+  await page.getByLabel("Form description").fill("Just two questions.")
   await page.getByLabel("Question label").fill("First question")
   await page.getByRole("button", { name: "Add question" }).click()
   await page.getByLabel("Question label").nth(1).fill("Second question")
@@ -73,9 +83,11 @@ test("focus layout walks one question at a time via the appearance panel and key
   expect(shareLink).toContain("/f/")
   const publicPage = await page.context().newPage()
   await publicPage.goto(shareLink)
+  await expect(publicPage.getByText("Just two questions.")).toBeVisible()
   await publicPage.getByLabel("First question").fill("Grace")
   await publicPage.getByLabel("First question").press("Enter")
   await expect(publicPage.getByLabel("Second question")).toBeVisible()
+  await expect(publicPage.getByText("Just two questions.")).not.toBeVisible()
   await expect(publicPage.getByLabel("First question")).not.toBeVisible()
   await publicPage.getByLabel("Second question").fill("Hopper")
   await publicPage.getByLabel("Second question").press("Enter")

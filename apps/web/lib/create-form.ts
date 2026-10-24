@@ -10,6 +10,7 @@ import {
   type Question,
 } from "@krypta/crypto"
 import { apiFetch } from "./api"
+import { normalizeFormDescription } from "./form-description"
 import { reconcileAnswerKey, type AnswerKey } from "./quiz"
 import { sealAnswerKey } from "./quiz-sealing"
 import { ensureSodiumReady } from "./sodium-ready"
@@ -21,6 +22,7 @@ import { ensureSodiumReady } from "./sodium-ready"
 export interface CreateFormInput {
   accountKey: string
   title: string
+  description?: string
   questions: Question[]
   theme: FormTheme
   settings: FormSettings
@@ -42,6 +44,7 @@ export async function createForm(
   // Binds the key respondents seal to into the schema the link's key
   // authenticates, so a key swapped in the database is refused.
   const schema: FormSchema = {
+    description: normalizeFormDescription(input.description),
     questions: input.questions,
     theme: input.theme,
     settings: input.settings,

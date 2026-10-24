@@ -96,6 +96,7 @@ describe("FormBuilder text direction", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[{ id: "q1", type: "short_text", label }]}
         onQuestionsChange={() => undefined}
         theme={DEFAULT_FORM_THEME}
@@ -122,6 +123,7 @@ describe("FormBuilder section breaks", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={questions}
         onQuestionsChange={() => undefined}
         theme={DEFAULT_FORM_THEME}
@@ -137,6 +139,7 @@ describe("FormBuilder section breaks", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[questions[0], { ...questions[1], pageBreakBefore: true }]}
         onQuestionsChange={() => undefined}
         theme={DEFAULT_FORM_THEME}
@@ -152,6 +155,7 @@ describe("FormBuilder section breaks", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           questions[0],
           { ...questions[1], pageBreakBefore: true, sectionTitle: "Part two" },
@@ -171,6 +175,7 @@ describe("FormBuilder section breaks", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={questions}
         onQuestionsChange={() => undefined}
         theme={{ ...DEFAULT_FORM_THEME, layout: "focus" }}
@@ -198,6 +203,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[choiceQuestions[0]]}
         onQuestionsChange={() => undefined}
         theme={DEFAULT_FORM_THEME}
@@ -213,6 +219,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={choiceQuestions}
         onQuestionsChange={() => undefined}
         theme={DEFAULT_FORM_THEME}
@@ -228,6 +235,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           choiceQuestions[0],
           {
@@ -253,6 +261,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           choiceQuestions[0],
           {
@@ -281,6 +290,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           {
             ...choiceQuestions[1],
@@ -305,6 +315,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           { id: "a", type: "short_text", label: "Do you have a pet?" },
           {
@@ -335,6 +346,7 @@ describe("FormBuilder conditions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           choiceQuestions[0],
           {
@@ -361,6 +373,7 @@ describe("FormBuilder question actions", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={questions}
         onQuestionsChange={() => undefined}
         theme={DEFAULT_FORM_THEME}
@@ -379,6 +392,7 @@ function renderBuilder(questionList: Question[]): string {
       eyebrowLabel="Editing form"
       title="A form"
       onTitleChange={() => undefined}
+      onDescriptionChange={() => undefined}
       questions={questionList}
       onQuestionsChange={() => undefined}
       theme={DEFAULT_FORM_THEME}
@@ -501,6 +515,7 @@ describe("FormBuilder text direction", () => {
         eyebrowLabel="Editing form"
         title="A form"
         onTitleChange={() => undefined}
+        onDescriptionChange={() => undefined}
         questions={[
           { id: "a", type: "multiple_choice", label: "ما اسمك؟", options: ["نعم"] },
         ]}

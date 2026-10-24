@@ -11,7 +11,7 @@ export const SECURITY: LocalizedDoc = {
     title: "Security",
     description:
       "What krypta encrypts, what the server can still see, and what this design does not protect against.",
-    lead: "Form questions, responses, file attachments and form titles are encrypted in the browser before they are sent. The server stores and moves ciphertext and holds no key that opens any of it. That is the whole claim, and it is the only one worth trusting: a database dump, a stolen backup, a compromised host or a subpoena to the operator yields ciphertext.",
+    lead: "Form questions, responses, file attachments, form titles and descriptions are encrypted in the browser before they are sent. The server stores and moves ciphertext and holds no key that opens any of it. That is the whole claim, and it is the only one worth trusting: a database dump, a stolen backup, a compromised host or a subpoena to the operator yields ciphertext.",
     intro: [
       "Your password never reaches the server either. The browser derives a key from it and sends a one-way verifier instead, so the password is absent from the wire, from request logs and from the memory of the server.",
     ],
@@ -111,7 +111,7 @@ export const SECURITY: LocalizedDoc = {
     title: "الأمان",
     description:
       "ما يشفّره krypta، وما يستطيع الخادم رؤيته رغم ذلك، وما لا يحمي منه هذا التصميم.",
-    lead: "تُشفَّر أسئلة النماذج وردودها ومرفقاتها وعناوينها في المتصفح قبل إرسالها. يخزّن الخادم نصًا مشفرًا وينقله ولا يملك أي مفتاح يفتح شيئًا منه. هذا هو الادعاء كله، وهو الوحيد الذي يستحق الثقة: نسخة من قاعدة البيانات أو نسخة احتياطية مسروقة أو خادم مخترق أو أمر قضائي إلى المشغّل لا تُنتج إلا نصًا مشفرًا. هذه الصفحة ترجمة للنص الإنجليزي، وعند أي اختلاف بين النصين يُعتمد النص الإنجليزي.",
+    lead: "تُشفَّر أسئلة النماذج وردودها ومرفقاتها وعناوينها وأوصافها في المتصفح قبل إرسالها. يخزّن الخادم نصًا مشفرًا وينقله ولا يملك أي مفتاح يفتح شيئًا منه. هذا هو الادعاء كله، وهو الوحيد الذي يستحق الثقة: نسخة من قاعدة البيانات أو نسخة احتياطية مسروقة أو خادم مخترق أو أمر قضائي إلى المشغّل لا تُنتج إلا نصًا مشفرًا. هذه الصفحة ترجمة للنص الإنجليزي، وعند أي اختلاف بين النصين يُعتمد النص الإنجليزي.",
     intro: [
       "كلمة مرورك أيضًا لا تصل إلى الخادم. يشتق المتصفح منها مفتاحًا ويرسل مُحقِّقًا أحادي الاتجاه بدلًا منها، فتغيب كلمة المرور عن الشبكة وعن سجلات الطلبات وعن ذاكرة الخادم.",
     ],

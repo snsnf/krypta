@@ -12,6 +12,8 @@
     "noQuestions": "This form has no questions yet.",
     "untitled": "Untitled form",
     "formTitle": "Form title",
+    "formDescription": "Form description",
+    "descriptionPlaceholder": "Add a description (optional)",
     "pressLetterToggle": "Press a letter to toggle an option.",
     "pressLetterChoose": "Press a letter to choose.",
     "pressNumberToggle": "Press a number to toggle an option.",

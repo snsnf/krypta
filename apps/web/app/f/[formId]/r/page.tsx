@@ -32,6 +32,7 @@ export default function EditResponsePage() {
   const { formId } = useParams<{ formId: string }>()
   const [token, setToken] = useState<string | null>(null)
   const [title, setTitle] = useState("")
+  const [description, setDescription] = useState<string | undefined>()
   const [questions, setQuestions] = useState<Question[]>([])
   const [theme, setTheme] = useState<FormTheme>(DEFAULT_FORM_THEME)
   const [publicKey, setPublicKey] = useState<string | null>(null)
@@ -78,6 +79,7 @@ export default function EditResponsePage() {
         setSchemaKey(key)
         setHasHeaderImage(form.headerImage)
         setTitle(form.title)
+        setDescription(form.description)
         setQuestions(form.questions)
         setTheme(form.theme)
         setPublicKey(form.publicKey)
@@ -154,7 +156,11 @@ export default function EditResponsePage() {
         onSubmit={handleSubmit}
         className="mx-auto w-full max-w-3xl space-y-4"
       >
-        <FormHeaderCard title={title} headerImageUrl={headerImageUrl} />
+        <FormHeaderCard
+          title={title}
+          description={description}
+          headerImageUrl={headerImageUrl}
+        />
         <p className="form-theme-text text-muted-foreground">
           Editing replaces your previous answers. Since only authorized
           collaborators can decrypt submitted responses, this form can&apos;t

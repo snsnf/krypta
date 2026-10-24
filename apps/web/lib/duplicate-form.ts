@@ -29,6 +29,7 @@ export async function duplicateForm(
   const copy = await createForm({
     accountKey,
     title: copyTitle(original.title),
+    description: original.description,
     questions: original.questions,
     theme: original.theme,
     settings: original.settings,

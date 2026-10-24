@@ -12,6 +12,8 @@
     "noQuestions": "لا توجد أسئلة في هذا النموذج بعد.",
     "untitled": "نموذج بلا عنوان",
     "formTitle": "عنوان النموذج",
+    "formDescription": "وصف النموذج",
+    "descriptionPlaceholder": "أضف وصفًا (اختياري)",
     "pressLetterToggle": "اضغط حرفًا لتحديد خيار أو إلغائه.",
     "pressLetterChoose": "اضغط حرفًا للاختيار.",
     "pressNumberToggle": "اضغط رقمًا لتحديد خيار أو إلغائه.",

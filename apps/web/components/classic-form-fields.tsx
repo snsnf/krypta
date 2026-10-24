@@ -10,6 +10,7 @@ import type { AnswerValue } from "@/hooks/use-public-form-answers"
 
 interface ClassicFormFieldsProps {
   title: string
+  description?: string
   /** Resolved object URL for the header image, or null when there is none. */
   headerImageUrl?: string | null
   questions: Question[]
@@ -27,6 +28,7 @@ interface ClassicFormFieldsProps {
 
 export function ClassicFormFields({
   title,
+  description,
   headerImageUrl = null,
   questions,
   answers,
@@ -68,7 +70,11 @@ export function ClassicFormFields({
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4">
-      <FormHeaderCard title={title} headerImageUrl={headerImageUrl} />
+      <FormHeaderCard
+        title={title}
+        description={description}
+        headerImageUrl={headerImageUrl}
+      />
 
       {pages.length > 1 && (
         <div>
