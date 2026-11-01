@@ -47,11 +47,20 @@ CARGO_AUDIT_IGNORE=(
 #
 #   GHSA-mrhx-c7xc-m3w5  zod memory exhaustion on oversized collections, fixed
 #                        only in 4.6.6. Reached only through the shadcn CLI,
-#                        which requires zod ^3, and eslint-plugin-react-hooks:
-#                        dev tools validating our own config, never user input,
-#                        and neither ships in the app.
+#                        which requires zod ^3: a dev tool validating our own
+#                        config, never user input, and it does not ship in the
+#                        app.
+#   GHSA-g3hv-75wg-m249  minimatch DoS through pattern amplification, fixed only
+#                        in 11.0.1. eslint and its plugins require ^3, ts-morph
+#                        (via shadcn) and typescript-eslint ^10. Dev tools
+#                        matching globs we write, and none ships in the app.
+#   GHSA-gcqx-w48m-w2h4  deepmerge prototype poisoning, unfixed in 4.3.1, the
+#                        latest release. Reached only through the shadcn CLI
+#                        merging our own config.
 WEB_AUDIT_IGNORE=(
   GHSA-mrhx-c7xc-m3w5
+  GHSA-g3hv-75wg-m249
+  GHSA-gcqx-w48m-w2h4
 )
 
 FAILED=()
