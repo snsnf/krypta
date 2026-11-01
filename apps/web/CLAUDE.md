@@ -5,16 +5,11 @@ directory**. The design this app must not violate (the zero-knowledge
 boundary, the account key hierarchy, sealing, password reset, the
 non-negotiable rules) lives in the root `CLAUDE.md` and applies here too.
 
-Note the `nextjs-agent-rules` block at the end of this file is written and
-re-added by `next dev`. It is not project guidance, it is committed only so
-the tree stays clean, and it is the one place in the source tree that carries
-an em-dash, because its text is not ours to edit. Everything between its
-hidden BEGIN and END comment markers is replaced on every `next dev` start,
-and the BEGIN marker sits above the block's visible heading. Add new sections
-above that marker, never just before the heading, or they are silently
-deleted the next time the dev server starts. Never write either marker out
-literally anywhere else in this file: `next dev` matches the first one it
-finds, and a copy quoted in prose becomes where the block is injected.
+Next 16 differs from older versions in APIs, conventions and file layout, so
+check the guide in `node_modules/next/dist/docs/` before relying on what you
+remember. `next dev` would otherwise write that reminder into an `AGENTS.md`
+of its own whenever it detects an AI agent; `agentRules: false` in
+`next.config.ts` turns that off, so no generated file appears in the tree.
 
 ## Conventions
 
@@ -574,13 +569,3 @@ fixing a wrong answer key regrade every past response. Only manual marks are
 saved, one blob per form (`hooks/use-quiz-grades.ts`), and unreadable grades
 open as `null` rather than empty, so a click can never save an empty set over
 them.
-
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->

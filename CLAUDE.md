@@ -114,9 +114,8 @@ These are the project's guardrails. Every feature decision should be checked aga
     colon before an explanation. Hyphens inside compound words such as
     "zero-knowledge" are correct and stay. This is a house style rule rather
     than a security one, but it is enforced the same way: the repository
-    currently contains none outside the generated Next block at the end of
-    `apps/web/CLAUDE.md`, so grepping the source for U+2014 and
-    finding a match elsewhere means a regression.
+    currently contains none, so grepping the source for U+2014 and finding a
+    match means a regression.
 
 Every claim in `SECURITY.md` has to stay true of the code: changing a default,
 a limit or a header means changing it there in the same commit.

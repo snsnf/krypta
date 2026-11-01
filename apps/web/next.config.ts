@@ -37,6 +37,10 @@ const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
 const devApiProxyTarget = process.env.DEV_API_PROXY_TARGET
 
 const nextConfig: NextConfig = {
+  // `next dev` otherwise writes an AGENTS.md of its own instructions whenever
+  // it detects an AI coding agent. Guidance for this directory lives in
+  // CLAUDE.md, written by people, and nothing in the tree is generated.
+  agentRules: false,
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
   ...(devApiProxyTarget
     ? {
