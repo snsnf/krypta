@@ -11,23 +11,42 @@
  * rely on.
  */
 import {
+  matchesFormKeyPin,
   openSealedFormGrant,
   unwrapKey,
   type FormKeyScheme,
 } from "@krypta/crypto"
 import type { AccountSharingMaterial } from "./account-sharing-key"
+import { formKeyFingerprint } from "./form-link"
+import { FormKeyMismatchError } from "./load-public-form"
 
 export interface MemberGrant {
   membership_state: "active" | "awaiting_keys"
   key_scheme: FormKeyScheme | null
   encrypted_form_data_key: string | null
   encrypted_form_private_key: string | null
+  /** This member's pin of the form's key, made when they accepted. */
+  key_pin: string | null
 }
 
+/**
+ * Opens this member's grant for `formId`.
+ *
+ * An owner's grant is wrapped under their own account key, which nobody else
+ * can produce, so it is trusted as it opens. A collaborator's grant is sealed
+ * to their public sharing key, and anyone able to write the database can seal
+ * a private key of their own to that, so a sealed grant opens only when the
+ * key inside matches the pin the member made on accepting, from the key
+ * fingerprint in their invitation email. A sealed grant with no pin is refused
+ * too: a missing pin is what a planted grant would look like, and there is no
+ * fallback that trusts what was served. Both refusals throw
+ * `FormKeyMismatchError`, so the workspace says the form cannot be trusted.
+ */
 export function openMemberGrant(
   grant: MemberGrant,
   accountKey: string,
-  sharing: AccountSharingMaterial
+  sharing: AccountSharingMaterial,
+  formId: string
 ): { formDataKey: string; formPrivateKey: string } {
   if (
     grant.membership_state !== "active" ||
@@ -47,7 +66,7 @@ export function openMemberGrant(
   }
 
   if (grant.key_scheme === "account_sealed_box_v1") {
-    return openSealedFormGrant(
+    const opened = openSealedFormGrant(
       {
         keyScheme: "account_sealed_box_v1",
         encryptedFormDataKey: grant.encrypted_form_data_key,
@@ -55,6 +74,18 @@ export function openMemberGrant(
       },
       sharing.sharingPrivateKey
     )
+    if (
+      typeof grant.key_pin !== "string" ||
+      !matchesFormKeyPin(
+        grant.key_pin,
+        accountKey,
+        formId,
+        formKeyFingerprint(opened.formPrivateKey)
+      )
+    ) {
+      throw new FormKeyMismatchError()
+    }
+    return opened
   }
 
   throw new Error("Unsupported form access")

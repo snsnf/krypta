@@ -67,7 +67,7 @@ test("Strict Mode reuses one deferred invitation exchange", async ({
     await route.abort()
   })
 
-  await page.goto("/invitations/accept#token=strict-mode-token", {
+  await page.goto("/invitations/accept#token=strict-mode-token&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=key-fingerprint", {
     waitUntil: "domcontentloaded",
   })
   await expect.poll(() => continueCalls).toBe(1)
@@ -125,7 +125,7 @@ test("unmount ignores a deferred exchange result after clearing the token", asyn
     await route.abort()
   })
 
-  await page.goto("/invitations/accept#token=unmount-token", {
+  await page.goto("/invitations/accept#token=unmount-token&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=key-fingerprint", {
     waitUntil: "domcontentloaded",
   })
   await expect.poll(() => continueCalls).toBe(1)

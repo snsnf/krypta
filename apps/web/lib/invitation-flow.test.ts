@@ -4,39 +4,101 @@ import {
   acceptanceViewState,
   currentInvitationViewState,
   invitationErrorViewState,
-  takeInvitationToken,
+  forgetInvitationKey,
+  recallInvitationKey,
+  rememberInvitationKey,
+  takeInvitationLink,
 } from "./invitation-flow"
 
-describe("takeInvitationToken", () => {
-  it("removes the complete fragment before returning its only token", () => {
+describe("takeInvitationLink", () => {
+  it("removes the complete fragment before returning the token and key", () => {
     const events: string[] = []
     const replace = vi.fn(() => events.push("cleared"))
 
-    const token = takeInvitationToken("#token=opaque%2Bvalue", replace)
+    const link = takeInvitationLink(
+      "#token=opaque%2Bvalue&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=key-fingerprint",
+      replace
+    )
     events.push("returned")
 
-    expect(token).toBe("opaque+value")
+    expect(link).toEqual({
+      token: "opaque+value",
+      key: { formId: "0198e904-aa65-4bd1-a2d2-b734286d8f72", keyFingerprint: "key-fingerprint" },
+    })
     expect(events).toEqual(["cleared", "returned"])
     expect(replace).toHaveBeenCalledWith(null, "", "/invitations/accept")
+  })
+
+  it("opens a link sent before invitations carried a fingerprint", () => {
+    expect(takeInvitationLink("#token=opaque", vi.fn())).toEqual({
+      token: "opaque",
+      key: null,
+    })
   })
 
   it("clears but rejects fragments with extra, duplicate, or empty fields", () => {
     for (const fragment of [
       "#other=value&token=opaque",
       "#token=one&token=two",
+      "#token=opaque&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=one&pk=two",
+      "#token=opaque&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=",
+      "#token=opaque&pk=key-fingerprint",
+      "#token=opaque&form=0198e904-aa65-4bd1-a2d2-b734286d8f72",
+      "#token=opaque&form=not-a-form&pk=key-fingerprint",
+      "#form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=key-fingerprint",
       "#token=",
       "#opaque",
     ]) {
       const replace = vi.fn()
-      expect(takeInvitationToken(fragment, replace)).toBeNull()
+      expect(takeInvitationLink(fragment, replace)).toBeNull()
       expect(replace).toHaveBeenCalledOnce()
     }
   })
 
   it("does not touch history when there is no fragment", () => {
     const replace = vi.fn()
-    expect(takeInvitationToken("", replace)).toBeNull()
+    expect(takeInvitationLink("", replace)).toBeNull()
     expect(replace).not.toHaveBeenCalled()
+  })
+})
+
+describe("the invitation key across sign-in", () => {
+  function memoryStorage(): Storage {
+    const values = new Map<string, string>()
+    return {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => void values.set(key, value),
+      removeItem: (key) => void values.delete(key),
+      clear: () => values.clear(),
+      key: () => null,
+      get length() {
+        return values.size
+      },
+    }
+  }
+
+  const key = { formId: "0198e904-aa65-4bd1-a2d2-b734286d8f72", keyFingerprint: "second" }
+
+  it("keeps the latest link's key and forgets it when asked", () => {
+    const storage = memoryStorage()
+    rememberInvitationKey(storage, { ...key, keyFingerprint: "first" })
+    rememberInvitationKey(storage, key)
+    expect(recallInvitationKey(storage)).toEqual(key)
+    forgetInvitationKey(storage)
+    expect(recallInvitationKey(storage)).toBeNull()
+  })
+
+  it("drops an earlier key when a link without one is opened", () => {
+    const storage = memoryStorage()
+    rememberInvitationKey(storage, key)
+    rememberInvitationKey(storage, null)
+    expect(recallInvitationKey(storage)).toBeNull()
+  })
+
+  it("recalls nothing from a stored value that is not a key", () => {
+    const storage = memoryStorage()
+    storage.setItem("krypta:invitation-key", '{"formId":"x","keyFingerprint":"y"}')
+    expect(recallInvitationKey(storage)).toBeNull()
   })
 })
 

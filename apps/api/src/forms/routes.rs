@@ -40,6 +40,28 @@ const MAX_ATTACHMENT_REFERENCES_PER_RESPONSE: usize = 20;
 /// any answer a person types; the web client refuses to send more and says so.
 pub const MAX_RESPONSE_BODY_BYTES: usize = 512 * 1024;
 
+// Ceilings on what one form row may store, checked on create and on every edit.
+// Plan limits count open forms only, and a form can be created already closed,
+// so without these one account could store a row as large as the 2 MiB body
+// limit on every request for as long as it kept creating forms. Each ceiling is
+// far above what the web client writes: a title is padded to 1 KiB, a large
+// schema is tens of KiB, and the keys are fixed sizes of a few KiB at most.
+const MAX_FORM_TITLE_CIPHERTEXT_BYTES: usize = 16 * 1024;
+const MAX_FORM_SCHEMA_CIPHERTEXT_BYTES: usize = 512 * 1024;
+const MAX_FORM_KEY_FIELD_BYTES: usize = 4 * 1024;
+/// Forms one account may create in a day. The size ceilings bound one row and
+/// this bounds how many rows, so closed forms, which no plan counts, cannot be
+/// used to grow the database without limit. Nobody builds two hundred forms in
+/// a day by hand, and a full end-to-end run on one account stays well under it.
+const FORMS_CREATED_PER_ACCOUNT_PER_DAY: u32 = 200;
+/// The refusal for a form over a ceiling. The web app matches this exact text
+/// to show it translated.
+pub const FORM_TOO_LARGE_MESSAGE: &str = "This form is too large to save";
+
+fn exceeds(value: Option<&str>, max: usize) -> bool {
+    value.is_some_and(|value| value.len() > max)
+}
+
 fn hash_token(token: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());
@@ -97,10 +119,41 @@ pub struct CreateFormBody {
 }
 
 pub async fn create_form(
-    State(state): State<AppState>,
+    State(mut state): State<AppState>,
     user: SessionUser,
     axum::Json(body): axum::Json<CreateFormBody>,
 ) -> ApiResult<serde_json::Value> {
+    if exceeds(
+        Some(&body.title_ciphertext),
+        MAX_FORM_TITLE_CIPHERTEXT_BYTES,
+    ) || exceeds(
+        Some(&body.schema_ciphertext),
+        MAX_FORM_SCHEMA_CIPHERTEXT_BYTES,
+    ) || exceeds(
+        body.answer_key_ciphertext.as_deref(),
+        MAX_FORM_SCHEMA_CIPHERTEXT_BYTES,
+    ) || [
+        &body.form_public_key,
+        &body.wrapped_form_private_key,
+        &body.wrapped_form_data_key,
+    ]
+    .into_iter()
+    .any(|key| key.len() > MAX_FORM_KEY_FIELD_BYTES)
+    {
+        return Err(ApiError::BadRequest(FORM_TOO_LARGE_MESSAGE.to_string()));
+    }
+    let allowed = crate::rate_limit::check_rate_limit(
+        &mut state.redis,
+        &format!("form_create_day:{}", user.user_id),
+        FORMS_CREATED_PER_ACCOUNT_PER_DAY,
+        24 * 60 * 60,
+    )
+    .await
+    .map_err(ApiError::Internal)?;
+    if !allowed {
+        return Err(ApiError::RateLimited);
+    }
+
     // v4, not v7, because this id goes into every public form link. v7 spends
     // its first 48 bits on a millisecond timestamp, so anyone holding a link
     // would learn when the form was created, and anyone holding two would
@@ -251,6 +304,7 @@ pub async fn list_forms(
             "key_scheme": access.key_scheme,
             "encrypted_form_data_key": access.encrypted_form_data_key,
             "encrypted_form_private_key": access.encrypted_form_private_key,
+            "key_pin": access.key_pin,
             "created_at": membership.created_at,
             "archived_at": archived_at,
             "version": version,
@@ -325,6 +379,7 @@ pub async fn get_form(
         "key_scheme": access.key_scheme,
         "encrypted_form_private_key": access.encrypted_form_private_key,
         "encrypted_form_data_key": access.encrypted_form_data_key,
+        "key_pin": access.key_pin,
         "allow_response_editing": row.allow_response_editing,
         "accepting_responses": row.accepting_responses,
         "closes_at": closes_at,
@@ -371,6 +426,21 @@ pub async fn update_form(
     ApiPath(id): ApiPath<Uuid>,
     ApiJson(body): ApiJson<UpdateFormBody>,
 ) -> ApiResult<serde_json::Value> {
+    if exceeds(
+        body.title_ciphertext.as_deref(),
+        MAX_FORM_TITLE_CIPHERTEXT_BYTES,
+    ) || exceeds(
+        body.schema_ciphertext.as_deref(),
+        MAX_FORM_SCHEMA_CIPHERTEXT_BYTES,
+    ) || exceeds(
+        body.answer_key_ciphertext
+            .as_ref()
+            .and_then(Option::as_deref),
+        MAX_FORM_SCHEMA_CIPHERTEXT_BYTES,
+    ) {
+        return Err(ApiError::BadRequest(FORM_TOO_LARGE_MESSAGE.to_string()));
+    }
+
     let mut transaction = state
         .db
         .begin()

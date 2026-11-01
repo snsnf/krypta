@@ -43,8 +43,18 @@ export function formShareLink(
   formDataKey: string,
   formPrivateKey: string
 ): string {
-  const fingerprint = formKeyCommitment(sealPublicKeyFromPrivate(formPrivateKey))
+  const fingerprint = formKeyFingerprint(formPrivateKey)
   return `${origin}/f/${formId}#key=${encodeURIComponent(formDataKey)}&pk=${encodeURIComponent(fingerprint)}`
+}
+
+/**
+ * The fingerprint of the key a form seals to, from a member's own private key.
+ * Share links carry it for respondents and invitation links for collaborators,
+ * and a collaborator's pin is made from it; always computed from the private
+ * key a member holds, never from the public key the server serves.
+ */
+export function formKeyFingerprint(formPrivateKey: string): string {
+  return formKeyCommitment(sealPublicKeyFromPrivate(formPrivateKey))
 }
 
 /**

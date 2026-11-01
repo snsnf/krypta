@@ -300,15 +300,39 @@ the machine.
 ```bash
 aws --endpoint-url "$BACKUP_S3_ENDPOINT" s3 cp "s3://$BACKUP_S3_BUCKET/postgres-<stamp>.dump.age" .
 age -d -i krypta-backup-key.txt postgres-<stamp>.dump.age > /tmp/krypta.dump
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
 docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
     pg_restore -U krypta -d krypta --clean --if-exists < /tmp/krypta.dump
+```
+
+**A restore undoes everything after the dump, including revocations.** A
+collaborator removed since then is a member again, a revoked invitation can be
+accepted again, a suspended or deleted account is back, and a password,
+vault recovery code or passkey changed since then works as it did before. On
+an instance that bills, a cancellation Stripe reported after the dump is
+undone too, and Stripe will not send it again. Before reopening the stack,
+sign everyone out and void the invitations that were open at the dump:
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T redis redis-cli FLUSHALL
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
+    psql -U krypta -d krypta -c "UPDATE form_invitations
+        SET status = 'revoked', token_hash = NULL, updated_at = now()
+        WHERE status IN ('sending', 'pending')"
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 ```
 
-Rehearse this once with your first backup. Attachment rows in the restored
-database point at objects that are still in the bucket, so nothing else is
-needed.
+Flushing Redis signs everyone out and forgets known browsers and rate-limit
+counters, and nothing else. Owners re-send any invitation still wanted. Then
+tell users the instance was restored to the dump's time: owners should check
+their collaborators, and anyone who changed a password, a vault recovery code
+or a passkey since then should change it again. On a billing instance, compare
+subscriptions with the Stripe dashboard.
+
+Attachments are not in the dump. A file uploaded after it stays in the bucket
+with nothing pointing at it, and a file deleted after it is gone even though
+its row is back, so that download fails. Rehearse all of this once with your
+first backup.
 
 ## Uptime
 

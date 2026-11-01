@@ -6,6 +6,11 @@ import {
   type InvitationSealer,
 } from "./sharing-invitations"
 
+// Stand-in for the fingerprint derivation, which @krypta/crypto covers.
+const fingerprint = vi.fn<(formPrivateKey: string) => string>(
+  () => "key-fingerprint"
+)
+
 describe("sendInvitation", () => {
   it("sends only recipient-sealed grants when the latest sharing key is usable", async () => {
     const requests: Array<{ path: string; init?: RequestInit }> = []
@@ -34,7 +39,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag", fingerprint }
     )
 
     expect(sealFormGrant).toHaveBeenCalledWith(
@@ -53,7 +58,9 @@ describe("sendInvitation", () => {
       encrypted_form_data_key: "sealed-data-key",
       encrypted_form_private_key: "sealed-private-key",
       approval_tag: "approval-tag",
+      form_key_fingerprint: "key-fingerprint",
     })
+    expect(fingerprint).toHaveBeenCalledWith("raw-private-key")
     expect(requests[1]!.init?.body).not.toContain("raw-data-key")
     expect(requests[1]!.init?.body).not.toContain("raw-private-key")
   })
@@ -86,7 +93,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag", fingerprint }
     )
 
     expect(sealFormGrant).not.toHaveBeenCalled()
@@ -97,6 +104,7 @@ describe("sendInvitation", () => {
       encrypted_form_data_key: null,
       encrypted_form_private_key: null,
       approval_tag: "approval-tag",
+      form_key_fingerprint: expect.any(String),
     })
   })
 
@@ -122,7 +130,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag", fingerprint }
     )
 
     expect(JSON.parse(requests[1]!.init?.body as string)).toEqual({
@@ -132,6 +140,7 @@ describe("sendInvitation", () => {
       encrypted_form_data_key: null,
       encrypted_form_private_key: null,
       approval_tag: "approval-tag",
+      form_key_fingerprint: expect.any(String),
     })
   })
 
@@ -160,7 +169,7 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant, approve: () => "approval-tag" }
+      { apiFetch, sealFormGrant, approve: () => "approval-tag", fingerprint }
     )
 
     expect(requests.map(({ path }) => path)).toEqual([
@@ -174,6 +183,7 @@ describe("sendInvitation", () => {
       encrypted_form_data_key: "latest-sealed-data",
       encrypted_form_private_key: "latest-sealed-private",
       approval_tag: "approval-tag",
+      form_key_fingerprint: expect.any(String),
     })
   })
 
@@ -193,7 +203,12 @@ describe("sendInvitation", () => {
         formDataKey: "raw-data-key",
         formPrivateKey: "raw-private-key",
       },
-      { apiFetch, sealFormGrant: vi.fn() as InvitationSealer, approve }
+      {
+        apiFetch,
+        sealFormGrant: vi.fn() as InvitationSealer,
+        approve,
+        fingerprint,
+      }
     )
 
     expect(approve).toHaveBeenCalledWith(

@@ -9,6 +9,9 @@ pub struct FormAccess {
     pub key_scheme: Option<String>,
     pub encrypted_form_data_key: Option<String>,
     pub encrypted_form_private_key: Option<String>,
+    /// The member's pin of the form's key (see migration 0035). Returned with
+    /// the grant for the member's browser to check; never read here.
+    pub key_pin: Option<String>,
 }
 
 impl FormAccess {
@@ -24,6 +27,7 @@ impl FormAccess {
         key_scheme: Option<String>,
         encrypted_form_data_key: Option<String>,
         encrypted_form_private_key: Option<String>,
+        key_pin: Option<String>,
     ) -> Result<Self, sqlx::Error> {
         let role = FormRole::try_from(role).map_err(|_| {
             sqlx::Error::Decode(
@@ -36,6 +40,7 @@ impl FormAccess {
             key_scheme,
             encrypted_form_data_key,
             encrypted_form_private_key,
+            key_pin,
         })
     }
 
@@ -59,7 +64,7 @@ impl FormAccess {
     ) -> Result<Option<Self>, sqlx::Error> {
         let row = sqlx::query!(
             "SELECT id, role, state, key_scheme,
-                    encrypted_form_data_key, encrypted_form_private_key
+                    encrypted_form_data_key, encrypted_form_private_key, key_pin
              FROM form_members
              WHERE form_id = $1 AND user_id = $2
              FOR UPDATE",
@@ -76,6 +81,7 @@ impl FormAccess {
                 row.key_scheme,
                 row.encrypted_form_data_key,
                 row.encrypted_form_private_key,
+                row.key_pin,
             )
         })
         .transpose()
@@ -88,7 +94,7 @@ impl FormAccess {
     ) -> Result<Option<Self>, sqlx::Error> {
         let row = sqlx::query!(
             "SELECT id, role, state, key_scheme,
-                    encrypted_form_data_key, encrypted_form_private_key
+                    encrypted_form_data_key, encrypted_form_private_key, key_pin
              FROM form_members
              WHERE form_id = $1 AND user_id = $2",
             form_id,
@@ -104,6 +110,7 @@ impl FormAccess {
                 row.key_scheme,
                 row.encrypted_form_data_key,
                 row.encrypted_form_private_key,
+                row.key_pin,
             )
         })
         .transpose()

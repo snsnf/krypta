@@ -5,6 +5,7 @@ import {
   type FormRole,
 } from "@krypta/crypto"
 import { apiFetch } from "./api"
+import { formKeyFingerprint } from "./form-link"
 
 type InvitationRole = Exclude<FormRole, "owner">
 
@@ -43,12 +44,14 @@ interface SendInvitationDependencies {
   apiFetch: InvitationApiFetch
   sealFormGrant: InvitationSealer
   approve: InvitationApprover
+  fingerprint: (formPrivateKey: string) => string
 }
 
 const defaultDependencies: SendInvitationDependencies = {
   apiFetch,
   sealFormGrant,
   approve: memberApprovalTag,
+  fingerprint: formKeyFingerprint,
 }
 
 function trySealGrant(
@@ -130,6 +133,10 @@ export async function sendInvitation(
         input.formId,
         input.email
       ),
+      // Goes into the emailed link and nowhere else. The recipient's browser
+      // pins it on accepting, which is what later lets it refuse a grant
+      // holding any other key. Computed from this owner's own private key.
+      form_key_fingerprint: dependencies.fingerprint(input.formPrivateKey),
     }),
   })
 }

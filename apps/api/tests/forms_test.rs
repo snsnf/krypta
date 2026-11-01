@@ -711,6 +711,51 @@ async fn closed_form_remains_publicly_readable_but_rejects_submissions() {
     assert_eq!(submission_body["error"]["message"], "Form is closed");
 }
 
+/// Plan limits count open forms only, so a form row's size has its own
+/// ceiling, on creation and on every edit, or closed forms could hold
+/// arbitrarily large rows.
+#[tokio::test]
+async fn a_form_larger_than_its_ceiling_is_refused_on_create_and_edit() {
+    let base = common::base_url();
+    let client = Client::builder().cookie_store(true).build().unwrap();
+    register_and_login(&client, &base).await;
+    let oversized_schema = "s".repeat(512 * 1024 + 1);
+
+    let created = client
+        .post(format!("{base}/api/v1/forms"))
+        .json(&json!({
+            "title_ciphertext": "title",
+            "schema_ciphertext": oversized_schema,
+            "form_public_key": "public-key",
+            "wrapped_form_data_key": "data-key",
+            "wrapped_form_private_key": "private-key",
+            "accepting_responses": false,
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(created.status(), 400);
+    let body: serde_json::Value = created.json().await.unwrap();
+    assert_eq!(body["error"]["message"], "This form is too large to save");
+
+    let form_id = create_test_form(&client, &base).await;
+    let expected_version = current_version(&client, &base, &form_id).await;
+    let edited = client
+        .patch(format!("{base}/api/v1/forms/{form_id}"))
+        .json(&json!({
+            "title_ciphertext": "t".repeat(16 * 1024 + 1),
+            "expected_version": expected_version,
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(edited.status(), 400);
+    assert_eq!(
+        current_version(&client, &base, &form_id).await,
+        expected_version
+    );
+}
+
 async fn create_test_form(client: &Client, base: &str) -> String {
     let created: serde_json::Value = client
         .post(format!("{base}/api/v1/forms"))

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { formKeyPin } from "@krypta/crypto"
 import { apiFetch } from "@/lib/api"
 import { useAppT } from "@/lib/app-i18n"
 import { ensureAccountSharingKey } from "@/lib/account-sharing-key"
@@ -13,11 +14,15 @@ import {
 import {
   acceptanceViewState,
   currentInvitationViewState,
+  forgetInvitationKey,
   invitationErrorViewState,
-  takeInvitationToken,
+  recallInvitationKey,
+  rememberInvitationKey,
+  takeInvitationLink,
   type InvitationRole,
   type InvitationViewState,
 } from "@/lib/invitation-flow"
+import { ensureSodiumReady } from "@/lib/sodium-ready"
 import { restoreVaultForDashboard } from "@/lib/vault-access"
 import { AuthShell } from "@/components/auth-shell"
 import { InvitationCard } from "@/components/invitation-card"
@@ -71,19 +76,22 @@ export default function InvitationAcceptancePage() {
     invitationLoad.current ??= (async () => {
       try {
         const fragment = window.location.hash
-        const token = takeInvitationToken(
+        const link = takeInvitationLink(
           fragment,
           window.history.replaceState.bind(window.history)
         )
 
-        if (fragment.length > 0 && token === null) {
+        if (fragment.length > 0 && link === null) {
           return { kind: "invalid" }
         }
 
-        if (token !== null) {
+        if (link !== null) {
+          // Kept before anything can navigate away: signing in or unlocking
+          // leaves this page, and the fragment does not come back with it.
+          rememberInvitationKey(window.sessionStorage, link.key)
           await apiFetch<{ continued: true }>("/invitations/continue", {
             method: "POST",
-            body: JSON.stringify({ token }),
+            body: JSON.stringify({ token: link.token }),
           })
         }
 
@@ -148,17 +156,39 @@ export default function InvitationAcceptancePage() {
         await apiFetch<Record<string, never>>("/invitations/current/decline", {
           method: "POST",
         })
+        forgetInvitationKey(window.sessionStorage)
         router.replace("/dashboard")
+        return
+      }
+
+      // The fingerprint from the emailed link is what this member's browser
+      // will hold the form's key to from now on. Without one there is nothing
+      // to pin, and accepting anyway would leave a membership whose keys this
+      // browser refuses to open, so the link is treated as unusable.
+      const invitationKey = recallInvitationKey(window.sessionStorage)
+      if (invitationKey === null) {
+        setView({ kind: "invalid" })
         return
       }
 
       const vault = await prepareVault()
       if (vault === null) return
 
+      await ensureSodiumReady()
       const response = await apiFetch<AcceptanceResponse>(
         "/invitations/current/accept",
-        { method: "POST" }
+        {
+          method: "POST",
+          body: JSON.stringify({
+            key_pin: formKeyPin(
+              vault.accountKey,
+              invitationKey.formId,
+              invitationKey.keyFingerprint
+            ),
+          }),
+        }
       )
+      forgetInvitationKey(window.sessionStorage)
       const accepted = acceptanceViewState(response)
 
       if (accepted.kind === "awaiting_keys") {

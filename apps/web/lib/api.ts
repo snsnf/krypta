@@ -6,6 +6,8 @@ export interface FormListWireItem {
   key_scheme: "master_wrap_v1" | "account_sealed_box_v1" | null
   encrypted_form_data_key: string | null
   encrypted_form_private_key: string | null
+  /** This member's pin of the form's key; see `openMemberGrant`. */
+  key_pin: string | null
   created_at: string
   archived_at: string | null
   /**

@@ -30,9 +30,19 @@ the form if either differs, or if the form carries no commitment at all. The
 fingerprint is what covers a database writer who also holds the link, since
 anyone with the link could rewrite the commitment. A link copied before links
 carried the fingerprint is checked against the commitment alone; copy the
-link again from the form's page to give respondents the stronger check. A collaborator's browser makes the same check against the
-key in its own grant before opening the form, so a planted grant cannot get
-the commitment rewritten by that collaborator's next save.
+link again from the form's page to give respondents the stronger check.
+
+A collaborator's keys are sealed to them, and sealing proves nothing about
+who sealed, so a collaborator's browser does not take the key in its grant on
+trust. The owner's browser puts the form's key fingerprint into the invitation
+email, and the collaborator's browser pins it when they accept, under a key
+derived from their own account key; the database never holds the fingerprint
+and cannot produce a pin. From then on the collaborator's browser refuses a
+grant whose key does not match the pin, and refuses a shared form with no pin
+at all, so someone who can write the database cannot hand a collaborator a key
+of their own, whether or not they also hold the link, and cannot get the
+links that collaborator copies to carry it. An owner's own keys are wrapped
+under their account key and need no pin.
 
 A collaborator receives a form's keys only from the owner's browser, and only
 for an address the owner invited. When the owner invites someone, their
@@ -85,6 +95,13 @@ someone who can write the database and replaces an invitee's stored key
 before the owner's browser seals to it receives that invitee's access. The
 approval tag stops a member being added who was never invited; it cannot
 vouch for the key of one who was.
+
+**An invitation email altered before it is opened.** The fingerprint a
+collaborator pins arrives in the invitation email. Someone who can both write
+the database and rewrite that email before the collaborator opens it could
+pin them to a key of their own. The token in the same email already hands the
+invitation itself to whoever opens it first, so the email is trusted for this
+either way.
 
 **Collaborator removal is not retroactive.** Removing someone, revoking an
 invitation or transferring ownership stops future API access. It cannot erase
@@ -174,6 +191,11 @@ allowance of its own (see Rate limits). Signing out everywhere, vault
 recovery, suspension and deletion forget every marked browser along with the
 sessions.
 
+Adding a passkey takes the password again, and on an account with
+two-factor authentication it also takes a session that signed in with a code,
+because a passkey later signs in without one. That includes the session that
+turned two-factor authentication on, which signs in again first.
+
 Vault recovery mints a separate, narrower session that reaches one endpoint and
 expires in 15 minutes, and whose lifetime is deliberately not renewed on use.
 
@@ -204,8 +226,9 @@ no images, no web fonts, no tracking pixel.
 
 ## Rate limits
 
-Redis-backed, applied before the work they protect. The per-form limits are
-fixed; the rest are defaults an operator can change:
+Redis-backed, applied before the work they protect. The per-form limits and
+the form creation limit are fixed; the rest are defaults an operator can
+change:
 
 | Action | Limit |
 |---|---|
@@ -223,6 +246,11 @@ fixed; the rest are defaults an operator can change:
 | Opening a form | 600 per minute per source per form |
 | Header image download | 600 per minute per source per form |
 | Editing a submitted response | 10 per minute per source per form |
+| Creating a form | 200 per day per account |
+
+A form's stored ciphertext is capped as well, since plan limits count only
+open forms: 16 KiB for the title and 512 KiB each for the questions and the
+quiz answer key, on creation and on every edit.
 
 "Per source" and "per IP" count an IPv4 address as one source and an IPv6
 address by its /64, since an IPv6 host is normally given a whole /64 and could

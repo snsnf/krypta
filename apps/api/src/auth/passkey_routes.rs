@@ -22,6 +22,12 @@ use crate::{
 
 const REGISTER_CEREMONY: &str = "register";
 
+/// Returned when an account with TOTP enabled tries to add a passkey from a
+/// session that never presented a code. The web app matches this exact text to
+/// show it translated, so rewording it means changing `api-error-text.ts`.
+pub const SECOND_FACTOR_REQUIRED_MESSAGE: &str =
+    "Sign in again with your authentication code to add a passkey";
+
 #[derive(Deserialize)]
 pub struct RegisterStartBody {
     reauthentication_receipt: String,
@@ -55,10 +61,26 @@ pub async fn register_start(
     )
     .await?;
 
-    let row = sqlx::query!("SELECT email FROM users WHERE id = $1", user.user_id)
-        .fetch_one(&state.db)
-        .await
-        .map_err(|error| ApiError::Internal(error.into()))?;
+    let row = sqlx::query!(
+        "SELECT email, totp_enabled FROM users WHERE id = $1",
+        user.user_id
+    )
+    .fetch_one(&state.db)
+    .await
+    .map_err(|error| ApiError::Internal(error.into()))?;
+
+    // A passkey signs in with the second factor already satisfied, so adding
+    // one takes that same assurance. Without this, a session minted before
+    // TOTP was turned on stays live afterwards, and with the password it could
+    // enrol a passkey and then hold a second-factor-verified session (the one
+    // the admin guard accepts) without ever presenting a code. Like the admin
+    // guard, this includes the session that turned TOTP on: it proved a code
+    // to the enrolment, not at sign-in, so it signs in again first.
+    if row.totp_enabled && !user.second_factor_verified {
+        return Err(ApiError::BadRequest(
+            SECOND_FACTOR_REQUIRED_MESSAGE.to_string(),
+        ));
+    }
 
     // Excluding what is already enrolled stops a device silently replacing its
     // own credential, which would orphan the wrapper that opens the vault.

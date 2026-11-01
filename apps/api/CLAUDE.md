@@ -513,6 +513,17 @@ cannot run in the suites, which make no outbound requests; the decision is a
 pure function with a unit test, and the claim's release is covered through
 the webhook.
 
+**Closed forms are bounded by size and rate, not by count.** `max_forms` (below)
+counts open forms only, and a form can be created already closed, so on its
+own it bounded nothing a script could store. `create_form` and `update_form`
+cap each ciphertext field (`MAX_FORM_*_BYTES` in `forms/routes.rs`: 16 KiB
+title, 512 KiB schema and answer key, 4 KiB per key field) and `create_form`
+allows 200 forms per account per day. The caps are fixed constants rather than
+settings, far above anything the web client writes; the daily rather than
+hourly window is what keeps a full end-to-end run on one account under it
+while still bounding a day's growth. A total-forms ceiling was declined
+because it would change what the plans mean.
+
 **`max_forms` counts open forms with a live query, not a counter, and that
 substitution was forced.** `account_usage.forms_used` still exists and
 `reserve_form_slot`/`release_form_slot` still move it, but it counts total
@@ -865,7 +876,14 @@ set up even if they sign in with a passkey.
 `register_start` consumes a reauthentication receipt, for the same reason TOTP
 enrolment does: a passkey is a standing way into the account and the vault.
 The ceremony token it issues is bound to the user and consumed by
-`register_finish`, so gating the start gates the whole ceremony.
+`register_finish`, so gating the start gates the whole ceremony. On an account
+with TOTP enabled it also requires a second-factor-verified session: a passkey
+login is minted `SecondFactor::Verified`, so enrolling one from a session that
+never presented a code (one from before TOTP was turned on, kept alive for up to
+90 days) would turn the password into a TOTP-free way past the admin guard. The
+session that enabled TOTP is not upgraded either, matching the admin guard; it
+signs in again first, and the refusal says so in a message the web app
+translates.
 
 **The RP ID is permanent.** `WEBAUTHN_RP_ID` is baked into every credential
 enrolled against it; changing the domain dead-weights every passkey with no

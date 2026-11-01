@@ -43,6 +43,7 @@ const provisioningItem = {
   owner_encrypted_form_private_key: "wrapped-owner-form-private-key",
   member_email: "bob@example.com",
   approval_tag: "owner-approval-tag",
+  owner_key_pin: null,
 }
 
 describe("provisionPendingMembers", () => {
@@ -78,9 +79,11 @@ describe("provisionPendingMembers", () => {
         key_scheme: "master_wrap_v1",
         encrypted_form_data_key: "wrapped-owner-form-data-key",
         encrypted_form_private_key: "wrapped-owner-form-private-key",
+        key_pin: null,
       },
       accountKey,
-      sharingMaterial
+      sharingMaterial,
+      "0198-form-one"
     )
     expect(mocks.sealFormGrant).toHaveBeenCalledWith(
       formDataKey,

@@ -106,7 +106,9 @@
     "codeInvalid": "That code is not valid",
     "invalidEmail": "Enter a valid email address",
     "startSetupFirst": "Start setup first",
-    "registrationClosed": "Registration is closed"
+    "registrationClosed": "Registration is closed",
+    "secondFactorRequired": "Sign in again with your authentication code to add a passkey",
+    "formTooLarge": "This form is too large to save"
   },
   "auth": {
     "signup": {

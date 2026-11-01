@@ -16,6 +16,8 @@ interface ProvisioningWireItem {
   owner_encrypted_form_private_key: string
   member_email: string
   approval_tag: string | null
+  /** The owner's own pin, present when the owner holds a sealed grant. */
+  owner_key_pin: string | null
 }
 
 interface ProvisioningWireResponse {
@@ -60,15 +62,20 @@ export async function provisionPendingMembers(
           key_scheme: item.owner_key_scheme,
           encrypted_form_data_key: item.owner_encrypted_form_data_key,
           encrypted_form_private_key: item.owner_encrypted_form_private_key,
+          key_pin: item.owner_key_pin,
         },
         accountKey,
-        sharingMaterial
+        sharingMaterial,
+        item.form_id
       )
       // The server builds this list, and anyone able to write its tables could
       // add a member of their own to it. Keys go only to an address this form's
       // owner approved, with a tag made under a key the server never holds.
-      // A member without one (invited before tags existed, or never invited
-      // at all) is reported, not served: the owner can remove and re-invite.
+      // That key comes from the private key just opened, which is the form's
+      // real one: an owner's grant is wrapped under their own account key, and
+      // a transferred owner's sealed grant had to match their pin. A member
+      // without a tag (invited before tags existed, or never invited at all)
+      // is reported, not served: the owner can remove and re-invite.
       if (
         item.approval_tag === null ||
         !matchesMemberApprovalTag(

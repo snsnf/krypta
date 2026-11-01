@@ -169,3 +169,65 @@ export function matchesMemberApprovalTag(
     return false;
   }
 }
+
+// Frozen, both of them. Every pin a member's browser has written is computed
+// under a key derived with the first and over a message beginning with the
+// second; changing either makes every shared form refuse to open.
+const FORM_KEY_PIN_KEY_DOMAIN = "krypta:form-key-pin-key:v1";
+const FORM_KEY_PIN_MESSAGE_DOMAIN = "krypta:form-key-pin:v1";
+
+function formKeyPinKey(accountKeyBase64: string): Uint8Array {
+  const accountKey = sodium.from_base64(accountKeyBase64);
+  const domain = sodium.from_string(FORM_KEY_PIN_KEY_DOMAIN);
+  const input = new Uint8Array(domain.length + accountKey.length);
+  input.set(domain, 0);
+  input.set(accountKey, domain.length);
+  return sodium.crypto_generichash(32, input, null);
+}
+
+/**
+ * A member's own record of which key a shared form seals to, stored beside
+ * their grant.
+ *
+ * A collaborator's grant is sealed to their public sharing key, and sealing
+ * authenticates nobody: anyone able to write the database can seal a private
+ * key of their own to that member. The pin is what tells the member's browser
+ * the grant holds the form's real key. It is written when the member accepts,
+ * from the key fingerprint in the invitation email (which the owner's browser
+ * computed and the database never held), and keyed from the member's account
+ * key, so no one else can produce one. The fingerprint itself is public, it is
+ * in every share link, so the pin authenticates it rather than hiding it.
+ * Keyed BLAKE2b-256 over the form id and the fingerprint, the same
+ * construction as the owner approval tag.
+ */
+export function formKeyPin(
+  accountKeyBase64: string,
+  formId: string,
+  keyFingerprint: string,
+): string {
+  const message = sodium.from_string(
+    `${FORM_KEY_PIN_MESSAGE_DOMAIN}\u0000${formId}\u0000${keyFingerprint}`,
+  );
+  return sodium.to_base64(
+    sodium.crypto_generichash(32, message, formKeyPinKey(accountKeyBase64)),
+  );
+}
+
+/** Whether a stored pin is this account's pin of this fingerprint for this form. */
+export function matchesFormKeyPin(
+  pin: string,
+  accountKeyBase64: string,
+  formId: string,
+  keyFingerprint: string,
+): boolean {
+  try {
+    const expected = sodium.from_base64(
+      formKeyPin(accountKeyBase64, formId, keyFingerprint),
+    );
+    const actual = sodium.from_base64(pin);
+    return expected.length === actual.length && sodium.memcmp(expected, actual);
+  } catch {
+    // A pin that does not decode pins nothing.
+    return false;
+  }
+}

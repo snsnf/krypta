@@ -100,6 +100,7 @@ interface FormWire {
   key_scheme: "master_wrap_v1" | "account_sealed_box_v1" | null
   encrypted_form_data_key: string | null
   encrypted_form_private_key: string | null
+  key_pin: string | null
   allow_response_editing: boolean
   accepting_responses: boolean
   closes_at: string | null
@@ -140,7 +141,8 @@ export async function loadFormDefinition(
   const { formDataKey, formPrivateKey } = openMemberGrant(
     form,
     accountKey,
-    sharing
+    sharing,
+    formId
   )
   const title = decryptWithKey(form.title_ciphertext, formDataKey)
   const schema = JSON.parse(

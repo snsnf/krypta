@@ -52,6 +52,7 @@ function formWire(overrides: Record<string, unknown> = {}) {
     key_scheme: "master_wrap_v1",
     encrypted_form_data_key: "wrapped-data",
     encrypted_form_private_key: "wrapped-priv",
+    key_pin: null,
     allow_response_editing: false,
     accepting_responses: true,
     closes_at: null,
@@ -140,7 +141,8 @@ describe("loadFormWorkspace", () => {
     expect(mocks.openMemberGrant).toHaveBeenCalledWith(
       expect.objectContaining({ key_scheme: "master_wrap_v1" }),
       "account-key",
-      sharing
+      sharing,
+      "form-1"
     )
     expect(workspace.title).toBe("My form")
     expect(workspace.questions).toEqual(schema.questions)

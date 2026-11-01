@@ -106,7 +106,9 @@
     "codeInvalid": "هذا الرمز غير صالح",
     "invalidEmail": "أدخل عنوان بريد إلكتروني صالحًا",
     "startSetupFirst": "ابدأ الإعداد أولًا",
-    "registrationClosed": "التسجيل مغلق"
+    "registrationClosed": "التسجيل مغلق",
+    "secondFactorRequired": "سجّل الدخول مجددًا باستخدام رمز المصادقة لإضافة مفتاح مرور",
+    "formTooLarge": "هذا النموذج أكبر من أن يُحفظ"
   },
   "auth": {
     "signup": {

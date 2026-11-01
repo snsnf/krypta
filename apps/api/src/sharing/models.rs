@@ -67,6 +67,20 @@ pub struct InvitationBody {
     /// checked there before keys are provisioned. The server only stores it.
     #[serde(default)]
     pub approval_tag: Option<String>,
+    /// The form's key fingerprint, computed in the owner's browser from the
+    /// owner's own keys. It goes into the emailed link, with the form id from
+    /// the request path, and nowhere else: the recipient's browser pins it on
+    /// acceptance, which is only worth anything because the database never
+    /// held it. A resend sends it again.
+    #[serde(default)]
+    pub form_key_fingerprint: Option<String>,
+}
+
+/// The recipient's pin of the form's key, made in their browser from the
+/// fingerprint in the invitation link. Stored on the membership unread.
+#[derive(serde::Deserialize)]
+pub struct AcceptInvitationBody {
+    pub key_pin: String,
 }
 
 #[derive(serde::Serialize)]
@@ -161,6 +175,10 @@ pub struct ProvisioningItem {
     /// owner's browser can refuse to seal keys to a member it never invited.
     pub member_email: String,
     pub approval_tag: Option<String>,
+    /// The owner's own pin, present when the owner holds a sealed grant (after
+    /// an ownership transfer); the owner's browser checks it before trusting
+    /// the private key it is about to approve and seal with.
+    pub owner_key_pin: Option<String>,
 }
 
 #[derive(serde::Serialize)]

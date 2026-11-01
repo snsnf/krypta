@@ -313,7 +313,8 @@ pub async fn provisioning(
                   owner.encrypted_form_data_key AS "owner_encrypted_form_data_key!",
                   owner.encrypted_form_private_key AS "owner_encrypted_form_private_key!",
                   recipient.email::text AS "member_email!",
-                  target.approval_tag
+                  target.approval_tag,
+                  owner.key_pin AS owner_key_pin
            FROM form_members owner
            JOIN forms ON forms.id = owner.form_id AND forms.deletion_started_at IS NULL
            JOIN form_members target ON target.form_id = owner.form_id
@@ -343,6 +344,7 @@ pub async fn provisioning(
             owner_encrypted_form_private_key: row.owner_encrypted_form_private_key,
             member_email: row.member_email,
             approval_tag: row.approval_tag,
+            owner_key_pin: row.owner_key_pin,
         })
         .collect();
     Ok(ApiResponse::ok(ProvisioningResponse { items }))

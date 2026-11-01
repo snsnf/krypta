@@ -10,6 +10,16 @@ describe("invitationLinkFromContent", () => {
     ).toBe("https://app.example/invitations/accept#token=abc_DEF-123")
   })
 
+  it("keeps the form and key fingerprint that follow the token", () => {
+    expect(
+      invitationLinkFromContent(
+        "Open https://app.example/invitations/accept#token=abc&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=key_FP-1 now"
+      )
+    ).toBe(
+      "https://app.example/invitations/accept#token=abc&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=key_FP-1"
+    )
+  })
+
   it.each([
     "prefixhttps://app.example/invitations/accept#token=abc",
     "7https://app.example/invitations/accept#token=abc",
@@ -39,6 +49,9 @@ describe("invitationLinkFromContent", () => {
     "https://app.example/invitations/accept?next=x#token=abc",
     "https://app.example/invitations/accept#token=abc&extra=value",
     "https://app.example/invitations/accept#token=one&token=two",
+    "https://app.example/invitations/accept#pk=abc&token=abc",
+    "https://app.example/invitations/accept#token=abc&pk=key",
+    "https://app.example/invitations/accept#token=abc&form=0198e904-aa65-4bd1-a2d2-b734286d8f72&pk=",
     "https://app.example/invitations/accept#token=",
     "https://app.example/invitations/accept#token=abc%ZZ",
     "https://app.example/invitations/accept#other=abc",

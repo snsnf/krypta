@@ -236,6 +236,29 @@ Six things to preserve:
   link without `pk` still opens on the schema check alone, deliberately:
   refusing it would break every form shared before links carried one, so
   `SECURITY.md` names the residual instead.
+- **A collaborator's grant must match their pin** (`openMemberGrant` in
+  `apps/web/lib/form-grants.ts`, `formKeyPin` in `packages/crypto/src/keys.ts`,
+  migration `0035`). The schema check above is only as strong as the link key,
+  so a database writer holding a link could re-encrypt the schema around a key
+  of their own and plant matching sealed grants for every member, after which
+  every link a member copied carried the planted fingerprint. The anchor that
+  closes this is out of the database's reach: the owner's browser sends the
+  fingerprint (computed from its own private key) with the invitation, the API
+  puts it into the emailed link with the form id and stores it nowhere, and
+  the recipient's browser turns it on acceptance into a keyed BLAKE2b tag
+  under a key derived from their account key, stored on `form_members.key_pin`
+  in the same insert as the membership. Four rules. A sealed grant with no pin
+  is refused, never trusted on first use: that is what makes a deleted or
+  rolled-back pin a refusal rather than a hole, and a restored backup stays
+  consistent because pins and memberships come back together. An owner's
+  `master_wrap_v1` grant needs no pin, since only their account key wraps it.
+  The server never checks a pin, only its shape. And the fingerprint never
+  comes from the server: an invitation link without one cannot be accepted,
+  and the preview route deliberately does not return the form id, which is
+  why it travels in the link too. Memberships accepted before pins existed
+  have none and are refused until the owner removes and re-invites them; this
+  shipped strict because no real accounts existed yet, and there is no legacy
+  path to add back.
 - **The KEM is not constant-time**: the library says so, and JIT, GC and
   `bigint` arithmetic offer no guarantee. This is tolerable only because
   decapsulation runs solely in the user's own browser with the user's own key,
@@ -365,7 +388,11 @@ seals keys only to a member whose tag verifies against the address the
 provisioning list reports, and reports the rest as `unapproved`, which the
 dashboard words as "remove and re-invite" rather than "try again". Without it a
 database writer could add a member of their own and receive both form keys on
-the owner's next visit. What the tag cannot do is vouch for the sharing key the
+the owner's next visit. The tag is only as good as the private key it is
+checked under, so provisioning opens the owner's grant through the same
+`openMemberGrant` as everything else: after an ownership transfer the owner
+holds a sealed grant, and an unpinned one would let a writer substitute the
+key and forge approvals under it. What the tag cannot do is vouch for the sharing key the
 server reports for an approved address; `SECURITY.md` names that limit. A
 member who accepted before tags existed has none and is never provisioned
 automatically: removing and re-inviting them is the remedy, and there is

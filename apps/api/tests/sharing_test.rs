@@ -10,6 +10,12 @@ use uuid::Uuid;
 // `SHARING_PUBLIC_KEY_BYTES` in `apps/api/src/sharing/routes.rs`.
 const SHARING_PUBLIC_KEY_BYTES: usize = 1216;
 
+/// What a browser sends to accept: its pin of the form's key. The server only
+/// checks the shape, so any 32-byte tag will do here.
+fn acceptance_body() -> serde_json::Value {
+    json!({ "key_pin": base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([21_u8; 32]) })
+}
+
 fn sharing_public_key(fill: u8) -> String {
     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([fill; SHARING_PUBLIC_KEY_BYTES])
 }
@@ -1670,6 +1676,7 @@ async fn invitation_acceptance_with_complete_grant_creates_active_membership() {
 
     let accepted = recipient
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(
             reqwest::header::COOKIE,
             invitation_cookie_header(&recipient_session, &continuation_cookie),
@@ -1734,6 +1741,7 @@ async fn invitation_acceptance_without_grant_creates_awaiting_keys_membership() 
     let continuation_cookie = continue_invitation(&recipient, &base, &token).await;
     let accepted = recipient
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(
             reqwest::header::COOKIE,
             invitation_cookie_header(&recipient_session, &continuation_cookie),
@@ -1817,6 +1825,7 @@ async fn an_owner_approval_tag_travels_from_invitation_to_membership_to_provisio
     let continuation_cookie = continue_invitation(&recipient, &base, &token).await;
     let accepted = recipient
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(
             reqwest::header::COOKIE,
             invitation_cookie_header(&recipient_session, &continuation_cookie),
@@ -1860,6 +1869,105 @@ async fn an_owner_approval_tag_travels_from_invitation_to_membership_to_provisio
 }
 
 #[tokio::test]
+async fn the_key_fingerprint_reaches_only_the_link_and_the_pin_is_kept_with_the_grant() {
+    let base = common::base_url();
+    let (owner, _, _, _) = register_invitation_user(&base, "pin-owner").await;
+    let (recipient, recipient_id, recipient_email, recipient_session) =
+        register_invitation_user(&base, "pin-recipient").await;
+    let form_id = create_test_form(&owner, &base, "key-pin").await;
+    let fingerprint = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([71_u8; 32]);
+
+    // It is written into a URL, so nothing but a tag gets through.
+    let refused = owner
+        .post(format!("{base}/api/v1/forms/{form_id}/invitations"))
+        .json(&json!({
+            "invited_email": recipient_email,
+            "role": "viewer",
+            "form_key_fingerprint": format!("{fingerprint}&token=planted"),
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_generic_bad_request(refused).await;
+
+    let sent = owner
+        .post(format!("{base}/api/v1/forms/{form_id}/invitations"))
+        .json(&json!({
+            "invited_email": recipient_email,
+            "role": "viewer",
+            "form_key_fingerprint": fingerprint,
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(sent.status(), 200);
+
+    // The mailed link carries the form and its fingerprint beside the token.
+    assert!(
+        latest_mail_content_for(&recipient_email)
+            .await
+            .contains(&format!("&form={form_id}&pk={fingerprint}"))
+    );
+
+    let db = test_db().await;
+    let token = format!("invitation-token-{}", Uuid::now_v7());
+    sqlx::query!(
+        "UPDATE form_invitations SET token_hash = $1, status = 'pending' WHERE form_id = $2",
+        format!("{:x}", Sha256::digest(token.as_bytes())),
+        form_id,
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+    let continuation_cookie = continue_invitation(&recipient, &base, &token).await;
+    let cookies = invitation_cookie_header(&recipient_session, &continuation_cookie);
+
+    let malformed = recipient
+        .post(format!("{base}/api/v1/invitations/current/accept"))
+        .header(reqwest::header::COOKIE, &cookies)
+        .json(&json!({ "key_pin": "not a pin" }))
+        .send()
+        .await
+        .unwrap();
+    assert_generic_bad_request(malformed).await;
+
+    let pin = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([72_u8; 32]);
+    let accepted = recipient
+        .post(format!("{base}/api/v1/invitations/current/accept"))
+        .header(reqwest::header::COOKIE, &cookies)
+        .json(&json!({ "key_pin": pin }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(accepted.status(), 200);
+    let stored = sqlx::query_scalar!(
+        "SELECT key_pin FROM form_members WHERE form_id = $1 AND user_id = $2",
+        form_id,
+        recipient_id,
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(stored.as_deref(), Some(pin.as_str()));
+
+    let listed: serde_json::Value = recipient
+        .get(format!("{base}/api/v1/forms"))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let entry = listed["data"]["forms"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|form| form["id"] == form_id.to_string())
+        .expect("the accepted form is listed");
+    assert_eq!(entry["key_pin"], pin);
+}
+
+#[tokio::test]
 async fn invitation_wrong_account_is_forbidden_without_consuming_invitation() {
     let base = common::base_url();
     let (owner, _, _, _) = register_invitation_user(&base, "wrong-owner").await;
@@ -1893,6 +2001,7 @@ async fn invitation_wrong_account_is_forbidden_without_consuming_invitation() {
 
     let response = wrong_account
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(
             reqwest::header::COOKIE,
             invitation_cookie_header(&wrong_session, &continuation_cookie),
@@ -2007,6 +2116,7 @@ async fn invitation_acceptance_replay_with_same_continuation_is_not_found() {
 
     let first = recipient
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(reqwest::header::COOKIE, &cookie_header)
         .send()
         .await
@@ -2014,6 +2124,7 @@ async fn invitation_acceptance_replay_with_same_continuation_is_not_found() {
     assert_eq!(first.status(), 200);
     let second = recipient
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(reqwest::header::COOKIE, &cookie_header)
         .send()
         .await
@@ -2113,6 +2224,7 @@ async fn invitation_concurrency_accept_and_owner_revoke_follow_form_first_lock_o
         let recipient_request = tokio::spawn(async move {
             recipient
                 .post(accept_url)
+                .json(&acceptance_body())
                 .header(reqwest::header::COOKIE, cookie_header)
                 .send()
                 .await
@@ -3321,6 +3433,7 @@ async fn viewer_cannot_delete_a_response() {
     let continuation_cookie = continue_invitation(&viewer, &base, &token).await;
     let accepted = viewer
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(
             reqwest::header::COOKIE,
             invitation_cookie_header(&viewer_session, &continuation_cookie),
@@ -3385,6 +3498,7 @@ async fn editor_can_delete_a_response() {
     let continuation_cookie = continue_invitation(&editor, &base, &token).await;
     let accepted = editor
         .post(format!("{base}/api/v1/invitations/current/accept"))
+        .json(&acceptance_body())
         .header(
             reqwest::header::COOKIE,
             invitation_cookie_header(&editor_session, &continuation_cookie),

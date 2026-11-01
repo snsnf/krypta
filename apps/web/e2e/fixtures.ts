@@ -140,7 +140,11 @@ export async function openInvitation(page: Page, link: string) {
   const fragmentMarker = "#token="
   const fragmentIndex = link.indexOf(fragmentMarker)
   const fragment = fragmentIndex === -1 ? "" : link.slice(fragmentIndex)
-  if (!/^#token=[A-Za-z0-9_-]+$/.test(fragment)) {
+  if (
+    !/^#token=[A-Za-z0-9_-]+&form=[0-9a-f-]{36}&pk=[A-Za-z0-9_-]+$/.test(
+      fragment
+    )
+  ) {
     throw new Error("Invitation mail did not contain a valid link.")
   }
 

@@ -486,3 +486,79 @@ async fn registration_requires_a_fresh_password_proof() {
 
     assert_eq!(res.status(), 401);
 }
+
+/// A passkey signs in with the second factor already satisfied, so once TOTP is
+/// on, adding one takes a session that signed in with a code. A session from
+/// before TOTP cannot, even with the password, and neither can the session that
+/// turned TOTP on, which the admin guard treats the same way.
+#[tokio::test]
+async fn adding_a_passkey_takes_the_second_factor_once_totp_is_on() {
+    let base = common::base_url();
+    let email = format!("passkey-2fa-{}@example.com", uuid::Uuid::now_v7());
+    let owner = Client::builder().cookie_store(true).build().unwrap();
+    common::register_test_account(&base, &owner, &email, common::TEST_PASSWORD).await;
+
+    // A second session from before TOTP, signed in with the password alone.
+    let earlier = Client::builder().cookie_store(true).build().unwrap();
+    let login = earlier
+        .post(format!("{base}/api/v1/auth/login"))
+        .json(&json!({
+            "email": email,
+            "verifier": common::auth_verifier(&email, common::TEST_PASSWORD),
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(login.status(), 200);
+
+    let totp = common::enrol_totp(&base, &owner).await;
+
+    for session in [&earlier, &owner] {
+        let receipt = common::reauthentication_receipt(&base, session, common::TEST_PASSWORD).await;
+        let refused = session
+            .post(format!("{base}/api/v1/auth/passkeys/register/start"))
+            .json(&json!({ "reauthentication_receipt": receipt }))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(refused.status(), 400);
+        let body: serde_json::Value = refused.json().await.unwrap();
+        assert_eq!(
+            body["error"]["message"],
+            "Sign in again with your authentication code to add a passkey"
+        );
+    }
+
+    let signed_in = Client::builder().cookie_store(true).build().unwrap();
+    let login: serde_json::Value = signed_in
+        .post(format!("{base}/api/v1/auth/login"))
+        .json(&json!({
+            "email": email,
+            "verifier": common::auth_verifier(&email, common::TEST_PASSWORD),
+        }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let verified = signed_in
+        .post(format!("{base}/api/v1/auth/2fa/verify"))
+        .json(&json!({
+            "pending_token": login["data"]["pending_token"],
+            "code": common::code_from_next_step(&totp).await,
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(verified.status(), 200);
+
+    let receipt = common::reauthentication_receipt(&base, &signed_in, common::TEST_PASSWORD).await;
+    let started = signed_in
+        .post(format!("{base}/api/v1/auth/passkeys/register/start"))
+        .json(&json!({ "reauthentication_receipt": receipt }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(started.status(), 200);
+}

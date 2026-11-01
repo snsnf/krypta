@@ -51,7 +51,12 @@ export function decryptFormList(
     }
 
     try {
-      const { formDataKey } = openMemberGrant(form, accountKey, sharingMaterial)
+      const { formDataKey } = openMemberGrant(
+        form,
+        accountKey,
+        sharingMaterial,
+        form.id
+      )
       return {
         ...base,
         title: decryptWithKey(form.title_ciphertext, formDataKey),

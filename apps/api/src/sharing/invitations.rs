@@ -31,7 +31,7 @@ use crate::{
         continuation,
         keys::SHARING_KEY_VERSION,
         models::{
-            ContinueInvitationBody, CurrentInvitationResponse, FormRole,
+            AcceptInvitationBody, ContinueInvitationBody, CurrentInvitationResponse, FormRole,
             InvitationAcceptanceResponse, InvitationBody, InvitationResponse, RecipientKeyBody,
             RecipientKeyResponse,
         },
@@ -145,7 +145,22 @@ fn validate_invitation_body(body: &InvitationBody) -> Result<(), ApiError> {
             return Err(ApiError::BadRequest("Invalid request".into()));
         }
     }
+    // The same shape, and it goes into a URL, so nothing else is allowed in.
+    if body
+        .form_key_fingerprint
+        .as_deref()
+        .is_some_and(|fingerprint| !is_blake2b_tag(fingerprint))
+    {
+        return Err(ApiError::BadRequest("Invalid request".into()));
+    }
     Ok(())
+}
+
+/// A 32-byte BLAKE2b output in the unpadded URL-safe base64 libsodium writes.
+fn is_blake2b_tag(value: &str) -> bool {
+    base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(value)
+        .is_ok_and(|decoded| decoded.len() == 32)
 }
 
 async fn check_invitation_limits(
@@ -490,8 +505,17 @@ async fn send_invitation(
         .await
         .map_err(|error| ApiError::Internal(error.into()))?;
 
+    // The form and its key fingerprint ride in the fragment beside the token,
+    // both from this request, so they reach the recipient's browser without
+    // the server reading them back from anywhere a database writer could have
+    // changed. The recipient pins the fingerprint to that form on accepting.
+    let key_fingerprint = body
+        .form_key_fingerprint
+        .as_deref()
+        .map(|fingerprint| format!("&form={form_id}&pk={fingerprint}"))
+        .unwrap_or_default();
     let invitation_url = format!(
-        "{}/invitations/accept#token={token}",
+        "{}/invitations/accept#token={token}{key_fingerprint}",
         state.config.web_base_url
     );
     // The recipient's own language if they have an account; the inviter's if
@@ -674,8 +698,14 @@ pub async fn accept_invitation(
     State(state): State<AppState>,
     user: SessionUser,
     jar: CookieJar,
+    ApiJson(body): ApiJson<AcceptInvitationBody>,
 ) -> Result<Response, ApiError> {
-    decide_invitation(state, user.user_id, jar, true).await
+    // The pin is checked in the member's browser, never here; the server only
+    // refuses something that is not shaped like one.
+    if !is_blake2b_tag(&body.key_pin) {
+        return Err(ApiError::BadRequest("Invalid request".into()));
+    }
+    decide_invitation(state, user.user_id, jar, Some(body.key_pin)).await
 }
 
 pub async fn decline_invitation(
@@ -683,14 +713,16 @@ pub async fn decline_invitation(
     user: SessionUser,
     jar: CookieJar,
 ) -> Result<Response, ApiError> {
-    decide_invitation(state, user.user_id, jar, false).await
+    decide_invitation(state, user.user_id, jar, None).await
 }
 
+/// `key_pin` is the acceptance: present to accept with that pin, absent to
+/// decline.
 async fn decide_invitation(
     state: AppState,
     user_id: Uuid,
     jar: CookieJar,
-    accept: bool,
+    key_pin: Option<String>,
 ) -> Result<Response, ApiError> {
     let (cookie, invitation_id) = invitation_from_continuation(&state, &jar).await?;
     let mut transaction = state
@@ -758,7 +790,7 @@ async fn decide_invitation(
         return Err(ApiError::NotFound);
     }
 
-    let membership_state = if accept {
+    let membership_state = if let Some(key_pin) = key_pin {
         let grant_ready = invitation.encrypted_form_data_key.is_some()
             && invitation.encrypted_form_private_key.is_some();
         let state = if grant_ready {
@@ -770,8 +802,9 @@ async fn decide_invitation(
         sqlx::query!(
             "INSERT INTO form_members (
                 id, form_id, user_id, role, state, key_scheme,
-                encrypted_form_data_key, encrypted_form_private_key, approval_tag
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+                encrypted_form_data_key, encrypted_form_private_key, approval_tag,
+                key_pin
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
             Uuid::now_v7(),
             invitation.form_id,
             user_id,
@@ -781,6 +814,7 @@ async fn decide_invitation(
             invitation.encrypted_form_data_key,
             invitation.encrypted_form_private_key,
             invitation.approval_tag,
+            key_pin,
         )
         .execute(&mut *transaction)
         .await
@@ -879,6 +913,7 @@ mod tests {
             encrypted_form_data_key: data_key.map(str::to_string),
             encrypted_form_private_key: private_key.map(str::to_string),
             approval_tag: None,
+            form_key_fingerprint: None,
         }
     }
 
@@ -896,6 +931,18 @@ mod tests {
         let short = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([7_u8; 16]);
         assert!(validate_invitation_body(&tagged_body(&short)).is_err());
         assert!(validate_invitation_body(&tagged_body("not base64 !")).is_err());
+    }
+
+    #[test]
+    fn a_key_fingerprint_must_be_a_32_byte_tag_since_it_goes_into_a_link() {
+        let body = |fingerprint: &str| InvitationBody {
+            form_key_fingerprint: Some(fingerprint.to_string()),
+            ..grant_body(None, None, None)
+        };
+        let fingerprint = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([7_u8; 32]);
+        assert!(validate_invitation_body(&body(&fingerprint)).is_ok());
+        assert!(validate_invitation_body(&body(&format!("{fingerprint}&token=x"))).is_err());
+        assert!(validate_invitation_body(&body("not base64 !")).is_err());
     }
 
     #[test]
@@ -957,6 +1004,7 @@ mod tests {
             encrypted_form_data_key: None,
             encrypted_form_private_key: None,
             approval_tag: None,
+            form_key_fingerprint: None,
         }
     }
 

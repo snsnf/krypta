@@ -15,7 +15,7 @@ const BY_CODE: Record<string, string> = {
   internal_error: "errors.internal",
 }
 
-// The only free-text bad_request messages the auth flows can return (the API's
+// The free-text bad_request messages the app can show (the API's
 // BadRequest(...) strings), so each has a translated key.
 const BAD_REQUEST_MESSAGES: Record<string, string> = {
   "Invalid request": "errors.invalidRequest",
@@ -23,6 +23,9 @@ const BAD_REQUEST_MESSAGES: Record<string, string> = {
   "Enter a valid email address": "errors.invalidEmail",
   "Start setup first": "errors.startSetupFirst",
   "Registration is closed": "errors.registrationClosed",
+  "Sign in again with your authentication code to add a passkey":
+    "errors.secondFactorRequired",
+  "This form is too large to save": "errors.formTooLarge",
 }
 
 /**

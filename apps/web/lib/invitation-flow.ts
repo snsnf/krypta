@@ -28,10 +28,31 @@ type ReplaceState = (
   url?: string | URL | null
 ) => void
 
-export function takeInvitationToken(
+/**
+ * The form an invitation is for and its key fingerprint, as the owner's
+ * browser sent them into the emailed link. What the recipient's browser pins
+ * on accepting.
+ */
+export interface InvitationKey {
+  formId: string
+  keyFingerprint: string
+}
+
+/**
+ * What an invitation link carries in its fragment: the token, and the form and
+ * its key fingerprint. The key is null for a link sent before invitations
+ * carried one; such a link can still be opened, but not accepted, since there
+ * would be nothing to pin.
+ */
+export interface InvitationLink {
+  token: string
+  key: InvitationKey | null
+}
+
+export function takeInvitationLink(
   fragment: string,
   replaceState: ReplaceState
-): string | null {
+): InvitationLink | null {
   if (fragment.length === 0) return null
 
   const params = new URLSearchParams(
@@ -43,14 +64,70 @@ export function takeInvitationToken(
   // work. This also removes malformed fragments rather than reflecting them.
   replaceState(null, "", "/invitations/accept")
 
+  const names = entries.map(([name]) => name)
+  const token = params.get("token")
+  const formId = params.get("form")
+  const keyFingerprint = params.get("pk")
   if (
-    entries.length !== 1 ||
-    entries[0][0] !== "token" ||
-    entries[0][1].length === 0
+    token === null ||
+    token.length === 0 ||
+    names.some((name) => !["token", "form", "pk"].includes(name)) ||
+    new Set(names).size !== names.length ||
+    (formId === null) !== (keyFingerprint === null)
   ) {
     return null
   }
-  return entries[0][1]
+  if (formId === null || keyFingerprint === null) return { token, key: null }
+  if (!UUID_PATTERN.test(formId) || keyFingerprint.length === 0) return null
+  return { token, key: { formId, keyFingerprint } }
+}
+
+// Where the key waits while the recipient signs in, signs up or unlocks:
+// those detours leave this page, and the fragment is gone by then. Session
+// storage rather than local, so it never outlives the tab.
+const INVITATION_KEY_STORAGE_KEY = "krypta:invitation-key"
+
+/** Keeps the key of the link just opened, replacing any earlier one. */
+export function rememberInvitationKey(
+  storage: Storage,
+  key: InvitationKey | null
+): void {
+  try {
+    if (key === null) {
+      storage.removeItem(INVITATION_KEY_STORAGE_KEY)
+    } else {
+      storage.setItem(INVITATION_KEY_STORAGE_KEY, JSON.stringify(key))
+    }
+  } catch {
+    // Storage can be blocked; acceptance then refuses for want of a pin.
+  }
+}
+
+export function recallInvitationKey(storage: Storage): InvitationKey | null {
+  try {
+    const stored: unknown = JSON.parse(
+      storage.getItem(INVITATION_KEY_STORAGE_KEY) ?? "null"
+    )
+    if (
+      typeof stored === "object" &&
+      stored !== null &&
+      "formId" in stored &&
+      "keyFingerprint" in stored &&
+      typeof stored.formId === "string" &&
+      UUID_PATTERN.test(stored.formId) &&
+      typeof stored.keyFingerprint === "string" &&
+      stored.keyFingerprint.length > 0
+    ) {
+      return { formId: stored.formId, keyFingerprint: stored.keyFingerprint }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+export function forgetInvitationKey(storage: Storage): void {
+  rememberInvitationKey(storage, null)
 }
 
 export function currentInvitationViewState(
