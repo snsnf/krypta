@@ -1130,7 +1130,10 @@ export default function FormDetailPage() {
                         </div>
                       )}
                       <div className="overflow-hidden rounded-lg border border-border">
-                        <div className="max-h-[28rem] overflow-auto overscroll-contain">
+                        {/* Sized to the screen rather than a fixed height, so a tall
+                            screen shows as many rows as it can fit while the
+                            header row stays pinned within the scroll box. */}
+                        <div className="max-h-[calc(100dvh-6rem)] overflow-auto overscroll-contain">
                           <table className="w-full border-collapse text-sm">
                             <thead className="sticky top-0 z-10 bg-background/85 backdrop-blur-sm">
                               <tr>
