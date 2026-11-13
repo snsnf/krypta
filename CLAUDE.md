@@ -495,12 +495,17 @@ bun run ci:images       # build both Docker images and boot each; needs Docker, 
 bun run ci               # static and integration
 ```
 
-`cargo audit` runs with four advisories explicitly ignored and `bun audit`
-with three, each with its reason recorded in the script. Anything not on that list fails, so a new
+`cargo audit` and `bun audit` run with a short list of advisories explicitly
+ignored, each with its reason recorded in the script. Anything not on that list fails, so a new
 advisory cannot be absorbed silently. The reverse is checked too: an ignored
 advisory that no longer appears in the report fails the step and names itself,
-so when one is fixed upstream (the zod entry, say, once shadcn moves to zod 4)
-the remedy is to delete that entry and its reason, never to keep it.
+so when one is fixed upstream the remedy is to delete that entry and its
+reason, never to keep it. That check fires only once the lockfile moves, and
+nothing in the script can see that a fixed release exists, which is how zod,
+quick-xml and rsa sat on the list for weeks after their fixes shipped. Two
+things close that gap: `.github/dependabot.yml` proposes newer versions weekly,
+and the static job also runs on a weekly schedule, so a new advisory against
+unchanged code surfaces without waiting for a push.
 
 ### Rate limits will bite you
 
