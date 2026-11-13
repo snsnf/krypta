@@ -36,7 +36,7 @@ totp-rs = { version = "6", features = ["otpauth", "qr"] }
 # rather than process memory. The danger it names is that the state must be
 # single-use and confidential; `passkey::take` deletes on read, and Redis
 # already holds every session.
-webauthn-rs = { version = "=0.5.5", features = [
+webauthn-rs = { version = "=0.6.2", features = [
     "conditional-ui",
     "danger-allow-state-serialisation",
 ] }
