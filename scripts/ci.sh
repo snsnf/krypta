@@ -509,7 +509,11 @@ boot_container() {
     fi
     sleep 1
   done
-  printf '%s did not answer at %s within 60s. Last log lines:\n' "$name" "$url"
+  printf '%s did not answer at %s within 60s. State: ' "$name" "$url"
+  # A process that dies before its first log line leaves the tail empty, so
+  # the state and exit code are what tell a crash from a hang.
+  docker inspect -f '{{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} {{.State.Error}}' "$name" 2>&1
+  printf 'Last log lines:\n'
   docker logs --tail 40 "$name" 2>&1 | sed 's/^/  /'
   docker rm -f "$name" >/dev/null
   return 1

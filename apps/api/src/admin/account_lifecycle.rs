@@ -84,10 +84,7 @@ pub async fn consume_reauthentication_receipt(
         return Ok(false);
     };
     let record: ReauthenticationReceiptRecord = serde_json::from_str(&value)?;
-    if record.user_id != user_id || record.session_token_hash != sha256_hex(session_token) {
-        return Ok(false);
-    }
-    Ok(true)
+    Ok(record.user_id == user_id && record.session_token_hash == sha256_hex(session_token))
 }
 
 /// Requires a fresh password proof from the caller's own session.

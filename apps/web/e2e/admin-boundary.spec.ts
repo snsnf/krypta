@@ -208,7 +208,8 @@ test("admin transfer refresh replaces stale form and editor membership selection
     second.formId
   )
   await transferButton.click()
-  expect(transfers).toEqual([
+  // Polled: the click resolves before the page's request reaches the route.
+  await expect.poll(() => transfers).toEqual([
     `/admin/forms/${first.formId}/transfer`,
     `/admin/forms/${second.formId}/transfer`,
   ])
