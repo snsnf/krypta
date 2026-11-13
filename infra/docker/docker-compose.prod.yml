@@ -56,7 +56,7 @@ services:
     # Base images are pinned to an exact release so a redeploy never changes
     # the proxy or a database server underneath a running instance. Raise them
     # deliberately, one at a time.
-    image: traefik:v3.7.13
+    image: traefik:v3.7.17
     command:
       - --configfile=/etc/traefik/traefik.yml
       - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL}

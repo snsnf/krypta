@@ -47,7 +47,7 @@ services:
   # the integration and e2e suites read verification codes back through its
   # HTTP API on 8025.
   mailpit:
-    image: axllent/mailpit:v1.21
+    image: axllent/mailpit:v1.33
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
@@ -58,7 +58,7 @@ services:
       retries: 5
 
   garage:
-    image: dxflrs/garage:v2.3.0
+    image: dxflrs/garage:v2.5.0
     ports:
       - "127.0.0.1:3900:3900"
     volumes:
