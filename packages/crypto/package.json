@@ -16,6 +16,6 @@
   "devDependencies": {
     "vitest": "^4.1.11",
     "@types/libsodium-wrappers-sumo": "^0.7.8",
-    "typescript": "^5"
+    "typescript": "^7"
   }
 }
