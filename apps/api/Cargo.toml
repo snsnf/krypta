@@ -18,7 +18,7 @@ redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
 argon2 = "0.5"
 password-hash = { version = "0.5", features = ["std"] }
 rand = "0.8"
-sha2 = "0.10"
+sha2 = "0.11"
 # TOTP (RFC 6238). `otpauth` gives the enrolment URI authenticator apps scan.
 totp-rs = { version = "6", features = ["otpauth", "qr"] }
 # WebAuthn relying party. Pinned to an exact stable version: 0.6.1-dev is a
