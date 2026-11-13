@@ -6,32 +6,68 @@
       {
         "ordinal": 0,
         "name": "registration_enabled",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "registration_enabled"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "register_rate_limit_per_hour",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "register_rate_limit_per_hour"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "login_rate_limit_per_minute",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "login_rate_limit_per_minute"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "default_max_forms",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "default_max_forms"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "default_max_attachment_bytes",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "default_max_attachment_bytes"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "default_max_responses_per_period",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "default_max_responses_per_period"
+          }
+        }
       }
     ],
     "parameters": {

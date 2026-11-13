@@ -608,15 +608,20 @@ mod tests {
             .await
             .unwrap();
         let schema_name = format!("task1_seed_{}", Uuid::now_v7().simple());
-        sqlx::query(&format!("CREATE SCHEMA {schema_name}"))
+        sqlx::query(sqlx::AssertSqlSafe(format!("CREATE SCHEMA {schema_name}")))
             .execute(&mut connection)
             .await
             .unwrap();
-        sqlx::query(&format!("SET search_path TO {schema_name}, public"))
-            .execute(&mut connection)
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SET search_path TO {schema_name}, public"
+        )))
+        .execute(&mut connection)
+        .await
+        .unwrap();
+        MIGRATOR
+            .run_direct(None, &mut connection, false)
             .await
             .unwrap();
-        MIGRATOR.run_direct(&mut connection).await.unwrap();
         (connection, schema_name)
     }
 
@@ -625,14 +630,16 @@ mod tests {
             .await
             .unwrap();
         let schema_name = format!("task1_seed_legacy_{}", Uuid::now_v7().simple());
-        sqlx::query(&format!("CREATE SCHEMA {schema_name}"))
+        sqlx::query(sqlx::AssertSqlSafe(format!("CREATE SCHEMA {schema_name}")))
             .execute(&mut connection)
             .await
             .unwrap();
-        sqlx::query(&format!("SET search_path TO {schema_name}, public"))
-            .execute(&mut connection)
-            .await
-            .unwrap();
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SET search_path TO {schema_name}, public"
+        )))
+        .execute(&mut connection)
+        .await
+        .unwrap();
         apply_migrations_through_0011(&mut connection).await;
         (connection, schema_name)
     }
@@ -642,10 +649,12 @@ mod tests {
             .execute(&mut *connection)
             .await
             .unwrap();
-        sqlx::query(&format!("DROP SCHEMA {schema_name} CASCADE"))
-            .execute(&mut *connection)
-            .await
-            .unwrap();
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "DROP SCHEMA {schema_name} CASCADE"
+        )))
+        .execute(&mut *connection)
+        .await
+        .unwrap();
     }
 
     async fn apply_migrations_through_0011(connection: &mut sqlx::PgConnection) {

@@ -6,17 +6,35 @@
       {
         "ordinal": 0,
         "name": "allow_response_editing",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "allow_response_editing"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "accepting_responses",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "accepting_responses"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "closes_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "closes_at"
+          }
+        }
       }
     ],
     "parameters": {

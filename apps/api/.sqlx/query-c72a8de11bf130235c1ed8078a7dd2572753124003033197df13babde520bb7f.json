@@ -6,32 +6,68 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "admin_audit_events",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "actor_user_id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "admin_audit_events",
+            "name": "actor_user_id"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "target_user_id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "admin_audit_events",
+            "name": "target_user_id"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "action",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "admin_audit_events",
+            "name": "action"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "result",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "admin_audit_events",
+            "name": "result"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "admin_audit_events",
+            "name": "created_at"
+          }
+        }
       }
     ],
     "parameters": {

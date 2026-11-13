@@ -451,7 +451,7 @@ async fn reauthenticate_receipt(client: &Client, base_url: &str, email: &str) ->
 
 async fn count_rows(db: &PgPool, table: &str, user_id: Uuid) -> i64 {
     let query = format!("SELECT count(*) FROM {table} WHERE user_id = $1");
-    sqlx::query_scalar::<_, i64>(&query)
+    sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(query))
         .bind(user_id)
         .fetch_one(db)
         .await

@@ -29,36 +29,25 @@ COMPOSE="$ROOT/infra/docker/docker-compose.dev.yml"
 # RustSec advisories with no available fix, reviewed and accepted. Anything not
 # listed here fails the build, so a new advisory is not silently absorbed.
 #
-#   RUSTSEC-2023-0071  rsa timing sidechannel. Reached only through sqlx-mysql,
-#                      which sqlx's `macros` feature compiles in even though
-#                      only the postgres driver is enabled, so the code never
-#                      executes. No fixed version exists.
-#   RUSTSEC-2026-0194  quick-xml DoS, via rust-s3 0.37.2 which pins ^0.38 and is
-#   RUSTSEC-2026-0195  the latest release. Parses responses from our own Garage
-#                      endpoint rather than user input.
+#   RUSTSEC-2026-0459  SQLite CVE in libsqlite3-sys, fixed in 0.39. The lockfile
+#                      lists it under sqlx-sqlite, which no enabled feature
+#                      builds (`cargo tree -i sqlx-sqlite` prints nothing), and
+#                      sqlx 0.9.0 still caps it below 0.38.
 CARGO_AUDIT_IGNORE=(
-  RUSTSEC-2023-0071
-  RUSTSEC-2026-0194
-  RUSTSEC-2026-0195
+  RUSTSEC-2026-0459
 )
 
 # npm advisories with no available fix, reviewed and accepted, on the same
 # terms as the list above.
 #
-#   GHSA-mrhx-c7xc-m3w5  zod memory exhaustion on oversized collections, fixed
-#                        only in 4.6.6. Reached only through the shadcn CLI,
-#                        which requires zod ^3: a dev tool validating our own
-#                        config, never user input, and it does not ship in the
-#                        app.
 #   GHSA-g3hv-75wg-m249  minimatch DoS through pattern amplification, fixed only
-#                        in 11.0.1. eslint and its plugins require ^3, ts-morph
-#                        (via shadcn) and typescript-eslint ^10. Dev tools
-#                        matching globs we write, and none ships in the app.
+#                        in 11.0.1. ts-morph (via shadcn) and typescript-eslint
+#                        require ^10. Dev tools matching globs we write, and
+#                        neither ships in the app.
 #   GHSA-gcqx-w48m-w2h4  deepmerge prototype poisoning, unfixed in 4.3.1, the
 #                        latest release. Reached only through the shadcn CLI
 #                        merging our own config.
 WEB_AUDIT_IGNORE=(
-  GHSA-mrhx-c7xc-m3w5
   GHSA-g3hv-75wg-m249
   GHSA-gcqx-w48m-w2h4
 )

@@ -11,15 +11,23 @@ async fn migrated_connection() -> (sqlx::PgConnection, String) {
     let mut connection = sqlx::PgConnection::connect(&database_url).await.unwrap();
     let schema_name = format!("task1_migration_{}", Uuid::now_v7().simple());
     connection
-        .execute(format!("CREATE SCHEMA {schema_name}").as_str())
+        .execute(sqlx::AssertSqlSafe(format!("CREATE SCHEMA {schema_name}")))
         .await
         .unwrap();
     connection
-        .execute(format!("SET search_path TO {schema_name}, public").as_str())
+        .execute(sqlx::AssertSqlSafe(format!(
+            "SET search_path TO {schema_name}, public"
+        )))
         .await
         .unwrap();
-    MIGRATOR.run_direct(&mut connection).await.unwrap();
-    MIGRATOR.run_direct(&mut connection).await.unwrap();
+    MIGRATOR
+        .run_direct(None, &mut connection, false)
+        .await
+        .unwrap();
+    MIGRATOR
+        .run_direct(None, &mut connection, false)
+        .await
+        .unwrap();
     (connection, schema_name)
 }
 
@@ -29,11 +37,13 @@ async fn legacy_0011_connection() -> (sqlx::PgConnection, String) {
     let mut connection = sqlx::PgConnection::connect(&database_url).await.unwrap();
     let schema_name = format!("task1_legacy_{}", Uuid::now_v7().simple());
     connection
-        .execute(format!("CREATE SCHEMA {schema_name}").as_str())
+        .execute(sqlx::AssertSqlSafe(format!("CREATE SCHEMA {schema_name}")))
         .await
         .unwrap();
     connection
-        .execute(format!("SET search_path TO {schema_name}, public").as_str())
+        .execute(sqlx::AssertSqlSafe(format!(
+            "SET search_path TO {schema_name}, public"
+        )))
         .await
         .unwrap();
     apply_migrations_through_0011(&mut connection).await;
@@ -43,7 +53,9 @@ async fn legacy_0011_connection() -> (sqlx::PgConnection, String) {
 async fn drop_schema(connection: &mut sqlx::PgConnection, schema_name: &str) {
     connection.execute("RESET search_path").await.unwrap();
     connection
-        .execute(format!("DROP SCHEMA {schema_name} CASCADE").as_str())
+        .execute(sqlx::AssertSqlSafe(format!(
+            "DROP SCHEMA {schema_name} CASCADE"
+        )))
         .await
         .unwrap();
 }

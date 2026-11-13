@@ -6,17 +6,35 @@
       {
         "ordinal": 0,
         "name": "default_max_forms",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "default_max_forms"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "default_max_attachment_bytes",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "default_max_attachment_bytes"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "default_max_responses_per_period",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "instance_settings",
+            "name": "default_max_responses_per_period"
+          }
+        }
       }
     ],
     "parameters": {

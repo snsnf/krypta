@@ -6,17 +6,35 @@
       {
         "ordinal": 0,
         "name": "stripe_customer_id",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "subscriptions",
+            "name": "stripe_customer_id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "plan_id",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "subscriptions",
+            "name": "plan_id"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "status",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "subscriptions",
+            "name": "status"
+          }
+        }
       }
     ],
     "parameters": {

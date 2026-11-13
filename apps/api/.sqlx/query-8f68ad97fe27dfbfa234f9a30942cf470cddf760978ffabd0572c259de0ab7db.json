@@ -6,12 +6,24 @@
       {
         "ordinal": 0,
         "name": "notify_on_response",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "form_members",
+            "name": "notify_on_response"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "archived_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "form_members",
+            "name": "archived_at"
+          }
+        }
       }
     ],
     "parameters": {

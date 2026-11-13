@@ -495,8 +495,8 @@ bun run ci:images       # build both Docker images and boot each; needs Docker, 
 bun run ci               # static and integration
 ```
 
-`cargo audit` runs with three advisories explicitly ignored and `bun audit`
-with one, each with its reason recorded in the script. Anything not on that list fails, so a new
+`cargo audit` runs with four advisories explicitly ignored and `bun audit`
+with three, each with its reason recorded in the script. Anything not on that list fails, so a new
 advisory cannot be absorbed silently. The reverse is checked too: an ignored
 advisory that no longer appears in the report fails the step and names itself,
 so when one is fixed upstream (the zod entry, say, once shadcn moves to zod 4)

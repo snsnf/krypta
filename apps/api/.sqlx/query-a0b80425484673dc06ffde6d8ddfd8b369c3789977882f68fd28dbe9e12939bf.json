@@ -6,12 +6,24 @@
       {
         "ordinal": 0,
         "name": "accepting_responses",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "accepting_responses"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "deletion_started_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "deletion_started_at"
+          }
+        }
       }
     ],
     "parameters": {

@@ -6,12 +6,19 @@
       {
         "ordinal": 0,
         "name": "notify_failure_count",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "form_members",
+            "name": "notify_failure_count"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "deferred_a_day!",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {

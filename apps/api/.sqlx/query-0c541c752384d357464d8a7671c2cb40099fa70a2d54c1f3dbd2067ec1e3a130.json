@@ -6,22 +6,46 @@
       {
         "ordinal": 0,
         "name": "accepting_responses",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "accepting_responses"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "closes_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "closes_at"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "max_responses",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "max_responses"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "deletion_started_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forms",
+            "name": "deletion_started_at"
+          }
+        }
       }
     ],
     "parameters": {
