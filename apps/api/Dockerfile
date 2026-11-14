@@ -25,19 +25,25 @@ ENV SQLX_OFFLINE=true
 # recompiled axum, tokio, sqlx, webauthn-rs and the native OpenSSL it links:
 # the whole 235s, every time.
 #
-# The stub binary exists only to give cargo something to build. Its artifacts
-# are removed afterwards so the real build below cannot link a stale `api`
-# from it. Dependency artifacts stay, which is the entire point.
+# The stub binary exists only to give cargo something to build. Dependency
+# artifacts stay, which is the entire point; the touch below is what stops the
+# stub itself from being shipped.
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src \
     && echo 'fn main() {}' > src/main.rs \
     && cargo build --release \
-    && rm -rf src target/release/api target/release/api.d target/release/deps/api-*
+    && rm -rf src
 
 COPY src ./src
 COPY migrations ./migrations
 COPY .sqlx ./.sqlx
-RUN cargo build --release
+# Cargo rebuilds a target only when a source file is newer than its last
+# build. A CI checkout stamps every file before the stub above was compiled,
+# so without the touch cargo judged the stub current and shipped it: an
+# `api` that exits 0 having printed nothing. Deleting the stub's artifacts
+# used to prevent that, until Cargo 1.100 moved them to a path the delete
+# no longer named. The touch does not depend on where Cargo keeps them.
+RUN touch src/main.rs && cargo build --release
 
 # ---- Runtime stage ----
 FROM debian:bookworm-slim AS runtime
