@@ -182,16 +182,12 @@ describe("form theme", () => {
     )
     // Every dark surface is derived from the chosen page background, so
     // Ocean's dark form carries its hue rather than a palette shared with
-    // Forest, and a custom page color still shows in dark mode.
-    expect(oceanDark["--form-page-background"]).toBe(
-      "oklch(from #e8f0f7 0.18 clamp(0.015, c, 0.06) h)"
-    )
-    expect(oceanDark["--card"]).toBe(
-      "oklch(from #e8f0f7 0.23 clamp(0.015, c, 0.045) h)"
-    )
-    expect(oceanDark["--foreground"]).toBe(
-      "oklch(from #e8f0f7 0.97 min(c, 0.008) h)"
-    )
+    // Forest, and a custom page color still shows in dark mode. The hue is
+    // written as a number: Chrome 158 reports a pale color's hue as `none`
+    // through relative color syntax, which dropped every preset's tint.
+    expect(oceanDark["--form-page-background"]).toBe("oklch(0.18 0.015 244.26)")
+    expect(oceanDark["--card"]).toBe("oklch(0.23 0.015 244.26)")
+    expect(oceanDark["--foreground"]).toBe("oklch(0.97 0.008 244.26)")
     expect(
       getFormThemeStyle(
         {
@@ -202,11 +198,23 @@ describe("form theme", () => {
         },
         "dark"
       )["--form-page-background"]
-    ).toBe("oklch(from #157e93 0.18 clamp(0.015, c, 0.06) h)")
+    ).toBe("oklch(0.18 0.06 215.71)")
+    // A gray page has no hue to keep, so its dark form takes no tint.
+    expect(
+      getFormThemeStyle(
+        {
+          preset: "custom",
+          accentColor: "#a35442",
+          backgroundColor: "#808080",
+          allowDarkMode: true,
+        },
+        "dark"
+      )["--form-page-background"]
+    ).toBe("oklch(0.18 0 0)")
     expect(oceanDark["--secondary"]).toBe(oceanDark["--muted"])
     expect(oceanDark["--secondary-foreground"]).toBe(oceanDark["--foreground"])
     // The accent is lifted to a legible lightness and takes dark text.
-    expect(oceanDark["--primary"]).toBe("oklch(from #3f6489 max(l, 0.74) c h)")
+    expect(oceanDark["--primary"]).toBe("oklch(0.74 0.0733 249.52)")
     expect(oceanDark["--primary-foreground"]).toBe("#18181b")
     expect(oceanDark.colorScheme).toBe("dark")
     expect(

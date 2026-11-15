@@ -67,13 +67,56 @@ function channel(value: number): number {
     : ((normalized + 0.055) / 1.055) ** 2.4
 }
 
-function luminance(hex: string): number {
+function linearRgb(hex: string): [number, number, number] {
   const value = hex.slice(1)
-  return (
-    0.2126 * channel(Number.parseInt(value.slice(0, 2), 16)) +
-    0.7152 * channel(Number.parseInt(value.slice(2, 4), 16)) +
-    0.0722 * channel(Number.parseInt(value.slice(4, 6), 16))
-  )
+  return [0, 2, 4].map((start) =>
+    channel(Number.parseInt(value.slice(start, start + 2), 16))
+  ) as [number, number, number]
+}
+
+function luminance(hex: string): number {
+  const [r, g, b] = linearRgb(hex)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+type Oklch = { l: number; c: number; h: number }
+
+const ACHROMATIC_CHROMA = 0.0005
+// The least tint a dark surface keeps, so a pale page color still shows.
+const DARK_SURFACE_MIN_CHROMA = 0.015
+
+/**
+ * A hex color in OKLCH, by the reference sRGB to OKLab conversion. The dark
+ * theme surfaces are computed from this here rather than with CSS relative
+ * color syntax (`oklch(from #hex ...)`), because Chrome 158 started reporting
+ * the hue of a pale color as `none`: every preset page background is pale, so
+ * their dark forms lost the tint they are built around. A number written here
+ * reads the same in every browser.
+ *
+ * A gray comes back with chroma 0: below ACHROMATIC_CHROMA the hue the
+ * conversion reports is rounding noise, and a gray takes no tint rather than
+ * an arbitrary one.
+ */
+function hexToOklch(hex: string): Oklch {
+  const [r, g, b] = linearRgb(hex)
+  const lc = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+  const mc = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+  const sc = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+  const okA = 1.9779984951 * lc - 2.428592205 * mc + 0.4505937099 * sc
+  const okB = 0.0259040371 * lc + 0.7827717662 * mc - 0.808675766 * sc
+  const chroma = Math.hypot(okA, okB)
+  return {
+    l: 0.2104542553 * lc + 0.793617785 * mc - 0.0040720468 * sc,
+    c: chroma < ACHROMATIC_CHROMA ? 0 : chroma,
+    h: ((Math.atan2(okB, okA) * 180) / Math.PI + 360) % 360,
+  }
+}
+
+function formatOklch({ l, c, h }: Oklch): string {
+  const round = (value: number, digits: number) => Number(value.toFixed(digits))
+  return c === 0
+    ? `oklch(${round(l, 4)} 0 0)`
+    : `oklch(${round(l, 4)} ${round(c, 4)} ${round(h, 2)})`
 }
 
 export function getContrastRatio(a: string, b: string): number {
@@ -320,19 +363,34 @@ export function getFormThemeStyle(
   // Dark surfaces are the chosen page background at low lightness, not one
   // fixed dark palette shared by every theme: Ocean's dark form is a deep
   // blue-gray, Terracotta's a warm one, and a creator who picks a teal page
-  // gets a dark teal. Relative color syntax keeps the background's hue and
-  // clamps its chroma: a floor so the presets' pale backgrounds still carry
-  // their hue, a cap so a saturated custom color reads as atmosphere rather
-  // than as a wall of color.
-  const tinted = (lightness: number, chromaCap: number) =>
-    `oklch(from ${theme.backgroundColor} ${lightness} clamp(0.015, c, ${chromaCap}) h)`
+  // gets a dark teal. Each keeps the background's hue and clamps its chroma: a
+  // floor so the presets' pale backgrounds still carry their hue, a cap so a
+  // saturated custom color reads as atmosphere rather than as a wall of color.
+  // A gray background stays gray. See hexToOklch for why this is not CSS.
+  const background = hexToOklch(theme.backgroundColor)
+  const isGray = background.c === 0
+  const tinted = (lightness: number, chromaCap: number) => {
+    const chroma = Math.min(
+      Math.max(background.c, DARK_SURFACE_MIN_CHROMA),
+      chromaCap
+    )
+    return formatOklch({
+      l: lightness,
+      c: isGray ? 0 : chroma,
+      h: background.h,
+    })
+  }
   const pageBackground = dark ? tinted(0.18, 0.06) : theme.backgroundColor
   // A creator may pick a dark page background while leaving dark mode off.
   // Cards stay white in light mode, so their text stays dark, but anything
   // sitting directly on the page (labels, the builder's view toggle, the add
   // question affordance) has to flip to light or it vanishes into the page.
   const cardForeground = dark
-    ? `oklch(from ${theme.backgroundColor} 0.97 min(c, 0.008) h)`
+    ? formatOklch({
+        l: 0.97,
+        c: Math.min(background.c, 0.008),
+        h: background.h,
+      })
     : "oklch(0.145 0 0)"
   const pageIsDark =
     !dark && getAccentForeground(theme.backgroundColor) === LIGHT_FOREGROUND
@@ -344,8 +402,9 @@ export function getFormThemeStyle(
   // on a dark surface it needs lifting to stay legible, so the floor raises
   // it without touching hue or chroma. Anything at or above the floor takes
   // dark text, which is what getAccentForeground would choose for it too.
+  const accentOklch = hexToOklch(theme.accentColor)
   const accent = dark
-    ? `oklch(from ${theme.accentColor} max(l, 0.74) c h)`
+    ? formatOklch({ ...accentOklch, l: Math.max(accentOklch.l, 0.74) })
     : theme.accentColor
   const accentForeground = dark
     ? DARK_FOREGROUND
