@@ -1,4 +1,4 @@
-use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use uuid::Uuid;
 
 use crate::{auth::extractor::SessionUser, error::ApiError, state::AppState};
@@ -7,7 +7,6 @@ pub struct InstanceAdmin {
     pub user_id: Uuid,
 }
 
-#[async_trait]
 impl FromRequestParts<AppState> for InstanceAdmin {
     type Rejection = ApiError;
 

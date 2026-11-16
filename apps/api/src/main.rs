@@ -287,41 +287,41 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::get(sharing::membership::provisioning),
         )
         .route(
-            "/api/v1/forms/:id/collaboration",
+            "/api/v1/forms/{id}/collaboration",
             axum::routing::get(sharing::membership::collaboration),
         )
         .route(
-            "/api/v1/forms/:id/members/me",
+            "/api/v1/forms/{id}/members/me",
             axum::routing::delete(sharing::membership::leave_form)
                 .patch(sharing::membership::set_notification_preference),
         )
         .route(
-            "/api/v1/forms/:id/members/:member_id",
+            "/api/v1/forms/{id}/members/{member_id}",
             axum::routing::patch(sharing::membership::update_member_role)
                 .delete(sharing::membership::remove_member),
         )
         .route(
-            "/api/v1/forms/:id/members/:member_id/key-grant",
+            "/api/v1/forms/{id}/members/{member_id}/key-grant",
             axum::routing::put(sharing::membership::put_member_grant),
         )
         .route(
-            "/api/v1/forms/:id/transfer-ownership",
+            "/api/v1/forms/{id}/transfer-ownership",
             axum::routing::post(forms::lifecycle::transfer_ownership),
         )
         .route(
-            "/api/v1/forms/:id/invitations/recipient-key",
+            "/api/v1/forms/{id}/invitations/recipient-key",
             axum::routing::post(sharing::invitations::recipient_key),
         )
         .route(
-            "/api/v1/forms/:id/invitations",
+            "/api/v1/forms/{id}/invitations",
             axum::routing::post(sharing::invitations::create_invitation),
         )
         .route(
-            "/api/v1/forms/:id/invitations/:invitation_id/resend",
+            "/api/v1/forms/{id}/invitations/{invitation_id}/resend",
             axum::routing::post(sharing::invitations::resend_invitation),
         )
         .route(
-            "/api/v1/forms/:id/invitations/:invitation_id",
+            "/api/v1/forms/{id}/invitations/{invitation_id}",
             axum::routing::delete(sharing::invitations::revoke_invitation),
         )
         .route(
@@ -377,7 +377,7 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::get(auth::passkey_routes::list),
         )
         .route(
-            "/api/v1/auth/passkeys/:id",
+            "/api/v1/auth/passkeys/{id}",
             axum::routing::delete(auth::passkey_routes::delete),
         )
         .route(
@@ -393,23 +393,23 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::get(admin::routes::list_audit),
         )
         .route(
-            "/api/v1/admin/accounts/:id/suspend",
+            "/api/v1/admin/accounts/{id}/suspend",
             axum::routing::post(admin::account_lifecycle::suspend_account),
         )
         .route(
-            "/api/v1/admin/accounts/:id/reactivate",
+            "/api/v1/admin/accounts/{id}/reactivate",
             axum::routing::post(admin::account_lifecycle::reactivate_account),
         )
         .route(
-            "/api/v1/admin/accounts/:id/eligible-transfers",
+            "/api/v1/admin/accounts/{id}/eligible-transfers",
             axum::routing::get(admin::routes::list_eligible_ownership_transfers),
         )
         .route(
-            "/api/v1/admin/accounts/:id",
+            "/api/v1/admin/accounts/{id}",
             axum::routing::delete(admin::account_lifecycle::delete_account),
         )
         .route(
-            "/api/v1/admin/forms/:form_id/transfer",
+            "/api/v1/admin/forms/{form_id}/transfer",
             axum::routing::post(admin::account_lifecycle::transfer_form),
         )
         .route(
@@ -421,21 +421,21 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::post(forms::routes::create_form).get(forms::routes::list_forms),
         )
         .route(
-            "/api/v1/forms/:id",
+            "/api/v1/forms/{id}",
             axum::routing::get(forms::routes::get_form)
                 .patch(forms::routes::update_form)
                 .delete(forms::lifecycle::delete_form),
         )
         .route(
-            "/api/v1/forms/:id/public",
+            "/api/v1/forms/{id}/public",
             axum::routing::get(forms::routes::get_form_public),
         )
         .route(
-            "/api/v1/forms/:id/grades",
+            "/api/v1/forms/{id}/grades",
             axum::routing::get(forms::grades::get_grades).put(forms::grades::put_grades),
         )
         .route(
-            "/api/v1/forms/:id/responses",
+            "/api/v1/forms/{id}/responses",
             axum::routing::post(forms::routes::submit_response)
                 .layer(DefaultBodyLimit::max(
                     forms::routes::MAX_RESPONSE_BODY_BYTES,
@@ -443,28 +443,28 @@ async fn main() -> anyhow::Result<()> {
                 .get(forms::routes::list_responses),
         )
         .route(
-            "/api/v1/forms/:id/responses/edit",
+            "/api/v1/forms/{id}/responses/edit",
             axum::routing::patch(forms::routes::update_response).layer(DefaultBodyLimit::max(
                 forms::routes::MAX_RESPONSE_BODY_BYTES,
             )),
         )
         .route(
-            "/api/v1/forms/:id/responses/:response_id",
+            "/api/v1/forms/{id}/responses/{response_id}",
             axum::routing::delete(forms::routes::delete_response),
         )
         .route(
-            "/api/v1/forms/:id/attachments",
+            "/api/v1/forms/{id}/attachments",
             axum::routing::post(attachments::routes::upload_attachment)
                 .layer(DefaultBodyLimit::max(11 * 1024 * 1024)),
         )
         .route(
-            "/api/v1/forms/:id/attachments/:attachment_id",
+            "/api/v1/forms/{id}/attachments/{attachment_id}",
             axum::routing::get(attachments::routes::download_attachment),
         )
         // Public on purpose: a respondent sees the header before they have any
         // reason to hold a session, and the bytes are ciphertext either way.
         .route(
-            "/api/v1/forms/:id/header-image",
+            "/api/v1/forms/{id}/header-image",
             axum::routing::get(attachments::routes::download_header_image),
         );
 

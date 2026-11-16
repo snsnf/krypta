@@ -1,4 +1,7 @@
-use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+use axum::{
+    extract::{FromRequestParts, OptionalFromRequestParts},
+    http::request::Parts,
+};
 use axum_extra::extract::CookieJar;
 use uuid::Uuid;
 
@@ -9,7 +12,6 @@ pub struct SessionUser {
     pub second_factor_verified: bool,
 }
 
-#[async_trait]
 impl FromRequestParts<AppState> for SessionUser {
     type Rejection = ApiError;
 
@@ -57,6 +59,25 @@ impl FromRequestParts<AppState> for SessionUser {
     }
 }
 
+/// Lets a handler take `Option<SessionUser>` where a session is welcome but
+/// not required, as anonymous attachment uploads do. Only a missing or
+/// invalid session means "no user"; a Redis or database failure is still an
+/// error, so an outage cannot quietly turn a member's request anonymous.
+impl OptionalFromRequestParts<AppState> for SessionUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        match <Self as FromRequestParts<AppState>>::from_request_parts(parts, state).await {
+            Ok(user) => Ok(Some(user)),
+            Err(ApiError::Unauthorized) => Ok(None),
+            Err(error) => Err(error),
+        }
+    }
+}
+
 /// Authorizes `/auth/recover/complete` and nothing else.
 ///
 /// Deliberately not built on `SessionUser`: that type now rejects recovery
@@ -69,7 +90,6 @@ pub struct RecoverySessionUser {
     pub user_id: Uuid,
 }
 
-#[async_trait]
 impl FromRequestParts<AppState> for RecoverySessionUser {
     type Rejection = ApiError;
 

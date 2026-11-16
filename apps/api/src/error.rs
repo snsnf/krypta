@@ -9,7 +9,6 @@ use serde::{Serialize, de::DeserializeOwned};
 /// JSON extractor whose framework rejections still use the API envelope.
 pub struct ApiJson<T>(pub T);
 
-#[axum::async_trait]
 impl<T, S> FromRequest<S> for ApiJson<T>
 where
     T: DeserializeOwned,
@@ -40,7 +39,6 @@ where
 /// missing row would be: not found, and no more.
 pub struct ApiPath<T>(pub T);
 
-#[axum::async_trait]
 impl<T, S> FromRequestParts<S> for ApiPath<T>
 where
     T: DeserializeOwned + Send,

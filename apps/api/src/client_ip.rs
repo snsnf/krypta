@@ -4,7 +4,6 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use axum::{
-    async_trait,
     extract::{ConnectInfo, FromRequestParts},
     http::request::Parts,
 };
@@ -36,7 +35,6 @@ use crate::{error::ApiError, state::AppState};
  */
 pub struct ClientIp(pub IpAddr);
 
-#[async_trait]
 impl FromRequestParts<AppState> for ClientIp {
     type Rejection = ApiError;
 

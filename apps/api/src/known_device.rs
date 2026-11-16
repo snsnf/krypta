@@ -189,7 +189,7 @@ mod tests {
                 .await
                 .unwrap(),
         );
-        remember(&mut redis, first.clone(), user_id).await.unwrap();
+        let _second_browser = remember(&mut redis, first.clone(), user_id).await.unwrap();
 
         assert!(recognise(&mut redis, &first).await.unwrap().is_none());
     }
