@@ -10,6 +10,10 @@ version: 2
 updates:
   # sha2 and blake2 0.11 move to digest 0.11 while the rest of the tree is
   # still on 0.10, so taking them now means two copies for no fix.
+  # webauthn-rs 0.6 verifies RSA passkeys with a release candidate of the rsa
+  # crate, which carries RUSTSEC-2023-0071 with no fixed release. Verification
+  # uses public keys only, out of that advisory's reach, but 0.5 carries no
+  # advisory at all, so it waits for a fixed rsa.
   - package-ecosystem: cargo
     directory: /apps/api
     schedule:
@@ -18,6 +22,8 @@ updates:
       - dependency-name: sha2
         update-types: ["version-update:semver-minor"]
       - dependency-name: blake2
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: webauthn-rs
         update-types: ["version-update:semver-minor"]
     groups:
       minor-and-patch:
