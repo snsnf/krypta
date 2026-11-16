@@ -107,7 +107,7 @@ blake2 = "0.10"
 totp-rs = { version = "6", features = ["otpauth"] }
 # Signs webhook payloads in the Stripe verification tests, reproducing what
 # Stripe itself does when computing the Stripe-Signature header.
-hmac = "0.12"
+hmac = "0.13"
 hex = "0.4"
 
 # Argon2 is deliberately expensive: 256 MiB and three passes, on both sides of
