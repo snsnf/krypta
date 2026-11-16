@@ -1,4 +1,3 @@
-use rand::RngCore;
 use redis::{AsyncCommands, aio::ConnectionManager};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -136,7 +135,7 @@ pub async fn create_scoped_session(
         u64::try_from(ttl_secs).map_err(|_| anyhow::anyhow!("session ttl must not be negative"))?;
 
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let token = base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
 
     let now = OffsetDateTime::now_utc();

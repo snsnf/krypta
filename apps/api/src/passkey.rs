@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use rand::RngCore;
 use redis::{AsyncCommands, aio::ConnectionManager};
 use serde::{Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
@@ -48,7 +47,7 @@ pub async fn stash<T: Serialize>(
     state: &T,
 ) -> anyhow::Result<String> {
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let token = base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
     let value = serde_json::to_string(state)?;
     let _: () = redis

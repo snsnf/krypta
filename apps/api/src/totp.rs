@@ -1,4 +1,3 @@
-use rand::RngCore;
 use redis::{AsyncCommands, aio::ConnectionManager};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -14,7 +13,7 @@ const REPLAY_MEMORY_SECS: i64 = 120;
 
 pub fn generate_secret() -> Vec<u8> {
     let mut bytes = vec![0u8; SECRET_BYTES];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     bytes
 }
 
@@ -108,7 +107,7 @@ pub async fn create_pending(
     generation: i64,
 ) -> anyhow::Result<String> {
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let token = base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
     let value = serde_json::to_string(&PendingLogin {
         user_id,
@@ -143,7 +142,7 @@ pub fn generate_recovery_codes() -> anyhow::Result<Vec<(String, String)>> {
     let mut out = Vec::with_capacity(RECOVERY_CODE_COUNT);
     for _ in 0..RECOVERY_CODE_COUNT {
         let mut bytes = [0u8; 10];
-        rand::thread_rng().fill_bytes(&mut bytes);
+        rand::fill(&mut bytes);
         // Crockford-ish alphabet: no look-alike characters to mistype.
         const ALPHABET: &[u8] = b"ABCDEFGHJKMNPQRSTVWXYZ23456789";
         let code: String = bytes

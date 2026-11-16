@@ -11,7 +11,6 @@
 //! so a stolen marker buys one more capped budget and nothing else.
 
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
-use rand::RngCore;
 use redis::{AsyncCommands, aio::ConnectionManager};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -109,7 +108,7 @@ pub async fn forget_all(redis: &mut ConnectionManager, user_id: Uuid) -> anyhow:
 
 fn new_marker() -> String {
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes)
 }
 

@@ -15,7 +15,6 @@ use axum_extra::extract::{
     cookie::{Cookie, SameSite},
 };
 use base64::Engine;
-use rand::RngCore;
 use sha2::{Digest, Sha256};
 use sqlx::{PgPool, Postgres, Transaction};
 use time::Duration;
@@ -309,7 +308,7 @@ async fn send_invitation(
     check_invitation_limits(state, owner_id, form_id, &email).await?;
 
     let mut token_bytes = [0_u8; 32];
-    rand::thread_rng().fill_bytes(&mut token_bytes);
+    rand::fill(&mut token_bytes);
     let token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(token_bytes);
     let token_hash = format!("{:x}", Sha256::digest(token.as_bytes()));
 

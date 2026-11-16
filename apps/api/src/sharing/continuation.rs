@@ -1,5 +1,4 @@
 use base64::Engine;
-use rand::RngCore;
 use redis::AsyncCommands;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -23,7 +22,7 @@ pub async fn create(
     invitation_id: Uuid,
 ) -> anyhow::Result<String> {
     let mut bytes = [0_u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let cookie = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes);
     let value = serde_json::to_string(&ContinuationRecord { invitation_id })?;
     let _: () = redis

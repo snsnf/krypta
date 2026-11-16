@@ -1,5 +1,4 @@
 use axum::extract::{Query, State};
-use rand::RngCore;
 use serde::Deserialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -971,7 +970,7 @@ pub async fn submit_response(
 
     let edit_token = if form.allow_response_editing {
         let mut token_bytes = [0u8; 32];
-        rand::thread_rng().fill_bytes(&mut token_bytes);
+        rand::fill(&mut token_bytes);
         Some(base64::Engine::encode(
             &base64::engine::general_purpose::URL_SAFE_NO_PAD,
             token_bytes,

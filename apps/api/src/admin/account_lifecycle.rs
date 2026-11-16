@@ -1,7 +1,6 @@
 use axum::{extract::State, response::IntoResponse};
 use axum_extra::extract::CookieJar;
 use base64::Engine;
-use rand::RngCore;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -55,7 +54,7 @@ pub async fn issue_reauthentication_receipt(
     session_token: &str,
 ) -> anyhow::Result<String> {
     let mut bytes = [0_u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let receipt = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes);
     let record = ReauthenticationReceiptRecord {
         user_id,

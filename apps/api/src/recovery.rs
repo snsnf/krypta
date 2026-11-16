@@ -1,4 +1,3 @@
-use rand::RngCore;
 use redis::{AsyncCommands, aio::ConnectionManager};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -125,7 +124,7 @@ pub async fn create_pending(
     record: &PendingRecovery,
 ) -> anyhow::Result<String> {
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let token = base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
     save_pending(redis, &token, record).await?;
     Ok(token)

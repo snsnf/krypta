@@ -1,4 +1,3 @@
-use rand::{Rng, RngCore};
 use redis::{AsyncCommands, aio::ConnectionManager};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -206,7 +205,7 @@ fn remaining_secs(record: &PendingSignup) -> Option<u64> {
 }
 
 pub fn generate_code() -> String {
-    format!("{:06}", rand::thread_rng().gen_range(0..1_000_000u32))
+    format!("{:06}", rand::random_range(0..1_000_000u32))
 }
 
 pub fn hash_code(code: &str) -> String {
@@ -339,7 +338,7 @@ pub async fn create_pending(
     record: &PendingSignup,
 ) -> anyhow::Result<String> {
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::fill(&mut bytes);
     let token = base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
     save_pending(redis, &token, record).await?;
     Ok(token)

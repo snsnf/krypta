@@ -312,7 +312,7 @@ pub fn auth_verifier(email: &str, password: &str) -> String {
 #[allow(dead_code)]
 pub fn opaque_wrapped_account_key() -> String {
     let mut bytes = [0u8; WRAPPED_ACCOUNT_KEY_BYTES];
-    rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut bytes);
+    rand::fill(&mut bytes);
     b64(&bytes)
 }
 
@@ -330,7 +330,7 @@ pub const WRAPPED_ACCOUNT_KEY_BYTES: usize = 24 + 32 + 16;
 #[allow(dead_code)]
 pub fn opaque_verifier() -> String {
     let mut bytes = [0u8; 32];
-    rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut bytes);
+    rand::fill(&mut bytes);
     b64(&bytes)
 }
 
