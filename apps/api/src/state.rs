@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use redis::aio::ConnectionManager;
 use sqlx::PgPool;
@@ -57,6 +58,27 @@ impl AppState {
     }
 }
 
+/// Opens the Redis connection every handler shares.
+///
+/// Without a max delay, `ConnectionManager`'s own backoff reaches 60
+/// seconds after a Redis restart, and the readiness probe times out at 2
+/// seconds, well before it ever observes an error from the shared
+/// reconnect future. A probe that can report an outage but never observe
+/// one that ends it never triggers the reconnect it is waiting on, so it
+/// keeps reporting a false outage long after Redis is back. Capping the
+/// delay at 500ms and giving the manager its own short response timeout
+/// makes it return an error quickly enough for the probe (and every other
+/// caller) to observe it and participate in recovery.
+pub(crate) async fn connect_redis(url: &str) -> redis::RedisResult<ConnectionManager> {
+    let client = redis::Client::open(url)?;
+    let config = redis::aio::ConnectionManagerConfig::new()
+        .set_max_delay(Duration::from_millis(500))
+        .set_number_of_retries(10)
+        .set_connection_timeout(Some(Duration::from_secs(2)))
+        .set_response_timeout(Some(Duration::from_secs(2)));
+    ConnectionManager::new_with_config(client, config).await
+}
+
 #[cfg(test)]
 impl AppState {
     /// The one place a test builds an `AppState`.
@@ -70,13 +92,7 @@ impl AppState {
     pub(crate) async fn for_tests(mailer: Mailer) -> Self {
         dotenvy::dotenv().ok();
         let db = crate::test_db::pool().await;
-        let redis_client = redis::Client::open(std::env::var("REDIS_URL").unwrap()).unwrap();
-        let redis_config = redis::aio::ConnectionManagerConfig::new()
-            .set_max_delay(500)
-            .set_number_of_retries(10)
-            .set_connection_timeout(std::time::Duration::from_secs(2))
-            .set_response_timeout(std::time::Duration::from_secs(2));
-        let redis = redis::aio::ConnectionManager::new_with_config(redis_client, redis_config)
+        let redis = connect_redis(&std::env::var("REDIS_URL").unwrap())
             .await
             .unwrap();
         let storage = Storage::new(

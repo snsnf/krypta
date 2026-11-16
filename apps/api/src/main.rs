@@ -89,22 +89,7 @@ async fn main() -> anyhow::Result<()> {
     let mut db_connection = db.acquire().await?;
     seed_instance_settings(&mut db_connection, &config).await?;
 
-    let redis_client = redis::Client::open(config.redis_url.clone())?;
-    // Without a max delay, `ConnectionManager`'s own backoff reaches 60
-    // seconds after a Redis restart, and the readiness probe times out at 2
-    // seconds, well before it ever observes an error from the shared
-    // reconnect future. A probe that can report an outage but never observe
-    // one that ends it never triggers the reconnect it is waiting on, so it
-    // keeps reporting a false outage long after Redis is back. Capping the
-    // delay at 500ms and giving the manager its own short response timeout
-    // makes it return an error quickly enough for the probe (and every other
-    // caller) to observe it and participate in recovery.
-    let redis_config = redis::aio::ConnectionManagerConfig::new()
-        .set_max_delay(500)
-        .set_number_of_retries(10)
-        .set_connection_timeout(std::time::Duration::from_secs(2))
-        .set_response_timeout(std::time::Duration::from_secs(2));
-    let redis = redis::aio::ConnectionManager::new_with_config(redis_client, redis_config).await?;
+    let redis = state::connect_redis(&config.redis_url).await?;
 
     let storage = attachments::storage::Storage::new(
         config.s3_endpoint.clone(),
