@@ -5,8 +5,7 @@
 
 use argon2::{Algorithm, Argon2, Params, Version};
 use base64::Engine;
-use blake2::Blake2bVar;
-use blake2::digest::VariableOutput;
+use blake2::{Blake2b128, Blake2b256, Digest as _};
 use redis::AsyncCommands;
 use reqwest::Client;
 use serde_json::json;
@@ -241,15 +240,15 @@ const ARGON2_MEMLIMIT_MODERATE_KIB: u32 = 262_144; // 256 MiB
 const VAULT_SALT_DOMAIN: &str = "krypta-vault-salt-v1";
 const AUTH_VERIFIER_DOMAIN: &str = "krypta-auth-verifier-v1";
 
-/// libsodium's `crypto_generichash`: BLAKE2b, unkeyed, variable output length.
-fn blake2b(out_len: usize, input: &[u8]) -> Vec<u8> {
-    let mut hasher = Blake2bVar::new(out_len).expect("valid blake2b length");
-    blake2::digest::Update::update(&mut hasher, input);
-    let mut out = vec![0u8; out_len];
-    hasher
-        .finalize_variable(&mut out)
-        .expect("valid output buffer");
-    out
+/// libsodium's `crypto_generichash`: BLAKE2b, unkeyed, at the two output
+/// lengths the browser uses. These are true BLAKE2b-128 and BLAKE2b-256 (the
+/// length is in the parameter block), not a truncated BLAKE2b-512.
+fn blake2b_128(input: &[u8]) -> Vec<u8> {
+    Blake2b128::digest(input).to_vec()
+}
+
+fn blake2b_256(input: &[u8]) -> Vec<u8> {
+    Blake2b256::digest(input).to_vec()
 }
 
 fn b64(bytes: &[u8]) -> String {
@@ -257,10 +256,7 @@ fn b64(bytes: &[u8]) -> String {
 }
 
 fn derive_salt(domain: &str, email: &str) -> Vec<u8> {
-    blake2b(
-        16,
-        format!("{domain}{}", email.trim().to_lowercase()).as_bytes(),
-    )
+    blake2b_128(format!("{domain}{}", email.trim().to_lowercase()).as_bytes())
 }
 
 fn derive_unlock_key(secret: &str, salt: &[u8]) -> Vec<u8> {
@@ -295,7 +291,7 @@ pub fn auth_verifier(email: &str, password: &str) -> String {
     let unlock_key = derive_unlock_key(password, &derive_salt(VAULT_SALT_DOMAIN, email));
     let mut input = AUTH_VERIFIER_DOMAIN.as_bytes().to_vec();
     input.extend_from_slice(&unlock_key);
-    let verifier = b64(&blake2b(32, &input));
+    let verifier = b64(&blake2b_256(&input));
 
     cache.lock().unwrap().insert(key, verifier.clone());
     verifier
