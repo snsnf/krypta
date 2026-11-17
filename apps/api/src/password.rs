@@ -1,5 +1,4 @@
-use argon2::{Algorithm, Argon2, Params, PasswordHasher, PasswordVerifier, Version};
-use password_hash::{PasswordHash, SaltString, rand_core::OsRng};
+use argon2::{Algorithm, Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier, Version};
 
 // Argon2id parameters for the server-side login hash, pinned rather than left
 // to `Argon2::default()` so that a crate upgrade cannot silently change the
@@ -36,9 +35,9 @@ fn hasher() -> anyhow::Result<Argon2<'static>> {
 /// in the `packages/crypto` sense. Calling it `hash_auth_verifier` at every
 /// site made the other two read as something they are not.
 pub fn hash_secret(plain: &str) -> anyhow::Result<String> {
-    let salt = SaltString::generate(&mut OsRng);
+    // `hash_password` draws a fresh 16-byte salt from the operating system.
     let hash = hasher()?
-        .hash_password(plain.as_bytes(), &salt)
+        .hash_password(plain.as_bytes())
         .map_err(|e| anyhow::anyhow!("hashing failed: {e}"))?;
     Ok(hash.to_string())
 }
@@ -122,14 +121,24 @@ mod tests {
         assert_eq!(params.p_cost(), ARGON2_P_COST);
     }
 
+    /// Every stored hash was written by an earlier version of the argon2
+    /// crate, so a crate upgrade that stopped reading them would lock every
+    /// account out. This one was minted by argon2 0.5.3 with the pinned
+    /// parameters.
+    #[test]
+    fn a_hash_written_by_an_earlier_crate_version_still_verifies() {
+        const ARGON2_0_5_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$2NvOGpt5Y0a4BT8egvcZrQ$wlqNYBd7qtbNPyXXCV0WTLicTpzlCA1SgEq6IqzZK+Q";
+        assert!(verify_auth_verifier("written by argon2 0.5", ARGON2_0_5_HASH).unwrap());
+        assert!(!verify_auth_verifier("something else", ARGON2_0_5_HASH).unwrap());
+    }
+
     // Guards the upgrade path: raising the constants must not lock out accounts
     // whose verifier was hashed under the old cost.
     #[test]
     fn hashes_made_with_different_parameters_still_verify() {
         let weaker = Params::new(8, 1, 1, None).unwrap();
-        let salt = SaltString::generate(&mut OsRng);
         let legacy = Argon2::new(Algorithm::Argon2id, Version::V0x13, weaker)
-            .hash_password(b"correct horse battery staple", &salt)
+            .hash_password(b"correct horse battery staple")
             .unwrap()
             .to_string();
 

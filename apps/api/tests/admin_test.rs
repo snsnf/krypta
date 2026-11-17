@@ -2,7 +2,6 @@ mod common;
 
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use common::code_now;
-use password_hash::{SaltString, rand_core::OsRng};
 use redis::AsyncCommands;
 use reqwest::Client;
 use serde_json::json;
@@ -472,9 +471,8 @@ fn user_sessions_key(user_id: Uuid) -> String {
 /// hand-built row has to store the same thing or its owner cannot log in.
 fn hashed_verifier(email: &str) -> String {
     let params = Params::new(19_456, 2, 1, None).unwrap();
-    let salt = SaltString::generate(&mut OsRng);
     Argon2::new(Algorithm::Argon2id, Version::V0x13, params)
-        .hash_password(common::auth_verifier(email, PASSWORD).as_bytes(), &salt)
+        .hash_password(common::auth_verifier(email, PASSWORD).as_bytes())
         .unwrap()
         .to_string()
 }
