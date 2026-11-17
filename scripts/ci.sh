@@ -44,12 +44,8 @@ CARGO_AUDIT_IGNORE=(
 #                        in 11.0.1. ts-morph (via shadcn) and typescript-eslint
 #                        require ^10. Dev tools matching globs we write, and
 #                        neither ships in the app.
-#   GHSA-gcqx-w48m-w2h4  deepmerge prototype poisoning, unfixed in 4.3.1, the
-#                        latest release. Reached only through the shadcn CLI
-#                        merging our own config.
 WEB_AUDIT_IGNORE=(
   GHSA-g3hv-75wg-m249
-  GHSA-gcqx-w48m-w2h4
 )
 
 FAILED=()
