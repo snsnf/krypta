@@ -177,7 +177,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4",
     "@types/libsodium-wrappers-sumo": "^0.8.2",
     "@types/node": "^20",
