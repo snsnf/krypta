@@ -989,7 +989,8 @@
       "storedItems": {
         "cipher": "Sealed ciphertext",
         "ids": "Form IDs and timestamps",
-        "keys": "Form keys, wrapped with your account key"
+        "keys": "Form keys, wrapped with your account key",
+        "account": "Your email address and form settings"
       },
       "neverItems": {
         "content": "Your questions and answers",
@@ -1051,7 +1052,7 @@
         "responses": "250 responses a month"
       },
       "proItems": {
-        "unlimited": "Unlimited forms and responses",
+        "unlimited": "Unlimited forms and responses, within fair use",
         "files": "5 GB of attachments",
         "free": "Everything in Free"
       },
@@ -1073,7 +1074,7 @@
       },
       "email": {
         "q": "Who sees my email address?",
-        "a": "We do, and so does whoever delivers our mail, because verifying an address means sending something to it. They see the address and when you signed up, never your questions, answers, or files. Everything about your forms stays encrypted with a key we have never held."
+        "a": "We do, and so does whoever delivers our mail, because verifying an address means sending something to it. They see the address and the mail we send it, such as sign-up codes, response notifications and invitations, never your questions, answers, or files. Everything about your forms stays encrypted with a key we have never held."
       },
       "edit": {
         "q": "Can respondents change an answer after submitting?",

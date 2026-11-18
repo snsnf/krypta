@@ -103,7 +103,7 @@ const FAQS = ["forgot", "handover", "quantum", "email", "edit"] as const
  * and an operator serving modified JavaScript could take keys from the page.
  * That second one is true of every browser-delivered encryption scheme.
  */
-const STORED = ["cipher", "ids", "keys"] as const
+const STORED = ["cipher", "ids", "keys", "account"] as const
 
 const NEVER_SEEN = ["content", "secrets", "key", "files"] as const
 
