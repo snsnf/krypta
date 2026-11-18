@@ -42,7 +42,7 @@ webauthn-rs = { version = "=0.5.5", features = [
 url = "2"
 # CIDR parsing for TRUSTED_PROXY_CIDRS. Already in the tree through hyper-util.
 ipnet = "2"
-base64 = "0.22"
+base64 = "0.23"
 thiserror = "2"
 anyhow = "1"
 dotenvy = "0.15"

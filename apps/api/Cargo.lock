@@ -51,7 +51,7 @@ dependencies = [
  "async-stripe-webhook",
  "axum",
  "axum-extra",
- "base64 0.22.1",
+ "base64 0.23.1",
  "blake2",
  "dotenvy",
  "hex",
