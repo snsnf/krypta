@@ -31,8 +31,8 @@ while IFS= read -r migration; do
   [ -n "$migration" ] || continue
   notes+=("- Adds the database migration \`$(basename "$migration")\`. It runs automatically on start and cannot be undone, so run \`./backup.sh\` before upgrading.")
 done < <(git diff --name-only --diff-filter=A "$PREV" "$TAG" -- apps/api/migrations)
-if ! git diff --quiet "$PREV" "$TAG" -- infra/docker/.env.prod.example; then
-  notes+=("- The configuration template changed. Compare your \`.env.prod\` with \`.env.prod.example\` before upgrading.")
+if ! git diff --quiet "$PREV" "$TAG" -- infra/docker/.env.example; then
+  notes+=("- The configuration template changed. Compare your \`.env\` with \`.env.example\` before upgrading.")
 fi
 
 echo

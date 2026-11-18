@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Encrypted backup of the production database, copied off the server.
 #
-#   ./backup.sh                 # from infra/docker, reads .env.prod
+#   ./backup.sh                 # from infra/docker, reads .env
 #   17 3 * * * cd /srv/krypta/infra/docker && ./backup.sh >> /var/log/krypta-backup.log 2>&1
 #
 # What it saves, and why only this:
@@ -10,7 +10,7 @@
 #             table holds emails, verifier hashes and TOTP secrets in the
 #             clear, which is why the dump is encrypted before it is written.
 #   attachments  NOT here. They live in the external object store named by
-#             S3_* in .env.prod, which is durable and versioned on its own.
+#             S3_* in .env, which is durable and versioned on its own.
 #             A restored database points at objects that are still there.
 #   redis     NOT here. Sessions, rate-limit counters and 15-minute pending
 #             signups; losing it logs everyone out and nothing more.
@@ -24,18 +24,18 @@
 # Restore, on a stopped stack with an empty postgres volume:
 #   aws --endpoint-url "$BACKUP_S3_ENDPOINT" s3 cp "s3://$BACKUP_S3_BUCKET/postgres-<ts>.dump.age" .
 #   age -d -i key.txt postgres-<ts>.dump.age > /tmp/krypta.dump
-#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres
-#   docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
+#   docker compose up -d postgres
+#   docker compose exec -T postgres \
 #       pg_restore -U krypta -d krypta --clean --if-exists < /tmp/krypta.dump
-#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+#   docker compose up -d
 set -eu
 
 cd "$(dirname "$0")"
-[ -f .env.prod ] || { echo "backup: .env.prod not found next to this script" >&2; exit 1; }
+[ -f .env ] || { echo "backup: .env not found next to this script" >&2; exit 1; }
 # shellcheck disable=SC1091
-set -a; . ./.env.prod; set +a
+set -a; . ./.env; set +a
 
-: "${BACKUP_AGE_RECIPIENT:?backup: set BACKUP_AGE_RECIPIENT in .env.prod (an age1... public key)}"
+: "${BACKUP_AGE_RECIPIENT:?backup: set BACKUP_AGE_RECIPIENT in .env (an age1... public key)}"
 command -v age >/dev/null 2>&1 || { echo "backup: age is not installed" >&2; exit 1; }
 if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
   command -v aws >/dev/null 2>&1 || { echo "backup: BACKUP_S3_BUCKET is set but the aws CLI is not installed" >&2; exit 1; }
@@ -52,7 +52,7 @@ mkdir -p "$BACKUP_DIR"
 umask 077
 
 OUT="$BACKUP_DIR/postgres-$STAMP.dump.age"
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
+docker compose exec -T postgres \
   pg_dump -U krypta -Fc krypta \
   | age -r "$BACKUP_AGE_RECIPIENT" > "$OUT.partial"
 mv "$OUT.partial" "$OUT"

@@ -8,7 +8,8 @@ node_modules/
 # local Garage bootstrap config (contains real secrets)
 infra/docker/garage.toml
 
-# production environment (contains real secrets)
+# production environment (contains real secrets), under its old name too
+infra/docker/.env
 infra/docker/.env.prod
 infra/docker/backups/
 

@@ -544,14 +544,14 @@ api_image_boots() {
     -e MAIL_FROM='krypta <no-reply@localhost>' \
     -e WEBAUTHN_RP_ID=localhost -e WEBAUTHN_ORIGIN=http://localhost:3000 \
     krypta-api:ci || return 1
-  # The same command docker-compose.prod.yml uses as its healthcheck.
+  # The same command docker-compose.yml uses as its healthcheck.
   probe_and_remove krypta-ci-api ./api healthcheck
 }
 
 web_image_boots() {
   boot_container krypta-ci-web http://127.0.0.1:3090/ \
     -p 127.0.0.1:3090:3000 krypta-web:ci || return 1
-  # The same command docker-compose.prod.yml uses as its healthcheck.
+  # The same command docker-compose.yml uses as its healthcheck.
   probe_and_remove krypta-ci-web bun -e \
     "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
 }

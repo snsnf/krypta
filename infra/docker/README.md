@@ -16,11 +16,11 @@ Files:
 
 | File | Purpose |
 |---|---|
-| `docker-compose.prod.yml` | The production stack. |
-| `.env.prod.example` | Template for `.env.prod`, the one file you edit. |
+| `docker-compose.yml` | The production stack. |
+| `.env.example` | Template for `.env`, the one file you edit. |
 | `traefik/traefik.yml` | Traefik's static configuration. Rarely touched. |
 | `backup.sh` | Nightly encrypted database backup, for cron. |
-| `docker-compose.dev.yml`, `docker-compose.yml`, `garage.toml.example` | Development and local smoke stacks. Not for production. |
+| `docker-compose.dev.yml`, `docker-compose.smoke.yml`, `garage.toml.example` | Development and local smoke stacks. Not for production. |
 
 ## Prerequisites
 
@@ -97,15 +97,15 @@ is what users see.
 ```bash
 git clone <repository> /srv/krypta
 cd /srv/krypta/infra/docker
-cp .env.prod.example .env.prod
-chmod 600 .env.prod
+cp .env.example .env
+chmod 600 .env
 ```
 
-Edit `.env.prod`. Every line marked REQUIRED needs a value; each is explained
+Edit `.env`. Every line marked REQUIRED needs a value; each is explained
 in the file and in the reference below. Then:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 
 That builds both images from this source: about five minutes for the API on a
@@ -117,12 +117,12 @@ against 276 for a cold build.
 
 ### Or run published images instead
 
-Set `KRYPTA_API_IMAGE` and `KRYPTA_WEB_IMAGE` in `.env.prod` to a published
+Set `KRYPTA_API_IMAGE` and `KRYPTA_WEB_IMAGE` in `.env` to a published
 tag, then:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+docker compose pull
+docker compose up -d
 ```
 
 Nothing compiles, so a 1 GB server is enough. Images are built for amd64 and
@@ -142,7 +142,7 @@ rather than a rebuild.
 
 ## Or run it on Dokploy
 
-Use `docker-compose.dokploy.yml` instead of `docker-compose.prod.yml` when the
+Use `docker-compose.dokploy.yml` instead of `docker-compose.yml` when the
 server is managed by [Dokploy](https://dokploy.com). Dokploy already runs
 Traefik on ports 80 and 443 with its own Let's Encrypt setup, so the two files
 cannot both run on one host: the Dokploy file drops the bundled proxy and lets
@@ -152,8 +152,8 @@ healthchecks, hardening and settings are the ones described everywhere else in
 this guide.
 
 1. Create a Compose service pointing at this repository, with the compose path
-   `infra/docker/docker-compose.dokploy.yml`. There is no `.env.prod` in this
-   path: every setting goes in the service's Environment tab, and the
+   `infra/docker/docker-compose.dokploy.yml`. Do not copy `.env.example` on
+   this path: every setting goes in the service's Environment tab, and the
    reference at the end of this file explains each one.
 2. Read the proxy network's name on the server and set `DOKPLOY_NETWORK` to
    it:
@@ -213,8 +213,8 @@ true after an upgrade) the site answers 404 for a short while. Wait for
 before concluding anything is wrong.
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml ps
-docker compose --env-file .env.prod -f docker-compose.prod.yml logs traefik | grep -i acme
+docker compose ps
+docker compose logs traefik | grep -i acme
 curl https://<DOMAIN>/api/v1/health      # expect: ok
 ```
 
@@ -280,7 +280,7 @@ and rate-limit counters; losing it signs everyone out and nothing more.
 1. On your own machine, not the server, run `age-keygen -o krypta-backup-key.txt`.
    Store that file in your password manager. It is the only thing that can
    open a backup.
-2. Put the public key (the `age1...` line) in `.env.prod` as
+2. Put the public key (the `age1...` line) in `.env` as
    `BACKUP_AGE_RECIPIENT`, and fill in the five `BACKUP_S3_*` values for the
    backups bucket.
 3. Run `./backup.sh` once by hand and confirm the file appears in the bucket.
@@ -300,8 +300,8 @@ the machine.
 ```bash
 aws --endpoint-url "$BACKUP_S3_ENDPOINT" s3 cp "s3://$BACKUP_S3_BUCKET/postgres-<stamp>.dump.age" .
 age -d -i krypta-backup-key.txt postgres-<stamp>.dump.age > /tmp/krypta.dump
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
+docker compose up -d postgres redis
+docker compose exec -T postgres \
     pg_restore -U krypta -d krypta --clean --if-exists < /tmp/krypta.dump
 ```
 
@@ -314,12 +314,12 @@ undone too, and Stripe will not send it again. Before reopening the stack,
 sign everyone out and void the invitations that were open at the dump:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T redis redis-cli FLUSHALL
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
+docker compose exec -T redis redis-cli FLUSHALL
+docker compose exec -T postgres \
     psql -U krypta -d krypta -c "UPDATE form_invitations
         SET status = 'revoked', token_hash = NULL, updated_at = now()
         WHERE status IN ('sending', 'pending')"
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+docker compose up -d
 ```
 
 Flushing Redis signs everyone out and forgets known browsers and rate-limit
@@ -343,10 +343,15 @@ this server, or it cannot tell you the server is down. `/health` without the
 
 ## Upgrades
 
+Up to 0.2.0 the production files were `docker-compose.prod.yml` and
+`.env.prod`. Coming from there, rename your settings once after pulling,
+`mv .env.prod .env`, and drop `--env-file` and `-f` from your commands. The
+project name is unchanged, so the same volumes and data are used.
+
 ```bash
 cd /srv/krypta && git pull
 cd infra/docker && ./backup.sh
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 
 Database migrations run automatically when the API starts. Take the backup
@@ -367,7 +372,7 @@ for the `pro` row in the database to the same price IDs.
 ## Privacy policy and terms
 
 `/privacy` and `/terms` are served only when this instance says who runs it.
-Set `LEGAL_ENTITY` and `LEGAL_CONTACT_EMAIL` in `.env.prod` and both pages
+Set `LEGAL_ENTITY` and `LEGAL_CONTACT_EMAIL` in `.env` and both pages
 appear, with links in the footer beside Security. Leave either blank and both
 return 404 and nothing links to them.
 
@@ -409,7 +414,7 @@ Optional settings:
 ### Tuning
 
 Every setting below has a default that suits a public instance, and a blank
-value in `.env.prod` means "use the default". Rate limits count per client
+value in `.env` means "use the default". Rate limits count per client
 address as seen through Traefik, so people behind one office or carrier
 address share a bucket; that is the reason to raise one, and a spam problem
 the reason to lower one.

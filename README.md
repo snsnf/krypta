@@ -278,7 +278,7 @@ cd apps/web && bunx playwright install && bun run test:e2e
 To build and start every service at once, including the API and web app:
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml up -d
+docker compose --env-file apps/api/.env -f infra/docker/docker-compose.smoke.yml up -d
 ```
 
 This is a local smoke stack for checking that the images build and boot

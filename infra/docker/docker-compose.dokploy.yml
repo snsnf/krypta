@@ -3,7 +3,7 @@
 # For running krypta on a Dokploy server, as a Docker Compose service.
 #
 # This file exists because Dokploy already runs Traefik on ports 80 and 443
-# with its own Let's Encrypt setup. docker-compose.prod.yml brings its own
+# with its own Let's Encrypt setup. docker-compose.yml brings its own
 # Traefik, so the two cannot share a host: use that file on a plain server and
 # this one under Dokploy. Everything else is the same stack, and the
 # application code is identical either way.
@@ -67,7 +67,7 @@
 # directory holding it, which is "docker", so the volumes become
 # docker_krypta_postgres_data and friends. Do not do that on a machine that has
 # ever run another stack from this directory; pass `-p` a name of your own, or
-# use docker-compose.prod.yml, which pins its project name for this reason.
+# use docker-compose.yml, which pins its project name for this reason.
 
 x-hardened: &hardened
   cap_drop: [ALL]

@@ -168,14 +168,13 @@ Postgres and one serving traffic looked identical from outside. The binary
 defaults to `info` now, and the boot step is what would catch the next
 silence of that kind.
 
-`infra/docker/docker-compose.yml`, the one-command smoke stack, is still not
+`infra/docker/docker-compose.smoke.yml`, the one-command smoke stack, is still not
 exercised by any gate. Run it yourself after anything that touches a
 Dockerfile, a dependency with a native component, or a migration:
 
 ```bash
 docker compose -f infra/docker/docker-compose.dev.yml down   # ports collide
-set -a && . ./apps/api/.env && set +a                        # S3 keys
-docker compose -f infra/docker/docker-compose.yml up -d --build --wait
+docker compose --env-file apps/api/.env -f infra/docker/docker-compose.smoke.yml up -d --build --wait
 ```
 
 Both stacks bind 5433, 6379, 3900, 8025, 8080 and 3000, so the dev one has to be

@@ -90,7 +90,7 @@ pub struct Config {
     pub stripe_price_monthly: Option<String>,
     pub stripe_price_yearly: Option<String>,
     /// Read only so the health report can say whether backups leave this
-    /// server. `backup.sh` sources `.env.prod` itself and does not use this.
+    /// server. `backup.sh` sources `infra/docker/.env` itself and does not use this.
     pub backup_s3_bucket: Option<String>,
     pub trusted_proxy_cidrs: Vec<ipnet::IpNet>,
     /// Proxies trusted by name, resolved through DNS. See client_ip.rs.
@@ -114,7 +114,7 @@ fn optional_setting(name: &str) -> Option<String> {
 /// A tuning setting with a production default. Reads through
 /// `optional_setting`, so a blank value falls back to the default instead of
 /// failing to parse: the production compose file forwards every one of these
-/// from `.env.prod` as `${NAME:-}`, and an operator who leaves a line empty
+/// from `infra/docker/.env` as `${NAME:-}`, and an operator who leaves a line empty
 /// there means "use the default", not "use the empty string".
 fn setting_or(name: &str, default: &str) -> String {
     optional_setting(name).unwrap_or_else(|| default.to_string())
@@ -559,7 +559,7 @@ mod tests {
     /// Every tuning key blank at once, through `Config::from_env` rather than
     /// through `setting_or` alone.
     ///
-    /// This is the shape `.env.prod.example` ships: the whole tuning block is
+    /// This is the shape `infra/docker/.env.example` ships: the whole tuning block is
     /// present and empty, because a blank line there means "use the default".
     /// Four keys used to read `std::env::var` directly and fall back only when
     /// the variable was absent, so an empty one reached `parse` and the API

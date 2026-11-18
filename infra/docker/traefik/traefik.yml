@@ -1,4 +1,4 @@
-# Traefik static configuration for docker-compose.prod.yml.
+# Traefik static configuration for docker-compose.yml.
 #
 # Only what a deployment needs: two entrypoints, HTTP permanently redirected to
 # HTTPS, Let's Encrypt over the TLS-ALPN challenge, and Docker labels as the

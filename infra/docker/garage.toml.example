@@ -19,7 +19,7 @@ admin_token = "REPLACE_WITH_OUTPUT_OF_openssl_rand_-base64_32"
 metrics_token = "REPLACE_WITH_OUTPUT_OF_openssl_rand_-base64_32"
 
 # Garage is the dev and smoke stack's object store only; production points
-# the S3_* variables at an external provider (see docker-compose.prod.yml).
+# the S3_* variables at an external provider (see docker-compose.yml).
 # `scripts/ci.sh prepare` does all of this, writes this file's secrets, and
 # fills in apps/api/.env. By hand instead: once the garage container is
 # healthy, prefix each with

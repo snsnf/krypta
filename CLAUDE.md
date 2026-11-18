@@ -48,7 +48,7 @@ rather than being mirrored:
   key handling), and how to report a vulnerability. Read by people deciding whether to trust an instance, so it
   may not reference a `CLAUDE.md` and may not outrun the code.
 - `infra/docker/README.md`: the operator's deployment guide, and the only
-  document `.env.prod.example` and the compose files may point a reader at.
+  document `infra/docker/.env.example` and the compose files may point a reader at.
   No configuration file, template, script output or user-facing text may
   reference a `CLAUDE.md`: those are design notes for people editing the
   code, and anyone else who meets the name has been sent to the wrong place.
@@ -76,7 +76,7 @@ Current monorepo layout:
 ```
 apps/{web,api}
 packages/crypto
-infra/docker/{README.md, docker-compose.dev.yml, docker-compose.yml, docker-compose.prod.yml, docker-compose.dokploy.yml, traefik/traefik.yml, backup.sh, garage.toml.example, .env.prod.example}
+infra/docker/{README.md, docker-compose.dev.yml, docker-compose.yml, docker-compose.smoke.yml, docker-compose.dokploy.yml, traefik/traefik.yml, backup.sh, garage.toml.example, .env.example}
 ```
 (`packages/crypto` is the only shared package, and no others are planned:
 `apps/web` is the one TypeScript consumer, and the API is Rust, so a shared
@@ -458,7 +458,7 @@ only the business one.
 Two consequences worth keeping in mind. Publishing images carries an
 obligation to offer corresponding source, which a public repository at the
 tag an image was built from satisfies, and the build provenance already links
-the two. And the `build:` path in `docker-compose.prod.yml` is what lets
+the two. And the `build:` path in `docker-compose.yml` is what lets
 someone actually exercise the right this licence gives them, which is a
 second reason not to remove it.
 
@@ -531,8 +531,8 @@ docker compose -f infra/docker/docker-compose.dev.yml exec redis redis-cli --sca
 
 ### Production stack (Traefik)
 
-`infra/docker/docker-compose.prod.yml`, driven by `.env.prod` (template in
-`.env.prod.example`) and the Traefik static config in `infra/docker/traefik/`.
+`infra/docker/docker-compose.yml`, driven by `infra/docker/.env` (template in
+`infra/docker/.env.example`) and the Traefik static config in `infra/docker/traefik/`.
 Traefik is the only published port: it terminates TLS for one hostname with
 Let's Encrypt and routes `/api` to the API and everything else to the web app.
 Postgres and Redis sit on an internal network with no host ports.
@@ -580,7 +580,7 @@ operator's guide, `infra/docker/README.md`, and is not repeated here.
 
 ### One-command full stack (Docker)
 
-`docker compose -f infra/docker/docker-compose.yml up -d` builds and starts
+`docker compose --env-file apps/api/.env -f infra/docker/docker-compose.smoke.yml up -d` builds and starts
 everything including the API and web app; `down` stops it (data persists in
 the `krypta-smoke_*` volumes; `-v` wipes them). It is a local smoke stack whose
 plaintext SMTP terminates at Mailpit and **must not be reused for
