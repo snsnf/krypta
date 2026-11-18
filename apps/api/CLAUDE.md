@@ -998,7 +998,9 @@ Five properties to preserve:
 - **An address is keyed, stored and mailed in one canonical form.**
   `mail::canonical_address` accepts only a bare address that lettre's
   `Mailbox` parser, the one `send` uses, delivers to unchanged, lowercased (a
-  quoted local part is refused, since `Mailbox` unquotes it); registration, recovery and invitations use it before
+  quoted local part is refused outright, by its quote or backslash, since a
+  mail server delivers it to the unquoted address; lettre's own handling of
+  quoting changed in 0.11.24, so the check does not lean on it); registration, recovery and invitations use it before
   any rate-limit key is built, because lettre delivers every decorated
   spelling to the same inbox and each spelling used to get its own counter.
   Registration refuses a padded address rather than trimming it, since the

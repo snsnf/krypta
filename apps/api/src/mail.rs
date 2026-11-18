@@ -131,15 +131,17 @@ pub enum Mailer {
 /// holds, so quietly turning `" a@b.c"` into `"a@b.c"` here would give the
 /// account a stored address its own salts were not derived from.
 ///
-/// The check parses with the same `Mailbox` parser `send` uses, not with
-/// `Address`. `Address` keeps its input verbatim, so it accepted a quoted local
-/// part (`"alice"@b.c`, `"\a\lice"@b.c` and so on), while `Mailbox` unquotes
-/// it and delivers every one of those spellings to `alice@b.c`. Each spelling
-/// hashed to its own rate-limit counter, which is the bypass this function
-/// exists to close. Now an address is accepted only when what would be
-/// delivered to is the string itself.
+/// A quoted local part (`"alice"@b.c`, `"\a\lice"@b.c` and so on) is refused
+/// outright. Mail servers deliver every such spelling to `alice@b.c`, so each
+/// would hash to its own rate-limit counter for one inbox, which is the bypass
+/// this function exists to close. A bare address never contains a quote or a
+/// backslash, so the check does not depend on how lettre parses quoting: until
+/// 0.11.24 `Mailbox` unquoted these, and since then it keeps them verbatim.
+///
+/// The rest parses with the same `Mailbox` parser `send` uses, so an address
+/// is accepted only when what would be delivered to is the string itself.
 pub fn canonical_address(raw: &str) -> Option<String> {
-    if raw.len() > 320 {
+    if raw.len() > 320 || raw.contains(['"', '\\']) {
         return None;
     }
     let mailbox: lettre::message::Mailbox = raw.parse().ok()?;
