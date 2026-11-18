@@ -99,7 +99,7 @@ rustls = { version = "=0.23.46", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-reqwest = { version = "0.12", features = ["json", "cookies"] }
+reqwest = { version = "0.13", features = ["json", "cookies"] }
 # Reproduces libsodium's crypto_generichash in the integration suites, which
 # have to derive the same auth verifier the browser sends.
 blake2 = "0.11"
