@@ -103,6 +103,8 @@ const FAQS = ["forgot", "handover", "quantum", "email", "edit"] as const
  * and an operator serving modified JavaScript could take keys from the page.
  * That second one is true of every browser-delivered encryption scheme.
  */
+const SUPPORT_URL = "https://buymeacoffee.com/krypta"
+
 const STORED = ["cipher", "ids", "keys", "account"] as const
 
 const NEVER_SEEN = ["content", "secrets", "key", "files"] as const
@@ -423,6 +425,22 @@ export default async function LandingPage() {
             <p className="reveal-on-scroll mt-8 max-w-2xl text-sm leading-relaxed text-muted-foreground">
               {t("landing.pricing.note")}
             </p>
+            {/*
+              A plain link, never the Buy Me a Coffee widget: its script would
+              be a third party on a page whose whole pitch is that nobody else
+              sees what happens here, and the CSP rightly refuses it anyway.
+            */}
+            <p className="reveal-on-scroll mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              {t("landing.pricing.support")}{" "}
+              <a
+                href={SUPPORT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline decoration-brand/50 underline-offset-4 transition-opacity duration-150 ease-out hover:opacity-70"
+              >
+                {t("landing.pricing.supportLink")}
+              </a>
+            </p>
           </div>
         </section>
 
@@ -524,6 +542,14 @@ export default async function LandingPage() {
               className="text-sm text-muted-foreground transition-opacity duration-150 ease-out hover:opacity-70"
             >
               {t("landing.footer.github")}
+            </a>
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground transition-opacity duration-150 ease-out hover:opacity-70"
+            >
+              {t("landing.footer.support")}
             </a>
             <span className="font-mono text-xs tracking-wide text-muted-foreground">
               {t("landing.footer.tagline")}

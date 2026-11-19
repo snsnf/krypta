@@ -1056,7 +1056,9 @@
         "files": "5 GB of attachments",
         "free": "Everything in Free"
       },
-      "note": "Every account starts on Free. Run krypta on your own server and neither plan applies: a self-hosted instance has no billing in it at all."
+      "note": "Every account starts on Free. Run krypta on your own server and neither plan applies: a self-hosted instance has no billing in it at all.",
+      "support": "krypta is free and open source. If it is useful to you, you can support its development.",
+      "supportLink": "Buy me a coffee"
     },
     "faq": {
       "title": "The questions worth asking first.",
@@ -1089,6 +1091,7 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "github": "GitHub",
+      "support": "Support",
       "tagline": "Zero-knowledge. Open source. Self-hostable."
     }
   },
