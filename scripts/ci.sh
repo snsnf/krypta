@@ -44,13 +44,8 @@ CARGO_AUDIT_IGNORE=(
 #                        in 11.0.1. ts-morph (via shadcn) and typescript-eslint
 #                        require ^10. Dev tools matching globs we write, and
 #                        neither ships in the app.
-#   GHSA-fc5q-39xc-vjpf  picomatch ReDoS through repeated extglobs, every
-#                        release through 4.0.7, no fix yet. Reached only by
-#                        vite, typescript-eslint, the shadcn CLI and the
-#                        next-intl build plugin, all matching globs we write.
 WEB_AUDIT_IGNORE=(
   GHSA-g3hv-75wg-m249
-  GHSA-fc5q-39xc-vjpf
 )
 
 FAILED=()
