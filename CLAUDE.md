@@ -489,10 +489,11 @@ First time only, `bun run ci:prepare` (or `./scripts/ci.sh prepare`) writes
 and local runs cannot drift. Add a check to the script, not the workflow.
 
 ```bash
-bun run ci:static       # fmt, clippy, types, lint, unit tests, audits, build; needs `bun run ci:prepare` to have run, because the unit tests open Postgres, Redis and the bucket
+bun run ci:static       # fmt, clippy, types, lint, unit tests, build; needs `bun run ci:prepare` to have run, because the unit tests open Postgres, Redis and the bucket
+bun run ci:audit        # cargo audit and bun audit; needs nothing running, so run it before every push
 bun run ci:integration  # API integration + Playwright; needs `bun run ci:prepare` to have run, plus the API and web dev servers up
 bun run ci:images       # build both Docker images and boot each; needs Docker, Postgres and Redis
-bun run ci               # static and integration
+bun run ci               # static, audit and integration
 ```
 
 `cargo audit` and `bun audit` run with a short list of advisories explicitly
@@ -504,8 +505,13 @@ reason, never to keep it. That check fires only once the lockfile moves, and
 nothing in the script can see that a fixed release exists, which is how zod,
 quick-xml and rsa sat on the list for weeks after their fixes shipped. Two
 things close that gap: `.github/dependabot.yml` proposes newer versions weekly,
-and the static job also runs on a weekly schedule, so a new advisory against
-unchanged code surfaces without waiting for a push.
+and the audit job also runs on a weekly schedule, so a new advisory against
+unchanged code surfaces without waiting for a push. The audits are their own
+job (`bun run ci:audit`) rather than part of the static checks because their
+result moves without the code moving: a new advisory shows as one red Audit
+beside green code checks, not as every open pull request failing at once.
+GitHub's Dependabot security updates are on as well, so an advisory with a
+fixed release usually arrives as a pull request before CI trips on it.
 
 ### Rate limits will bite you
 

@@ -247,10 +247,11 @@ open Mailpit at **http://localhost:8025** and read it there.
 workflow calls it rather than listing its own steps, so the two cannot drift.
 
 ```bash
-bun run ci:static       # formatting, clippy, types, lint, unit tests, audits, build, needs the stack up
+bun run ci:static       # formatting, clippy, types, lint, unit tests, build, needs the stack up
+bun run ci:audit        # dependency audits, needs nothing running
 bun run ci:integration  # API integration suites and Playwright, needs the stack up
 bun run ci:images       # build both Docker images and boot each one, needs Docker
-bun run ci              # static and integration
+bun run ci              # static, audit and integration
 ```
 
 Per-service commands, for a faster loop:

@@ -10,6 +10,7 @@
     "ci": "./scripts/ci.sh",
     "ci:prepare": "./scripts/ci.sh prepare",
     "ci:static": "./scripts/ci.sh static",
+    "ci:audit": "./scripts/ci.sh audit",
     "ci:integration": "./scripts/ci.sh integration",
     "ci:images": "./scripts/ci.sh images"
   },

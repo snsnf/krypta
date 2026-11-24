@@ -4,12 +4,13 @@
 # re-listing the steps, so the two cannot drift apart.
 #
 #   scripts/ci.sh prepare       start the dev stack, bootstrap Garage, write apps/api/.env
-#   scripts/ci.sh static        fmt, lint, types, unit tests, dependency audits
+#   scripts/ci.sh static        fmt, lint, types, unit tests, build
+#   scripts/ci.sh audit         dependency audits, Rust and npm
 #   scripts/ci.sh integration   every API integration suite and Playwright e2e
 #   scripts/ci.sh integration-api / integration-e2e   either half on its own
 #   scripts/ci.sh images        build both Docker images and boot each one
 #   scripts/ci.sh version vX.Y.Z  every manifest and lockfile names that release
-#   scripts/ci.sh               static and integration
+#   scripts/ci.sh               static, audit and integration
 #
 # `static` needs `prepare` to have run: its unit tests open real Postgres,
 # Redis and S3 connections, and the S3 credentials live in apps/api/.env.
@@ -18,6 +19,10 @@
 # `images` needs Docker and the dev stack's Postgres and
 # Redis; it is not part of the default run because a Rust image build takes
 # minutes, so it is its own job in the workflow and its own command locally.
+# `audit` needs nothing running. It is apart from `static` because its result
+# changes without the code changing: an advisory published today fails it on a
+# commit that passed yesterday, and inside `static` that read as every open
+# pull request being broken at once.
 
 set -uo pipefail
 
@@ -295,7 +300,6 @@ static_checks() {
     export_database_url
     run "rust: unit tests" bash -c "cd '$API' && cargo test --bin api -- --test-threads=1"
   fi
-  run "rust: audit"      cargo_audit
 
   # The font build fails on a listed family whose package is missing, so a
   # bad family list stops here rather than at the image build.
@@ -303,7 +307,6 @@ static_checks() {
   run "web: typecheck"   bash -c "cd '$WEB' && bun run typecheck"
   run "web: lint"        bash -c "cd '$WEB' && bun run lint"
   run "web: unit tests"  bash -c "cd '$WEB' && bun run test:unit"
-  run "web: audit"       web_audit
   run "crypto: tests"    bash -c "cd '$ROOT/packages/crypto' && bun run test"
   run "web: build"       bash -c "cd '$WEB' && bun run build"
 }
@@ -566,16 +569,22 @@ image_checks() {
   run "image: web boots" web_image_boots
 }
 
+audit_checks() {
+  run "rust: audit" cargo_audit
+  run "web: audit"  web_audit
+}
+
 case "${1:-all}" in
   prepare) prepare_stack ;;
   static) static_checks ;;
+  audit) audit_checks ;;
   integration) api_integration_checks; e2e_checks ;;
   integration-api) api_integration_checks ;;
   integration-e2e) e2e_checks ;;
   images) image_checks ;;
   version) run "versions: every manifest records ${2:-the same version}" check_versions "${2:-}" ;;
-  all) static_checks; api_integration_checks; e2e_checks ;;
-  *) echo "usage: $0 [prepare|static|integration|integration-api|integration-e2e|images|version [vX.Y.Z]|all]" >&2; exit 2 ;;
+  all) static_checks; audit_checks; api_integration_checks; e2e_checks ;;
+  *) echo "usage: $0 [prepare|static|audit|integration|integration-api|integration-e2e|images|version [vX.Y.Z]|all]" >&2; exit 2 ;;
 esac
 
 printf '\n'
