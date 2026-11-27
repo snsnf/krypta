@@ -58,7 +58,7 @@ services:
       retries: 5
 
   garage:
-    image: dxflrs/garage:v2.5.0
+    image: dxflrs/garage:v2.6.0
     ports:
       - "127.0.0.1:3900:3900"
     volumes:
